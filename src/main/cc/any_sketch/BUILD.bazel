@@ -1,0 +1,44 @@
+cc_library(
+    name = "hash_function",
+    srcs = [],
+    hdrs = [
+        "hash_function.h",
+    ],
+    deps = [
+        "@absl//absl/types:span",
+    ],
+)
+
+cc_library(
+    name = "farm_hash_function",
+    srcs = ["farm_hash_function.cc"],
+    hdrs = [
+	"farm_hash_function.h"
+    ],
+    deps = [
+	":hash_function",
+	"@absl//absl/types:span",
+	"@farmhash"
+    ],
+)
+
+cc_library(
+    name = "index_function",
+    srcs = [],
+    hdrs = [
+        "index_function.h",
+    ],
+    deps = [
+    ],
+)
+
+cc_library(
+    name = "value_function",
+    srcs = ["value_function.cc"],
+    hdrs = [
+        "value_function.h",
+    ],
+    deps = [
+        "@absl//absl/strings",
+    ],
+)
