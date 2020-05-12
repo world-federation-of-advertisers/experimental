@@ -5,7 +5,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace wfa_xmedia {
+namespace wfa::any_sketch {
 
 class ValueFunction {
  public:
@@ -22,6 +22,6 @@ class ValueFunction {
   virtual int64_t GetInitialValue(int64_t new_value) const = 0;
 };
 
-}  // namespace wfa_xmedia
+}  // namespace wfa::any_sketch
 
 #endif  // ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_

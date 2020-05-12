@@ -3,7 +3,7 @@
 
 #include "absl/types/span.h"
 
-namespace wfa_xmedia {
+namespace wfa::any_sketch {
 
 class HashFunction {
  public:
@@ -16,6 +16,6 @@ class HashFunction {
   virtual uint64_t Fingerprint(absl::Span<const unsigned char> item) const = 0;
 };
 
-}  // namespace wfa_xmedia
+}  // namespace wfa::any_sketch
 
 #endif  // ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_HASH_FUNCTION_H_

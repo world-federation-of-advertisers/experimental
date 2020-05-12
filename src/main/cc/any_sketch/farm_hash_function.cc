@@ -2,7 +2,7 @@
 
 #include "external/farmhash/src/farmhash.h"
 
-namespace wfa_xmedia {
+namespace wfa::any_sketch {
 
 uint64_t FarmHashFunction::Fingerprint(
     absl::Span<const unsigned char> item) const {
@@ -10,4 +10,4 @@ uint64_t FarmHashFunction::Fingerprint(
                                  item.size());
 }
 
-}  // namespace wfa_xmedia
+}  // namespace wfa::any_sketch
