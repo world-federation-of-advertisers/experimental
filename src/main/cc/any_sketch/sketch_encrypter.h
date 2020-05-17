@@ -16,7 +16,8 @@
 #ifndef ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_ENCRYPTOR_H_
 #define ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_ENCRYPTOR_H_
 
-#include "absl/types/span.h"
+#include <vector>
+
 #include "util/statusor.h"
 #include "wfa/measurement/api/v1alpha/sketch.pb.h"
 
@@ -38,7 +39,7 @@ class SketchEncrypter {
   virtual ~SketchEncrypter() {}
   // Return the word by word ElGamal encryption of the sketch. The result is
   // concatenated as a byte array.
-  virtual StatusOr<absl::Span<unsigned char>> Encrypt(
+  virtual StatusOr<std::vector<unsigned char>> Encrypt(
       const wfa::measurement::api::v1alpha::Sketch& sketch) = 0;
 
  protected:

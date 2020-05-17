@@ -7,6 +7,13 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-cpp/archive/20200225.2.zip"],
 )
 
+http_archive(
+    name = "googletest",
+    sha256 = "94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91",
+    strip_prefix = "googletest-release-1.10.0",
+    urls = ["https://github.com/google/googletest/archive/release-1.10.0.zip"],
+)
+
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 new_git_repository(
@@ -90,6 +97,6 @@ protobuf_deps()
 
 git_repository(
     name = "wfa_measurement_proto",
-    commit = "7e8bf95e6a3f89c8e3ca7fb451652989eb986810",
+    commit = "694f5ca40440460bd6e746c738d7fc66edd523b3",
     remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
 )
