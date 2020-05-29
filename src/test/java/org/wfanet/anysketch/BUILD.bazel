@@ -1,0 +1,15 @@
+load("@rules_java//java:defs.bzl", "java_test")
+
+java_test(
+    name = "tests",
+    srcs = [
+        "SketchJavaEncrypterTest.java",
+    ],
+    test_class = "org.wfanet.anysketch.SketchJavaEncrypterTest",
+    deps = [
+        "//src/main/java/org/wfanet/anysketch:sketch_java_encrypter",
+        "//src/main/java/org/wfanet/anysketch:sketch_java_proto",
+        "@maven//:com_google_truth_truth",
+        "@maven//:junit_junit",
+    ],
+)

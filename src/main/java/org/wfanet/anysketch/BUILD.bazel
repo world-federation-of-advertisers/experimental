@@ -1,0 +1,90 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+package(default_visibility = [
+    "//src/main/java/org/wfanet/anysketch:__subpackages__",
+    "//src/test/java/org/wfanet/anysketch:__subpackages__",
+])
+
+# Generate the SWIG C++ and Java wrapper files using SWIG.
+# The machine running this code should have swig installed.
+genrule(
+    name = "generate_swig",
+    srcs = ["sketch_encrypter.swig"],
+    outs = [
+        "sketch_encrypter_swig.cc",
+        "SketchEncrypterAdapter.java",
+        "SketchEncrypterAdapterJNI.java",
+        "SketchEncrypterJavaAdapter.java",
+    ],
+    # Using swi and C++ source files, generate Java wrappers under the
+    # package "org.wfanet.anysketch". Save all output in bazel-genfiles/...
+    # with the C++ wrapper file named sketch_encrypter_swig.cc.
+    cmd = "swig -c++ -java -package org.wfanet.anysketch -o $(@D)/sketch_encrypter_swig.cc -outdir $(@D) $(SRCS)",
+    local = 1,
+)
+
+genrule(
+    name = "copy_jni_h",
+    srcs = ["@bazel_tools//tools/jdk:jni_header"],
+    outs = ["jni.h"],
+    cmd = "cp -f $< $@",
+)
+
+genrule(
+    name = "copy_jni_md_h",
+    srcs = ["@bazel_tools//tools/jdk:jni_md_header-linux"],
+    outs = ["jni_md.h"],
+    cmd = "cp -f $< $@",
+)
+
+# Eliminate "<JNI include path> not below the relative path of its package" warnings by
+# copying required includes locally.
+cc_library(
+    name = "jni",
+    hdrs = [
+        ":jni.h",
+        ":jni_md.h",
+    ],
+    includes = ["."],
+)
+
+# Create a C++ library from the C++ files created by the :generate_swig rule.
+cc_library(
+    name = "sketch_encrypter_swig",
+    srcs = [
+        ":generate_swig",
+    ],
+    deps = [
+        ":jni",
+        "//src/main/cc/any_sketch:sketch_encrypter",
+        "//src/main/cc/any_sketch:sketch_encrypter_java_adapter",
+    ],
+    alwayslink = True,
+)
+
+java_proto_library(
+    name = "sketch_java_proto",
+    deps = [
+        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_proto",
+    ],
+)
+
+# Wrap the Bazel C++ library as a shared library file that can be referenced from Java.
+cc_binary(
+    name = "libsketchencrypter.so",
+    linkshared = True,
+    deps = [":sketch_encrypter_swig"],
+)
+
+java_library(
+    name = "sketch_java_encrypter",
+    srcs = [
+        "SketchJavaEncrypter.java",
+        ":generate_swig",
+    ],
+    # data = ["libsketchencrypter.so"],
+    runtime_deps = [":libsketchencrypter.so"],
+    deps = [
+        ":sketch_java_proto",
+    ],
+)

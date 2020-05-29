@@ -79,13 +79,6 @@ http_archive(
 )
 
 http_archive(
-    name = "io_grpc_grpc_java",
-    sha256 = "ca30194aa4ff175f910bbf212911f1b35c17307833da0afcfba07c525f28fff7",
-    strip_prefix = "grpc-java-1.28.0",
-    url = "https://github.com/grpc/grpc-java/archive/v1.28.0.tar.gz",
-)
-
-http_archive(
     name = "com_google_protobuf",
     strip_prefix = "protobuf-fe1790ca0df67173702f70d5646b82f48f412b99",  # this is 3.11.2
     urls = ["https://github.com/protocolbuffers/protobuf/archive/fe1790ca0df67173702f70d5646b82f48f412b99.zip"],
@@ -100,3 +93,30 @@ git_repository(
     commit = "694f5ca40440460bd6e746c738d7fc66edd523b3",
     remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
 )
+
+# Support Maven sources
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a",
+    strip_prefix = "rules_jvm_external-3.0",
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/3.0.zip",
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+# Maven
+maven_install(
+    artifacts = [
+        "com.google.truth:truth:1.0.1",
+        "junit:junit:4.13",
+    ],
+    generate_compat_repositories = True,
+    repositories = [
+        "https://repo.maven.apache.org/maven2/",
+    ],
+)
+
+load("@maven//:compat.bzl", "compat_repositories")
+
+compat_repositories()

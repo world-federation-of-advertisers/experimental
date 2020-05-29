@@ -1,3 +1,9 @@
+package(default_visibility = [
+    "//src/main/cc/any_sketch:__subpackages__",
+    "//src/main/java/org/wfanet/anysketch:__subpackages__",
+    "//src/test/java/org/wfanet/anysketch:__subpackages__",
+])
+
 cc_library(
     name = "any_sketch",
     srcs = [
@@ -100,6 +106,30 @@ cc_test(
     ],
     deps = [
         ":sketch_encrypter",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "sketch_encrypter_java_adapter",
+    hdrs = [
+        "sketch_encrypter_java_adapter.h",
+    ],
+    deps = [
+        ":sketch_encrypter",
+        "@com_google_private_join_and_compute//util:status",
+        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "sketch_encrypter_java_adapter_test",
+    size = "small",
+    srcs = [
+        "sketch_encrypter_java_adapter_test.cc",
+    ],
+    deps = [
+        ":sketch_encrypter_java_adapter",
         "@googletest//:gtest_main",
     ],
 )
