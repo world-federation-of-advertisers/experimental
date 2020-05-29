@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-#include "hash_function.h"
 #include "absl/types/span.h"
+#include "hash_function.h"
 
 namespace wfa::any_sketch {
 

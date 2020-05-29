@@ -1,4 +1,37 @@
 cc_library(
+    name = "any_sketch",
+    srcs = [
+        "any_sketch.cc",
+    ],
+    hdrs = [
+        "any_sketch.h",
+    ],
+    deps = [
+        ":index_function",
+        ":hash_function",
+        ":value_function",
+        "@absl//absl/base:core_headers",
+        "@absl//absl/container:fixed_array",
+        "@absl//absl/container:flat_hash_map",
+        "@absl//absl/container:node_hash_map",
+        "@absl//absl/random:bit_gen_ref",
+    ],
+)
+
+cc_test(
+    name = "any_sketch_test",
+    size = "small",
+    srcs = [
+        "any_sketch_test.cc",
+    ],
+    deps = [
+        ":any_sketch",
+        "@googletest//:gtest_main",
+        "@absl//absl/types:span",
+    ],
+)
+
+cc_library(
     name = "hash_function",
     srcs = [],
     hdrs = [

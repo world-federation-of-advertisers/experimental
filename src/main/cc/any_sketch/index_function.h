@@ -7,17 +7,18 @@ namespace wfa::any_sketch {
 
 class IndexFunction {
  public:
-  IndexFunction(IndexFunction&& other) = default;
-  IndexFunction& operator=(IndexFunction&& other) = default;
-  IndexFunction(const IndexFunction&) = delete;
-  IndexFunction& operator=(const IndexFunction&) = delete;
   virtual ~IndexFunction() = default;
+  IndexFunction(const IndexFunction&) = delete;
 
   virtual uint64_t GetIndex(uint64_t hash) const = 0;
 
   virtual uint64_t max_value() const = 0;
 
   virtual uint64_t hash_max_value() const = 0;
+
+ protected:
+  IndexFunction() = default;
+  IndexFunction& operator=(const IndexFunction&) = delete;
 };
 
 }  // namespace wfa::any_sketch
