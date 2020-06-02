@@ -43,9 +43,7 @@ SketchConfig CreateSketchConfig(const int index_cnt, const int unique_cnt,
 void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
   for (int i = 0; i < register_cnt; ++i) {
     Sketch::Register* last_register = sketch.add_registers();
-    for (int index_i = 0; index_i < sketch.config().indexes_size(); ++index_i) {
-      last_register->add_indexes(rand());
-    }
+    last_register->set_index(rand());
     for (int value_i = 0; value_i < sketch.config().values_size(); ++value_i) {
       // The Aggregate type doesn't matter here.
       // Mod(kMaxCounterValue * 1.2) so we have some but not too many values

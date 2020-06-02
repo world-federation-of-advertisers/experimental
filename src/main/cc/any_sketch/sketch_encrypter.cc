@@ -44,18 +44,18 @@ constexpr char KUnitECPointSeed[] = "unit_ec_point";
 // A Sketch is valid if and only if all its registers contain the same number
 // of indexes and same number of values as the SketchConfig specifies.
 bool ValidateSketch(const Sketch& sketch) {
-  const int indexes_size = sketch.config().indexes_size();
   const int values_size = sketch.config().values_size();
   for (int i = 0; i < sketch.registers_size(); i++) {
     const Sketch::Register& reg = sketch.registers(i);
-    if (indexes_size != reg.indexes_size() ||
-        values_size != reg.values_size()) {
+    if (values_size != reg.values_size()) {
       return false;
     }
   }
   return true;
 }
 
+// Add ElGamal Encryption to plaintext sketch word by word using the same public
+// key.
 class SketchEncrypterImpl : public SketchEncrypter {
  public:
   SketchEncrypterImpl(std::unique_ptr<CommutativeElGamal> el_gamal_cipher,
@@ -85,6 +85,10 @@ class SketchEncrypterImpl : public SketchEncrypter {
   // Once a new integer is mapped to the curve, we store the value for future
   // reference.
   absl::flat_hash_map<uint64_t, std::string> integer_to_ec_point_map_;
+
+  // Since the underlying private-join-and-computer::CommutativeElGamal is NOT
+  // thread safe, we use mutex to enforce thread safety in this class.
+  absl::Mutex mutex_;
 
   // Encrypt a Register and append the result to the encrypted_sketch.
   StatusOr<bool> EncryptAdditionalRegister(
@@ -138,13 +142,15 @@ StatusOr<std::vector<unsigned char>> SketchEncrypterImpl::Encrypt(
 StatusOr<bool> SketchEncrypterImpl::EncryptAdditionalRegister(
     const Sketch::Register& reg, const SketchConfig& sketch_config,
     std::vector<unsigned char>& encrypted_sketch) {
-  for (int64_t index : reg.indexes()) {
-    // For indexes, we encrypt the value as a string, since we don't need to do
-    // addition on it.
-    ASSIGN_OR_RETURN(std::string ec_point_string,
-                     MapToCurve(std::to_string(index)));
-    EncryptAdditionalECPoint(ec_point_string, encrypted_sketch);
-  }
+  // Lock the mutex since most of the crpyto computations here are NOT
+  // thread-safe.
+  absl::WriterMutexLock l(&mutex_);
+  // We encrypt the index as a string, since we don't need to do
+  // addition on it.
+  ASSIGN_OR_RETURN(std::string ec_point_string,
+                   MapToCurve(std::to_string(reg.index())));
+  EncryptAdditionalECPoint(ec_point_string, encrypted_sketch);
+
   for (int i = 0; i < reg.values_size(); i++) {
     CiphertextString cipher_index;
     // For values, we encrypt the value as a string if it uses UNIQUE

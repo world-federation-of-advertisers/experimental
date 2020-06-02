@@ -90,7 +90,7 @@ protobuf_deps()
 
 git_repository(
     name = "wfa_measurement_proto",
-    commit = "694f5ca40440460bd6e746c738d7fc66edd523b3",
+    commit = "d6b42bb0fd73a287110e54203783b9c02e35a5b2",
     remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
 )
 

@@ -10,7 +10,6 @@ import org.junit.runners.JUnit4;
 import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch;
 import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch.Register;
 import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.IndexSpec;
 import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.ValueSpec;
 import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.ValueSpec.Aggregator;
 
@@ -21,19 +20,19 @@ public class SketchJavaEncrypterTest {
   static final int MAX_COUNTER_VALUE = 10;
   static final byte[] PUBLIC_KEY_G =
       new byte[] {
-          3, 107, 23, -47, -14, -31, 44, 66,
-          71, -8, -68, -26, -27, 99, -92, 64,
-          -14, 119, 3, 125, -127, 45, -21, 51,
-          -96, -12, -95, 57, 69, -40, -104, -62,
-          -106
+        3, 107, 23, -47, -14, -31, 44, 66,
+        71, -8, -68, -26, -27, 99, -92, 64,
+        -14, 119, 3, 125, -127, 45, -21, 51,
+        -96, -12, -95, 57, 69, -40, -104, -62,
+        -106
       };
   static final byte[] PUBLIC_KEY_Y =
       new byte[] {
-          2, 119, -65, 64, 108, 90, -92, 55,
-          100, 19, -28, -128, -32, -85, -117, 14,
-          -4, -87, -103, -45, 98, 32, 78, 109,
-          22, -122, -32, -66, 86, 120, 17, 96,
-          77
+        2, 119, -65, 64, 108, 90, -92, 55,
+        100, 19, -28, -128, -32, -85, -117, 14,
+        -4, -87, -103, -45, 98, 32, 78, 109,
+        22, -122, -32, -66, 86, 120, 17, 96,
+        77
       };
 
   Sketch CreateFakeSketch(int numRegisters) {
@@ -41,14 +40,13 @@ public class SketchJavaEncrypterTest {
         Sketch.newBuilder()
             .setConfig(
                 SketchConfig.newBuilder()
-                    .addIndexes(IndexSpec.getDefaultInstance())
                     .addValues(ValueSpec.newBuilder().setAggregator(Aggregator.UNIQUE))
                     .addValues(ValueSpec.newBuilder().setAggregator(Aggregator.SUM)));
     Random random = new Random();
     for (int i = 0; i < numRegisters; ++i) {
       plaintextSketch.addRegisters(
           Register.newBuilder()
-              .addIndexes(random.nextInt())
+              .setIndex(random.nextInt())
               .addValues(random.nextInt())
               .addValues(random.nextInt()));
     }
@@ -97,11 +95,10 @@ public class SketchJavaEncrypterTest {
         new SketchJavaEncrypter(CURVE_ID, MAX_COUNTER_VALUE, PUBLIC_KEY_G, PUBLIC_KEY_Y);
 
     Sketch sketchWithNoConfig =
-        Sketch.newBuilder().addRegisters(Register.newBuilder().addIndexes(1)).build();
+        Sketch.newBuilder().addRegisters(Register.newBuilder().setIndex(1).addValues(2)).build();
 
     RuntimeException exception =
-        assertThrows(
-            RuntimeException.class, () -> sketchJavaEncrypter.Encrypt(sketchWithNoConfig));
+        assertThrows(RuntimeException.class, () -> sketchJavaEncrypter.Encrypt(sketchWithNoConfig));
     assertThat(exception).hasMessageThat().contains("config");
   }
 }
