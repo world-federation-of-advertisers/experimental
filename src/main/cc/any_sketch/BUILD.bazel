@@ -1,8 +1,4 @@
-package(default_visibility = [
-    "//src/main/cc/any_sketch:__subpackages__",
-    "//src/main/java/org/wfanet/anysketch:__subpackages__",
-    "//src/test/java/org/wfanet/anysketch:__subpackages__",
-])
+package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "any_sketch",
