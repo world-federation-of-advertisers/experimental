@@ -3,8 +3,18 @@ package org.wfanet.anysketch;
 import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch;
 
 public final class SketchJavaEncrypter {
+
   static {
-    System.loadLibrary("sketchencrypter");
+    try {
+      System.loadLibrary("sketchencrypter");
+    } catch (UnsatisfiedLinkError e) {
+      if (e.getMessage().contains("grte")) {
+        throw new RuntimeException(
+            "This JNI SketchJavaEncrypter doesn't work with googlejdk.  Use another Java version.");
+      } else {
+        throw e;
+      }
+    }
   }
 
   private SketchEncrypterJavaAdapter sketchEncrypter;
