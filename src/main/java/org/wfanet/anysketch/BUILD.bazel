@@ -16,7 +16,7 @@ genrule(
     # Using swi and C++ source files, generate Java wrappers under the
     # package "org.wfanet.anysketch". Save all output in bazel-genfiles/...
     # with the C++ wrapper file named sketch_encrypter_swig.cc.
-    cmd = "type -p swig3 > /dev/null || (echo \"Swig doesn't exist, install swig first.\" && exit 100) ;" +
+    cmd = "type -p swig > /dev/null || (echo \"Swig doesn't exist, install swig first.\" && exit 100) ;" +
           "swig -c++ -java -package org.wfanet.anysketch -o $(@D)/sketch_encrypter_swig.cc -outdir $(@D) $(SRCS)",
     local = True,
 )
