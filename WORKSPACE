@@ -110,6 +110,7 @@ maven_install(
     artifacts = [
         "com.google.truth:truth:1.0.1",
         "junit:junit:4.13",
+        "com.google.guava:guava:29.0-jre",
     ],
     generate_compat_repositories = True,
     repositories = [

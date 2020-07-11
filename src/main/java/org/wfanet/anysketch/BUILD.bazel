@@ -35,8 +35,8 @@ genrule(
     cmd = "cp -f $< $@",
 )
 
-# Eliminate "<JNI include path> not below the relative path of its package" warnings by
-# copying required includes locally.
+## Eliminate "<JNI include path> not below the relative path of its package" warnings by
+## copying required includes locally.
 cc_library(
     name = "jni",
     hdrs = [
@@ -84,5 +84,18 @@ java_library(
     runtime_deps = [":libsketchencrypter.so"],
     deps = [
         ":sketch_java_proto",
+    ],
+)
+
+java_library(
+    name = "any_sketch",
+    srcs = [
+        "AnySketch.java",
+        "HashFunction.java",
+        "IndexFunction.java",
+        "ValueFunction.java",
+    ],
+    deps = [
+        "@maven//:com_google_guava_guava",
     ],
 )
