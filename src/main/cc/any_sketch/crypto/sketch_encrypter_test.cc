@@ -4,11 +4,12 @@
 
 #include "absl/types/span.h"
 // TODO(wangyaopw): use "external/*" path for blinders headers
+#include "absl/strings/string_view.h"
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace wfa::any_sketch {
+namespace wfa::any_sketch::crypto {
 namespace {
 
 using ::private_join_and_compute::CommutativeElGamal;
@@ -53,24 +54,21 @@ void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
     last_register->set_index(rand());
     for (int value_i = 0; value_i < sketch.config().values_size(); ++value_i) {
       // The Aggregate type doesn't matter here.
-      // Mod(kMaxCounterValue * 1.2) so we have some but not too many values
+      // Mod(kMaxCounterValue * 2) so we have some but not too many values
       // exceed the max.
-      last_register->add_values(rand() %
-                                static_cast<int>(kMaxCounterValue * 1.2));
+      last_register->add_values(rand() % (kMaxCounterValue * 2));
     }
   }
 }
 
 // Partition the char vector 33 by 33, and convert the results to strings
-std::vector<std::string> GetCipherStrings(
-    absl::Span<const unsigned char> bytes) {
+std::vector<std::string> GetCipherStrings(absl::string_view bytes) {
   EXPECT_EQ(bytes.size() % 66, 0);
   std::vector<std::string> result;
   int word_cnt = bytes.size() / 33;
   result.reserve(word_cnt);
   for (int i = 0; i < word_cnt; ++i) {
-    result.emplace_back(
-        std::string(bytes.begin() + i * 33, bytes.begin() + i * 33 + 33));
+    result.emplace_back(bytes.substr(i * 33, 33));
   }
   return result;
 }
@@ -224,4 +222,4 @@ TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
 }
 
 }  // namespace
-}  // namespace wfa::any_sketch
+}  // namespace wfa::any_sketch::crypto

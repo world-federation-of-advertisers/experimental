@@ -20,9 +20,9 @@
 #include "crypto/commutative_elgamal.h"
 #include "crypto/context.h"
 #include "crypto/ec_group.h"
-#include "util/macros.h"
+#include "src/main/cc/any_sketch/util/macros.h"
 
-namespace wfa::any_sketch {
+namespace wfa::any_sketch::crypto {
 
 namespace {
 using ::private_join_and_compute::BigNum;
@@ -68,7 +68,7 @@ class SketchEncrypterImpl : public SketchEncrypter {
   SketchEncrypterImpl(const SketchEncrypterImpl&) = delete;
   SketchEncrypterImpl& operator=(const SketchEncrypterImpl&) = delete;
 
-  StatusOr<std::vector<unsigned char>> Encrypt(const Sketch& sketch) override;
+  StatusOr<std::string> Encrypt(const Sketch& sketch) override;
 
  private:
   // ElGamal cipher used to do the encryption
@@ -91,13 +91,12 @@ class SketchEncrypterImpl : public SketchEncrypter {
   absl::Mutex mutex_;
 
   // Encrypt a Register and append the result to the encrypted_sketch.
-  StatusOr<bool> EncryptAdditionalRegister(
-      const Sketch::Register& reg, const SketchConfig& sketch_config,
-      std::vector<unsigned char>& encrypted_sketch);
+  StatusOr<bool> EncryptAdditionalRegister(const Sketch::Register& reg,
+                                           const SketchConfig& sketch_config,
+                                           std::string& encrypted_sketch);
   // Encrypt an ECPoint and append the result to the encrypted_sketch.
-  StatusOr<bool> EncryptAdditionalECPoint(
-      const std::string& ec_point,
-      std::vector<unsigned char>& encrypted_sketch) const;
+  StatusOr<bool> EncryptAdditionalECPoint(const std::string& ec_point,
+                                          std::string& encrypted_sketch) const;
   // Lookup the corresponding ECPoint of the input integer in the map.
   // If the ECPoint doesn't exist in the map, calculate it and insert the result
   // to the map. n can not be 0 since there is no string representation of the
@@ -117,8 +116,7 @@ SketchEncrypterImpl::SketchEncrypterImpl(
       ec_group_(std::move(ec_group)),
       max_counter_value_(max_counter_value) {}
 
-StatusOr<std::vector<unsigned char>> SketchEncrypterImpl::Encrypt(
-    const Sketch& sketch) {
+StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
   if (!ValidateSketch(sketch)) {
     return InternalError("Sketch data doesn't match the config.");
   }
@@ -129,19 +127,19 @@ StatusOr<std::vector<unsigned char>> SketchEncrypterImpl::Encrypt(
       sketch.config().indexes_size() + sketch.config().values_size();
   const int total_cipher_sketch_bytes =
       num_registers * register_size * kBytesPerCipherText;
-  std::vector<unsigned char> encrypted_sketch;
+  std::string encrypted_sketch;
   encrypted_sketch.reserve(total_cipher_sketch_bytes);
   for (auto& reg : sketch.registers()) {
     RETURN_IF_ERROR(
         EncryptAdditionalRegister(reg, sketch.config(), encrypted_sketch)
             .status());
   }
-  return {std::move(encrypted_sketch)};
+  return encrypted_sketch;
 }
 
 StatusOr<bool> SketchEncrypterImpl::EncryptAdditionalRegister(
     const Sketch::Register& reg, const SketchConfig& sketch_config,
-    std::vector<unsigned char>& encrypted_sketch) {
+    std::string& encrypted_sketch) {
   // Lock the mutex since most of the crpyto computations here are NOT
   // thread-safe.
   absl::WriterMutexLock l(&mutex_);
@@ -170,10 +168,8 @@ StatusOr<bool> SketchEncrypterImpl::EncryptAdditionalRegister(
           // the PAI directly by calling EncryptIdentityElement();
           ASSIGN_OR_RETURN(BlindersCiphertext zero,
                            el_gamal_cipher_->EncryptIdentityElement());
-          encrypted_sketch.insert(encrypted_sketch.end(), zero.first.begin(),
-                                  zero.first.end());
-          encrypted_sketch.insert(encrypted_sketch.end(), zero.second.begin(),
-                                  zero.second.end());
+          encrypted_sketch.append(zero.first);
+          encrypted_sketch.append(zero.second);
         } else {
           // All other values are calculated based on the unit ECPoint P, which
           // is defined by KUnitECPointSeed. Integer n is mapping to nP.
@@ -192,14 +188,11 @@ StatusOr<bool> SketchEncrypterImpl::EncryptAdditionalRegister(
 }
 
 StatusOr<bool> SketchEncrypterImpl::EncryptAdditionalECPoint(
-    const std::string& ec_point,
-    std::vector<unsigned char>& encrypted_sketch) const {
+    const std::string& ec_point, std::string& encrypted_sketch) const {
   ASSIGN_OR_RETURN(BlindersCiphertext ciphertext,
                    el_gamal_cipher_->Encrypt(ec_point));
-  encrypted_sketch.insert(encrypted_sketch.end(), ciphertext.first.begin(),
-                          ciphertext.first.end());
-  encrypted_sketch.insert(encrypted_sketch.end(), ciphertext.second.begin(),
-                          ciphertext.second.end());
+  encrypted_sketch.append(ciphertext.first);
+  encrypted_sketch.append(ciphertext.second);
   return true;
 }
 
@@ -255,4 +248,4 @@ StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
   return {std::move(result)};
 }
 
-}  // namespace wfa::any_sketch
+}  // namespace wfa::any_sketch::crypto

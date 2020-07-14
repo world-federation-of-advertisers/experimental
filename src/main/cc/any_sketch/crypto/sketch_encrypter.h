@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_ENCRYPTOR_H_
-#define ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_ENCRYPTOR_H_
+#ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_
+#define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_
 
 #include <vector>
 
 #include "util/statusor.h"
 #include "wfa/measurement/api/v1alpha/sketch.pb.h"
 
-namespace wfa::any_sketch {
+namespace wfa::any_sketch::crypto {
 
 // TODO(wangyaopw): update to ::absl::StatusOr when it is open sourced.
 using ::private_join_and_compute::StatusOr;
@@ -38,8 +38,8 @@ class SketchEncrypter {
  public:
   virtual ~SketchEncrypter() {}
   // Return the word by word ElGamal encryption of the sketch. The result is
-  // concatenated as a byte array.
-  virtual StatusOr<std::vector<unsigned char>> Encrypt(
+  // the concatenation of all ciphertext strings.
+  virtual StatusOr<std::string> Encrypt(
       const wfa::measurement::api::v1alpha::Sketch& sketch) = 0;
 
  protected:
@@ -63,6 +63,6 @@ StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
     int curve_id, size_t max_counter_value,
     const CiphertextString& public_key_bytes);
 
-}  // namespace wfa::any_sketch
+}  // namespace wfa::any_sketch::crypto
 
-#endif  // ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_ENCRYPTOR_H_
+#endif  // SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_

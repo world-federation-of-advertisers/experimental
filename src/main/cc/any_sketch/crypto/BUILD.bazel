@@ -1,0 +1,57 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "sketch_encrypter",
+    srcs = ["sketch_encrypter.cc"],
+    hdrs = [
+        "sketch_encrypter.h",
+    ],
+    deps = [
+        "//src/main/cc/any_sketch/util:macros",
+        "@absl//absl/container:flat_hash_map",
+        "@absl//absl/types:span",
+        "@com_google_private_join_and_compute//crypto:commutative_elgamal",
+        "@com_google_private_join_and_compute//util:status",
+        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "sketch_encrypter_test",
+    size = "small",
+    srcs = [
+        ":sketch_encrypter_test.cc",
+    ],
+    deps = [
+        ":sketch_encrypter",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "sketch_encrypter_adapter",
+    srcs = [
+        ":sketch_encrypter_adapter.cc",
+    ],
+    hdrs = [
+        ":sketch_encrypter_adapter.h",
+    ],
+    deps = [
+        ":sketch_encrypter",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
+        "@com_google_private_join_and_compute//util:status",
+    ],
+)
+
+cc_test(
+    name = "sketch_encrypter_adapter_test",
+    size = "small",
+    srcs = [
+        ":sketch_encrypter_adapter_test.cc",
+    ],
+    deps = [
+        ":sketch_encrypter_adapter",
+        "@googletest//:gtest_main",
+        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
+    ],
+)

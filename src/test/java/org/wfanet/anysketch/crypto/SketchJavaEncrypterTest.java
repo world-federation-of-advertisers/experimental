@@ -1,8 +1,9 @@
-package org.wfanet.anysketch;
+package org.wfanet.anysketch.crypto;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import com.google.protobuf.ByteString;
 import java.util.Random;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +16,10 @@ import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.ValueSpec.Aggre
 
 @RunWith(JUnit4.class)
 public class SketchJavaEncrypterTest {
+
+  static {
+    System.loadLibrary("sketch_encrypter_adapter");
+  }
 
   static final int CURVE_ID = 415; // NID_X9_62_prime256v1
   static final int MAX_COUNTER_VALUE = 10;
@@ -55,50 +60,68 @@ public class SketchJavaEncrypterTest {
   }
 
   @Test
-  public void SketchJavaEncrypter_basicbehavior() {
-    SketchJavaEncrypter sketchJavaEncrypter =
-        new SketchJavaEncrypter(CURVE_ID, MAX_COUNTER_VALUE, PUBLIC_KEY_G, PUBLIC_KEY_Y);
-
+  public void SketchJavaEncrypter_basicbehavior() throws Exception {
     int numRegister = 1000;
     Sketch plaintextSketch = CreateFakeSketch(numRegister);
 
-    byte[] encrptedSketch = sketchJavaEncrypter.Encrypt(plaintextSketch);
+    EncryptSketchRequest request =
+        EncryptSketchRequest.newBuilder()
+            .setSketch(plaintextSketch)
+            .setCurveId(CURVE_ID)
+            .setMaximumValue(MAX_COUNTER_VALUE)
+            .setElGamalKeys(
+                ElGamalPublicKeys.newBuilder()
+                    .setElGamalG(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
+                    .setElGamalY(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
+            .build();
+
+    EncryptSketchResponse response =
+        EncryptSketchResponse.parseFrom(
+            SketchEncrypterAdapter.EncryptSketch(request.toByteArray()));
 
     // Each register contains 3 ciphertexts, each cipherText is 66 bytes.
-    assertThat(encrptedSketch.length).isEqualTo(66 * 3 * numRegister);
-  }
-
-  @Test
-  public void SketchJavaEncrypter_emptyProtoGetEmptyResults() {
-    SketchJavaEncrypter sketchJavaEncrypter =
-        new SketchJavaEncrypter(CURVE_ID, MAX_COUNTER_VALUE, PUBLIC_KEY_G, PUBLIC_KEY_Y);
-    assertThat(sketchJavaEncrypter.Encrypt(Sketch.getDefaultInstance()).length).isEqualTo(0);
+    assertThat(response.getEncryptedSketch().size()).isEqualTo(66 * 3 * numRegister);
   }
 
   @Test
   public void SketchJavaEncrypter_invalidPublicKeyShouldThrow() {
+    EncryptSketchRequest request =
+        EncryptSketchRequest.newBuilder()
+            .setCurveId(CURVE_ID)
+            .setMaximumValue(MAX_COUNTER_VALUE)
+            .setElGamalKeys(
+                ElGamalPublicKeys.newBuilder()
+                    .setElGamalG(ByteString.copyFromUtf8("invalidKey_a"))
+                    .setElGamalY(ByteString.copyFromUtf8("invalidKey_b")))
+            .build();
+
     RuntimeException exception =
         assertThrows(
             RuntimeException.class,
-            () ->
-                new SketchJavaEncrypter(
-                    CURVE_ID,
-                    MAX_COUNTER_VALUE,
-                    "invalidKey_a".getBytes(),
-                    "invalidKey_b".getBytes()));
+            () -> SketchEncrypterAdapter.EncryptSketch(request.toByteArray()));
     assertThat(exception).hasMessageThat().contains("Could not decode point");
   }
 
   @Test
   public void SketchJavaEncrypter_internalCxxErrorIsReturnBackToJava() {
-    SketchJavaEncrypter sketchJavaEncrypter =
-        new SketchJavaEncrypter(CURVE_ID, MAX_COUNTER_VALUE, PUBLIC_KEY_G, PUBLIC_KEY_Y);
-
     Sketch sketchWithNoConfig =
         Sketch.newBuilder().addRegisters(Register.newBuilder().setIndex(1).addValues(2)).build();
 
+    EncryptSketchRequest request =
+        EncryptSketchRequest.newBuilder()
+            .setSketch(sketchWithNoConfig)
+            .setCurveId(CURVE_ID)
+            .setMaximumValue(MAX_COUNTER_VALUE)
+            .setElGamalKeys(
+                ElGamalPublicKeys.newBuilder()
+                    .setElGamalG(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
+                    .setElGamalY(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
+            .build();
+
     RuntimeException exception =
-        assertThrows(RuntimeException.class, () -> sketchJavaEncrypter.Encrypt(sketchWithNoConfig));
+        assertThrows(
+            RuntimeException.class,
+            () -> SketchEncrypterAdapter.EncryptSketch(request.toByteArray()));
     assertThat(exception).hasMessageThat().contains("config");
   }
 }

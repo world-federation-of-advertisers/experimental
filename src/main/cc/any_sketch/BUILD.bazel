@@ -9,8 +9,8 @@ cc_library(
         "any_sketch.h",
     ],
     deps = [
-        ":index_function",
         ":hash_function",
+        ":index_function",
         ":value_function",
         "@absl//absl/base:core_headers",
         "@absl//absl/container:fixed_array",
@@ -28,8 +28,8 @@ cc_test(
     ],
     deps = [
         ":any_sketch",
-        "@googletest//:gtest_main",
         "@absl//absl/types:span",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -75,57 +75,5 @@ cc_library(
     ],
     deps = [
         "@absl//absl/strings",
-    ],
-)
-
-cc_library(
-    name = "sketch_encrypter",
-    srcs = ["sketch_encrypter.cc"],
-    hdrs = [
-        "sketch_encrypter.h",
-    ],
-    deps = [
-        "//src/main/cc/any_sketch/util:macros",
-        "@absl//absl/container:flat_hash_map",
-        "@absl//absl/types:span",
-        "@com_google_private_join_and_compute//crypto:commutative_elgamal",
-        "@com_google_private_join_and_compute//util:status",
-        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
-    ],
-)
-
-cc_test(
-    name = "sketch_encrypter_test",
-    size = "small",
-    srcs = [
-        "sketch_encrypter_test.cc",
-    ],
-    deps = [
-        ":sketch_encrypter",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "sketch_encrypter_java_adapter",
-    hdrs = [
-        "sketch_encrypter_java_adapter.h",
-    ],
-    deps = [
-        ":sketch_encrypter",
-        "@com_google_private_join_and_compute//util:status",
-        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
-    ],
-)
-
-cc_test(
-    name = "sketch_encrypter_java_adapter_test",
-    size = "small",
-    srcs = [
-        "sketch_encrypter_java_adapter_test.cc",
-    ],
-    deps = [
-        ":sketch_encrypter_java_adapter",
-        "@googletest//:gtest_main",
     ],
 )

@@ -1,35 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_library")
-load("@wfa_rules_swig//java:defs.bzl", "java_wrap_cc")
 
 package(default_visibility = ["//visibility:public"])
-
-java_wrap_cc(
-    name = "sketch_encrypter_swig",
-    src = "sketch_encrypter.swig",
-    package = "org.wfanet.anysketch",
-    deps = [
-        "//src/main/cc/any_sketch:sketch_encrypter",
-        "//src/main/cc/any_sketch:sketch_encrypter_java_adapter",
-    ],
-)
-
-java_proto_library(
-    name = "sketch_java_proto",
-    deps = [
-        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_proto",
-    ],
-)
-
-java_library(
-    name = "sketch_java_encrypter",
-    srcs = [
-        "SketchJavaEncrypter.java",
-    ],
-    deps = [
-        ":sketch_encrypter_swig",
-        ":sketch_java_proto",
-    ],
-)
 
 java_library(
     name = "any_sketch",
