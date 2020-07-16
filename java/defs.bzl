@@ -8,23 +8,27 @@ def _java_wrap_cc_impl(ctx):
     outfile = ctx.outputs.outfile
     outputs = [outfile] + ctx.outputs.java_outputs
 
+    swig_args = [
+        "-c++",
+        "-java",
+        "-package",
+        ctx.attr.package,
+        "-module",
+        module,
+        "-outdir",
+        outfile.dirname,
+        "-o",
+        outfile.path,
+    ]
+    if len(ctx.label.workspace_root) > 0:
+        swig_args.append("-I" + ctx.label.workspace_root)
+    swig_args.append(src.path)
+
     ctx.actions.run(
         outputs = outputs,
         inputs = inputs,
         executable = "swig",
-        arguments = [
-            "-c++",
-            "-java",
-            "-package",
-            ctx.attr.package,
-            "-module",
-            module,
-            "-outdir",
-            outfile.dirname,
-            "-o",
-            outfile.path,
-            src.path,
-        ],
+        arguments = swig_args,
         mnemonic = "SwigCompile",
     )
 
