@@ -88,12 +88,6 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-git_repository(
-    name = "wfa_measurement_proto",
-    commit = "d6b42bb0fd73a287110e54203783b9c02e35a5b2",
-    remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
-)
-
 # Support Maven sources
 
 http_archive(
@@ -121,3 +115,19 @@ maven_install(
 load("@maven//:compat.bzl", "compat_repositories")
 
 compat_repositories()
+
+# Swig rules.
+git_repository(
+    name = "wfa_rules_swig",
+    commit = "4799cbfa2d0e335208d790729ed4b49d34968245",
+    remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
+    shallow_since = "1595012448 -0700"
+)
+
+# Measurement APIs.
+git_repository(
+    name = "wfa_measurement_proto",
+    commit = "d6b42bb0fd73a287110e54203783b9c02e35a5b2",
+    remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
+    shallow_since = "1590709328 +0000",
+)

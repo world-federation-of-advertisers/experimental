@@ -6,7 +6,7 @@ public final class SketchJavaEncrypter {
 
   static {
     try {
-      System.loadLibrary("sketchencrypter");
+      System.loadLibrary("sketch_encrypter_swig");
     } catch (UnsatisfiedLinkError e) {
       if (e.getMessage().contains("grte")) {
         throw new RuntimeException(
