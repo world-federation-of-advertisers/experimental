@@ -6,8 +6,10 @@ java_library(
     name = "any_sketch",
     srcs = [
         "AnySketch.java",
+        "ExponentialIndexFunction.java",
         "HashFunction.java",
         "IndexFunction.java",
+        "UniqueValueFunction.java",
         "ValueFunction.java",
     ],
     deps = [
