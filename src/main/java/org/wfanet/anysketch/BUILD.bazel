@@ -8,6 +8,7 @@ java_library(
         "AnySketch.java",
         "ExponentialIndexFunction.java",
         "HashFunction.java",
+        "FarmHashFunction.java",
         "IndexFunction.java",
         "UniqueValueFunction.java",
         "ValueFunction.java",
