@@ -84,7 +84,7 @@ public class AnySketch implements Iterable<Register> {
   // ConsumeBits divides the fingerprint into chunks with maxValue size
   private long consumeBits(long fingerprint, long maxValue) {
     Preconditions.checkArgument(maxValue > 0);
-    return fingerprint % maxValue;
+    return Long.remainderUnsigned(fingerprint, maxValue);
   }
 
   private long getIndex(long fingerprint) {
@@ -93,7 +93,7 @@ public class AnySketch implements Iterable<Register> {
     for (IndexFunction indexFunction : indexFunctions) {
       long hashMaxValue = indexFunction.maxSupportedHash();
       long indexFingerprint = consumeBits(fingerprint, hashMaxValue);
-      fingerprint /= hashMaxValue;
+      fingerprint = Long.divideUnsigned(fingerprint, hashMaxValue);
       linearized_index += product * indexFunction.getIndex(indexFingerprint);
       product *= indexFunction.maxIndex();
     }

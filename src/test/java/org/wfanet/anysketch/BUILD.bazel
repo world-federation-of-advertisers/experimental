@@ -43,3 +43,16 @@ java_test(
         "@maven//:junit_junit",
     ],
 )
+
+java_test(
+    name = "sketch_proto_converter_test",
+    srcs = ["SketchProtoConverterTest.java"],
+    test_class = "org.wfanet.anysketch.SketchProtoConverterTest",
+    deps = [
+        "//src/main/java/org/wfanet/anysketch:any_sketch",
+        "//src/main/java/org/wfanet/anysketch:sketch_proto_converter",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
+        "@maven//:com_google_truth_truth",
+        "@maven//:junit_junit",
+    ],
+)

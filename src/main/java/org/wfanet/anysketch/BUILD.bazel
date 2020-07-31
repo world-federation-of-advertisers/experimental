@@ -17,3 +17,15 @@ java_library(
         "@maven//:com_google_guava_guava",
     ],
 )
+
+java_library(
+    name = "sketch_proto_converter",
+    srcs = [
+        "SketchProtoConverter.java"
+    ],
+    deps = [
+        ":any_sketch",
+        "@maven//:com_google_guava_guava",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
+    ],
+)
