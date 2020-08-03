@@ -1,0 +1,26 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "utils",
+    srcs = [
+        "utils.cc",
+    ],
+    hdrs = [
+        "utils.h",
+    ],
+    deps = [
+    ],
+)
+
+cc_test(
+    name = "utils_test",
+    size = "small",
+    srcs = [
+        "utils_test.cc",
+    ],
+    deps = [
+        ":utils",
+        "@absl//absl/types:span",
+        "@googletest//:gtest_main",
+    ],
+)
