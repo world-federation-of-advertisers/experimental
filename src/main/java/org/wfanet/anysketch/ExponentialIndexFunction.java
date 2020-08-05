@@ -22,8 +22,8 @@ import com.google.common.base.Preconditions;
  */
 public class ExponentialIndexFunction implements IndexFunction {
 
-  private double rate;
-  private long size;
+  private final double rate;
+  private final long size;
 
   /**
    * Creates ExponentialIndexFunction object expecting rate and size arguments.
@@ -39,15 +39,14 @@ public class ExponentialIndexFunction implements IndexFunction {
   }
 
   /**
-   * Returns the index of the hashmap given the hashed key
+   * Returns the register index of a fingerprint.
    *
    * @param fingerprint hashed key
-   * <p>ExponentialIndexFunction getIndex uses inverse CDF of the truncated exponential
-   * distribution. To sample from number of legionaries, it multiplies the result with the size.
-   *
-   * It is possible to precompute inverse CDF for each register and do a O(log(size)) lookup for a
-   * fingerprint. This implementation takes a simpler approach of calculating inverse CDF for each
-   * fingerprint separately.
+   *     <p>ExponentialIndexFunction getIndex uses inverse CDF of the truncated exponential
+   *     distribution. To sample from number of legionaries, it multiplies the result with the size.
+   *     <p>It is possible to precompute inverse CDF for each register and do a O(log(size)) lookup
+   *     for a fingerprint. This implementation takes a simpler approach of calculating inverse CDF
+   *     for each fingerprint separately.
    */
   public long getIndex(long fingerprint) {
     Preconditions.checkArgument(fingerprint > 0);
@@ -56,16 +55,12 @@ public class ExponentialIndexFunction implements IndexFunction {
     return (long) Math.floor(x * this.size);
   }
 
-  /**
-   * Returns the max index value as output value to calculate next indexes
-   */
+  /** Returns the max index value as output value to calculate next indexes. */
   public long maxIndex() {
     return this.size - 1;
   }
 
-  /**
-   * Returns the max supported hash value to divide fingerprint into chunks
-   */
+  /** Returns the max supported hash value to divide fingerprint into chunks. */
   public long maxSupportedHash() {
     return Long.MAX_VALUE;
   }

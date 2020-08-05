@@ -37,7 +37,7 @@ public class UniqueValueFunctionTest {
     UniqueValueFunction uniqueValueFunction = new UniqueValueFunction();
     assertThat(uniqueValueFunction.name()).isEqualTo("UniqueValueFunction");
 
-    long first_value = uniqueValueFunction.getValue(5, 5);
-    assertThat(uniqueValueFunction.getValue(first_value, 4)).isEqualTo(-1);
+    long firstValue = uniqueValueFunction.getValue(5, 5);
+    assertThat(uniqueValueFunction.getValue(firstValue, 4)).isEqualTo(-1);
   }
 }

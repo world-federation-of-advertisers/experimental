@@ -21,9 +21,8 @@ package org.wfanet.anysketch;
  */
 public class UniqueValueFunction implements ValueFunction {
 
-  /**
-   * The name of this value function is UniqueValueFunction.
-   */
+  /** The name of this value function is UniqueValueFunction. */
+  @Override
   public String name() {
     return "UniqueValueFunction";
   }
@@ -32,9 +31,10 @@ public class UniqueValueFunction implements ValueFunction {
    * The aggregator either stores the value or the destructor (-1). The destructor will be stored as
    * 0 in the proto for space saving reasons.
    */
-  public long getValue(long old_value, long new_value) {
-    if (old_value == new_value) {
-      return old_value;
+  @Override
+  public long getValue(long oldValue, long newValue) {
+    if (oldValue == newValue) {
+      return oldValue;
     }
     return -1;
   }
@@ -43,7 +43,18 @@ public class UniqueValueFunction implements ValueFunction {
    * We store the value that is passed to the value function if this is the first assignment to this
    * register.
    */
-  public long getInitialValue(long new_value) {
-    return new_value;
+  @Override
+  public long getInitialValue(long newValue) {
+    return newValue;
+  }
+
+  @Override
+  public long encodeToProtoValue(long value) {
+    return value + 1;
+  }
+
+  @Override
+  public long decodeFromProtoValue(long protoValue) {
+    return protoValue - 1;
   }
 }

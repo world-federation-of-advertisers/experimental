@@ -34,7 +34,7 @@ public class ExponentialIndexFunctionTest {
   }
 
   @Test
-  public void ExponentialIndexFunctionTest_testGetIndexRateOneSuceeds() {
+  public void ExponentialIndexFunctionTest_testGetIndexRateOneSucceeds() {
     // Maps everything to the first register.
     ExponentialIndexFunction exponentialIndexFunction = new ExponentialIndexFunction(1, 10);
     long hash_input = 50;
@@ -44,9 +44,9 @@ public class ExponentialIndexFunctionTest {
   }
 
   @Test
-  public void ExponentialIndexFunctionTest_testGetIndexSuceeds() {
+  public void ExponentialIndexFunctionTest_testGetIndexSucceeds() {
     ExponentialIndexFunction exponentialIndexFunction = new ExponentialIndexFunction(2, 10000);
-    long hash_input = 5l * (long) Math.pow(10, 18);
+    long hash_input = 5L * (long) Math.pow(10, 18);
     assertThat(exponentialIndexFunction.maxIndex()).isEqualTo(9999);
     assertThat(exponentialIndexFunction.maxSupportedHash()).isEqualTo(EXPECTED_MAX_HASH);
     assertThat(exponentialIndexFunction.getIndex(hash_input)).isEqualTo(3162);
@@ -54,20 +54,17 @@ public class ExponentialIndexFunctionTest {
 
   @Test
   public void ExponentialIndexFunctionTest_testIllegalRateFails() {
-    assertThrows(
-        java.lang.IllegalArgumentException.class, () -> new ExponentialIndexFunction(0, 10000));
+    assertThrows(IllegalArgumentException.class, () -> new ExponentialIndexFunction(0, 10000));
   }
 
   @Test
   public void ExponentialIndexFunctionTest_testIllegalSizeFails() {
-    assertThrows(
-        java.lang.IllegalArgumentException.class, () -> new ExponentialIndexFunction(10, -1));
+    assertThrows(IllegalArgumentException.class, () -> new ExponentialIndexFunction(10, -1));
   }
 
   @Test
   public void ExponentialIndexFunctionTest_testIllegalHashFails() {
     ExponentialIndexFunction exponentialIndexFunction = new ExponentialIndexFunction(1, 10);
-    assertThrows(
-        java.lang.IllegalArgumentException.class, () -> exponentialIndexFunction.getIndex(-10));
+    assertThrows(IllegalArgumentException.class, () -> exponentialIndexFunction.getIndex(-10));
   }
 }

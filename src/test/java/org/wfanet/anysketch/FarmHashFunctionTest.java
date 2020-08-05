@@ -33,16 +33,16 @@ public class FarmHashFunctionTest {
   @Test
   public void FarmHashFunctionTest_testTwoSameStringsMatchSucceeds() {
     FarmHashFunction farmHashFunction = new FarmHashFunction();
-    String x = new String("Foo");
-    String y = new String("Foo");
+    String x = "Foo";
+    String y = "Foo";
     assertThat(farmHashFunction.fingerprint(x)).isEqualTo(farmHashFunction.fingerprint(y));
   }
 
   @Test
   public void FarmHashFunctionTest_testTwoDifferentStringsMatchFails() {
     FarmHashFunction farmHashFunction = new FarmHashFunction();
-    String x = new String("Foo");
-    String y = new String("Bar");
+    String x = "Foo";
+    String y = "Bar";
     assertThat(farmHashFunction.fingerprint(x)).isNotEqualTo(farmHashFunction.fingerprint(y));
   }
 }

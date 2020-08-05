@@ -28,6 +28,7 @@ public class FarmHashFunction implements HashFunction {
    *
    * @param item Key to be hashed
    */
+  @Override
   public long fingerprint(String item) {
     return Hashing.farmHashFingerprint64().hashString(item, StandardCharsets.UTF_8).asLong();
   }

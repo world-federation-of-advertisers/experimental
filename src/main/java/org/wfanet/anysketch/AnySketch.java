@@ -30,14 +30,12 @@ import org.wfanet.anysketch.AnySketch.Register;
  */
 public class AnySketch implements Iterable<Register> {
 
-  private List<IndexFunction> indexFunctions;
-  private List<ValueFunction> valueFunctions;
-  private HashFunction hashFunction;
-  private Map<Long, List<Long>> registers;
+  private final ImmutableList<IndexFunction> indexFunctions;
+  private final ImmutableList<ValueFunction> valueFunctions;
+  private final HashFunction hashFunction;
+  private final Map<Long, List<Long>> registers;
 
-  /**
-   * Enriched cardinality sketch register class.
-   */
+  /** Enriched cardinality sketch register class. */
   public static class Register {
 
     // Linearized register index
@@ -70,10 +68,15 @@ public class AnySketch implements Iterable<Register> {
       List<IndexFunction> indexFunctions,
       List<ValueFunction> valueFunctions,
       HashFunction hashFunction) {
-    this.indexFunctions = indexFunctions;
-    this.valueFunctions = valueFunctions;
+    this.indexFunctions = ImmutableList.copyOf(indexFunctions);
+    this.valueFunctions = ImmutableList.copyOf(valueFunctions);
     this.hashFunction = hashFunction;
     this.registers = new HashMap<>();
+  }
+
+  /** Returns the list of ValueFunctions for the sketch. */
+  public ImmutableList<ValueFunction> getValueFunctions() {
+    return valueFunctions;
   }
 
   // Returns the number of values per Register
@@ -110,17 +113,20 @@ public class AnySketch implements Iterable<Register> {
     }
     Preconditions.checkState(registerValues.size() == registerSize());
     for (int i = 0; i < registerSize(); i++) {
-      registerValues.set(i,
-          inserted ? valueFunctions.get(i).getInitialValue(values.get(i))
-              : valueFunctions.get(i).getValue(registerValues.get(i), values.get(i))
-      );
+      ValueFunction valueFunction = valueFunctions.get(i);
+      long value = values.get(i);
+      registerValues.set(
+          i,
+          inserted
+              ? valueFunction.getInitialValue(value)
+              : valueFunction.getValue(registerValues.get(i), value));
     }
   }
 
   /**
    * Adds `item` to the Sketch.
    *
-   * Insert determines a register by hashing `item` and applying the index functions described in
+   * <p>Insert determines a register by hashing `item` and applying the index functions described in
    * the config. The values in the register are updated by invoking the value functions described in
    * the config with the old value and the value provided here to produce a new value.
    *
@@ -186,7 +192,7 @@ public class AnySketch implements Iterable<Register> {
    *
    * @param others List of {@link AnySketch} objects
    */
-  public void mergeAll(List<AnySketch> others) {
+  public void mergeAll(Iterable<AnySketch> others) {
     for (AnySketch other : others) {
       merge(other);
     }
