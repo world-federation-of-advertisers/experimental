@@ -68,6 +68,31 @@ cc_library(
 )
 
 cc_library(
+    name = "exponential_index_function",
+    srcs = ["exponential_index_function.cc"],
+    hdrs = [
+        "exponential_index_function.h",
+    ],
+    deps = [
+        ":index_function",
+        "@absl//absl/base:core_headers",
+        "@absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "exponential_index_function_test",
+    size = "small",
+    srcs = [
+        "exponential_index_function_test.cc",
+    ],
+    deps = [
+        ":exponential_index_function",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "value_function",
     srcs = [],
     hdrs = [
