@@ -14,25 +14,24 @@
 
 package org.wfanet.anysketch;
 
-/**
- * IndexFunction maps the output of a {@link HashFunction} to a coordinate in that dimension
- */
+import com.google.common.primitives.UnsignedLong;
+
+/** IndexFunction maps the output of a {@link HashFunction} to a coordinate in that dimension */
 interface IndexFunction {
 
   /**
-   * Returns the index of the hashmap given the hashed key
+   * Returns the register index corresponding to a fingerprint.
    *
-   * @param hash hashed key
+   * <p>It is an error to pass in a fingerprint larger than maxSupportedHash().
+   *
+   * @param fingerprint the fingerprint of an item; see {@link HashFunction#fingerprint}
+   * @return a register index in the closed interval [0, maxIndex()]
    */
-  long getIndex(long hash);
+  UnsignedLong getIndex(UnsignedLong fingerprint);
 
-  /**
-   * Returns the max index value as output value to calculate next indexes
-   */
-  long maxIndex();
+  /** Returns the maximum register index that getIndex() can return. */
+  UnsignedLong maxIndex();
 
-  /**
-   * Returns the max supported hash value to divide fingerprint into chunks
-   */
-  long maxSupportedHash();
+  /** Returns the maximum supported value for input to {@link #getIndex}. */
+  UnsignedLong maxSupportedHash();
 }

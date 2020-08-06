@@ -15,6 +15,8 @@
 package org.wfanet.anysketch;
 
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedLong;
+import java.math.BigDecimal;
 
 /**
  * ExponentialIndexFunction maps the output of a {@link HashFunction} to a coordinate using
@@ -23,7 +25,8 @@ import com.google.common.base.Preconditions;
 public class ExponentialIndexFunction implements IndexFunction {
 
   private final double rate;
-  private final long size;
+  private final double expRate;
+  private final UnsignedLong size;
 
   /**
    * Creates ExponentialIndexFunction object expecting rate and size arguments.
@@ -31,10 +34,11 @@ public class ExponentialIndexFunction implements IndexFunction {
    * @param rate Rate of the exponential distribution
    * @param size Number of legionaries
    */
-  public ExponentialIndexFunction(double rate, long size) {
+  public ExponentialIndexFunction(double rate, UnsignedLong size) {
     Preconditions.checkArgument(rate > 0);
-    Preconditions.checkArgument(size > 0);
+    Preconditions.checkArgument(!size.equals(UnsignedLong.ZERO));
     this.rate = rate;
+    this.expRate = Math.exp(rate);
     this.size = size;
   }
 
@@ -48,20 +52,27 @@ public class ExponentialIndexFunction implements IndexFunction {
    *     for a fingerprint. This implementation takes a simpler approach of calculating inverse CDF
    *     for each fingerprint separately.
    */
-  public long getIndex(long fingerprint) {
-    Preconditions.checkArgument(fingerprint > 0);
-    double u = (double) fingerprint / (double) Long.MAX_VALUE;
-    double x = 1 - Math.log(Math.exp(this.rate) + u * (1 - Math.exp(this.rate))) / this.rate;
-    return (long) Math.floor(x * this.size);
+  @Override
+  public UnsignedLong getIndex(UnsignedLong fingerprint) {
+    Preconditions.checkArgument(fingerprint.compareTo(maxSupportedHash()) <= 0);
+    double u = fingerprint.doubleValue() / maxSupportedHash().doubleValue();
+    double x = 1 - Math.log(expRate + u * (1 - expRate)) / rate;
+    double fractionalIndex = x * size.doubleValue();
+    return roundDoubleToUnsignedLong(fractionalIndex);
   }
 
-  /** Returns the max index value as output value to calculate next indexes. */
-  public long maxIndex() {
-    return this.size - 1;
+  private UnsignedLong roundDoubleToUnsignedLong(double value) {
+    return UnsignedLong.valueOf(BigDecimal.valueOf(value).toBigInteger());
   }
 
-  /** Returns the max supported hash value to divide fingerprint into chunks. */
-  public long maxSupportedHash() {
-    return Long.MAX_VALUE;
+  @Override
+  public UnsignedLong maxIndex() {
+    return size.minus(UnsignedLong.ONE);
+  }
+
+  @Override
+  public UnsignedLong maxSupportedHash() {
+    // TODO: this should be a much smaller value.
+    return UnsignedLong.MAX_VALUE;
   }
 }

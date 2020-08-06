@@ -41,7 +41,7 @@ public class SketchProtoConverter {
     for (Register register : anySketch) {
       builder
           .addRegistersBuilder()
-          .setIndex(register.getIndex())
+          .setIndex(register.getIndex().longValue())
           .addAllValues(encodeValues(anySketch.getValueFunctions(), register.getValues()))
           .build();
     }

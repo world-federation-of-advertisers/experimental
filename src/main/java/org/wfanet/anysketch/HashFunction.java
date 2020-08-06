@@ -14,15 +14,16 @@
 
 package org.wfanet.anysketch;
 
-/**
- * HashFunction class provides multiple hashing options to hash the key
- */
+import com.google.common.primitives.UnsignedLong;
+
+/** HashFunction class provides multiple hashing options to hash the key */
 interface HashFunction {
 
   /**
-   * Returns hashed value of the key inserted into Sketch
+   * Computes a deterministic fingerprint.
    *
-   * @param item Key to be hashed
+   * @param item What to fingerprint
+   * @return a 64-bit fingerprint of the input
    */
-  long fingerprint(String item);
+  UnsignedLong fingerprint(String item);
 }

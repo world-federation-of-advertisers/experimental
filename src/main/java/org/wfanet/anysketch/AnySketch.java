@@ -16,6 +16,7 @@ package org.wfanet.anysketch;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.UnsignedLong;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,27 +34,36 @@ public class AnySketch implements Iterable<Register> {
   private final ImmutableList<IndexFunction> indexFunctions;
   private final ImmutableList<ValueFunction> valueFunctions;
   private final HashFunction hashFunction;
-  private final Map<Long, List<Long>> registers;
+  private final Map<UnsignedLong, List<Long>> registers;
 
   /** Enriched cardinality sketch register class. */
   public static class Register {
 
     // Linearized register index
-    private long index;
+    private UnsignedLong index;
     // Values of the register
     private ImmutableList<Long> values;
 
-    Register(long index, ImmutableList<Long> values) {
+    Register(UnsignedLong index, ImmutableList<Long> values) {
       this.index = index;
       this.values = values;
     }
 
-    public long getIndex() {
+    Register(long index, ImmutableList<Long> values) {
+      this(UnsignedLong.valueOf(index), values);
+    }
+
+    public UnsignedLong getIndex() {
       return index;
     }
 
     public ImmutableList<Long> getValues() {
       return values;
+    }
+
+    @Override
+    public String toString() {
+      return "<Register index: " + index + " values: " + values + ">";
     }
   }
 
@@ -85,41 +95,40 @@ public class AnySketch implements Iterable<Register> {
   }
 
   // ConsumeBits divides the fingerprint into chunks with maxValue size
-  private long consumeBits(long fingerprint, long maxValue) {
-    Preconditions.checkArgument(maxValue > 0);
-    return Long.remainderUnsigned(fingerprint, maxValue);
+  private UnsignedLong consumeBits(UnsignedLong fingerprint, UnsignedLong maxValue) {
+    Preconditions.checkArgument(!maxValue.equals(UnsignedLong.ZERO));
+    return fingerprint.mod(maxValue);
   }
 
-  private long getIndex(long fingerprint) {
-    long product = 1;
-    long linearized_index = 0;
+  private UnsignedLong getIndex(UnsignedLong fingerprint) {
+    UnsignedLong product = UnsignedLong.ONE;
+    UnsignedLong linearizedIndex = UnsignedLong.ZERO;
     for (IndexFunction indexFunction : indexFunctions) {
-      long hashMaxValue = indexFunction.maxSupportedHash();
-      long indexFingerprint = consumeBits(fingerprint, hashMaxValue);
-      fingerprint = Long.divideUnsigned(fingerprint, hashMaxValue);
-      linearized_index += product * indexFunction.getIndex(indexFingerprint);
-      product *= indexFunction.maxIndex();
+      UnsignedLong hashMaxValue = indexFunction.maxSupportedHash();
+
+      UnsignedLong indexFingerprint = consumeBits(fingerprint, hashMaxValue);
+      fingerprint = fingerprint.dividedBy(hashMaxValue);
+
+      UnsignedLong indexPart = indexFunction.getIndex(indexFingerprint);
+      linearizedIndex = linearizedIndex.plus(product.times(indexPart));
+      product = product.times(indexFunction.maxIndex());
     }
-    return linearized_index;
+    return linearizedIndex;
   }
 
-  private void insertPreHashed(long fingerprint, ImmutableList<Long> values) {
-    long index = getIndex(fingerprint);
-    List<Long> registerValues = registers.putIfAbsent(index, new ArrayList<>(values));
-    boolean inserted = false;
-    if (registerValues == null) {
-      inserted = true;
-      registerValues = new ArrayList<>(values);
-    }
-    Preconditions.checkState(registerValues.size() == registerSize());
+  private void insertPreHashed(UnsignedLong fingerprint, ImmutableList<Long> values) {
+    UnsignedLong index = getIndex(fingerprint);
+    List<Long> registerValues = registers.computeIfAbsent(index, key -> new ArrayList<>());
+    boolean inserted = registerValues.isEmpty();
+    Preconditions.checkState(inserted || registerValues.size() == registerSize());
     for (int i = 0; i < registerSize(); i++) {
       ValueFunction valueFunction = valueFunctions.get(i);
       long value = values.get(i);
-      registerValues.set(
-          i,
-          inserted
-              ? valueFunction.getInitialValue(value)
-              : valueFunction.getValue(registerValues.get(i), value));
+      if (inserted) {
+        registerValues.add(valueFunction.getInitialValue(value));
+      } else {
+        registerValues.set(i, valueFunction.getValue(registerValues.get(i), value));
+      }
     }
   }
 
@@ -150,7 +159,7 @@ public class AnySketch implements Iterable<Register> {
    */
   public void insert(String item, List<Long> values) {
     Preconditions.checkState(values.size() == registerSize());
-    long fingerprint = hashFunction.fingerprint(item);
+    UnsignedLong fingerprint = hashFunction.fingerprint(item);
     insertPreHashed(fingerprint, ImmutableList.copyOf(values));
   }
 
@@ -181,7 +190,7 @@ public class AnySketch implements Iterable<Register> {
    * @param other {@link AnySketch} object
    */
   public void merge(AnySketch other) {
-    for (Map.Entry<Long, List<Long>> entry : other.registers.entrySet()) {
+    for (Map.Entry<UnsignedLong, List<Long>> entry : other.registers.entrySet()) {
       insertPreHashed(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
     }
   }
@@ -205,7 +214,7 @@ public class AnySketch implements Iterable<Register> {
    */
   @Override
   public Iterator<Register> iterator() {
-    Iterator<Map.Entry<Long, List<Long>>> iterator = registers.entrySet().iterator();
+    Iterator<Map.Entry<UnsignedLong, List<Long>>> iterator = registers.entrySet().iterator();
     return new Iterator<Register>() {
       @Override
       public boolean hasNext() {
@@ -214,7 +223,7 @@ public class AnySketch implements Iterable<Register> {
 
       @Override
       public Register next() {
-        Map.Entry<Long, List<Long>> entry = iterator.next();
+        Map.Entry<UnsignedLong, List<Long>> entry = iterator.next();
         return new Register(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
       }
     };

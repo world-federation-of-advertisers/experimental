@@ -14,22 +14,21 @@
 
 package org.wfanet.anysketch;
 
+import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import com.google.common.primitives.UnsignedLong;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 64bit FarmHash an open-source fingerprinting algorithm for strings that supports equality testing
- * and sorting.
+ * Implementation of {@link HashFunction} using FarmHash's Fingerprint64 algorithm.
+ *
+ * <p>See {@link Hashing#farmHashFingerprint64} for details on the algorithm.
  */
 public class FarmHashFunction implements HashFunction {
 
-  /**
-   * Returns the long value of HashCode produced from the String parameter.
-   *
-   * @param item Key to be hashed
-   */
   @Override
-  public long fingerprint(String item) {
-    return Hashing.farmHashFingerprint64().hashString(item, StandardCharsets.UTF_8).asLong();
+  public UnsignedLong fingerprint(String item) {
+    HashCode hashCode = Hashing.farmHashFingerprint64().hashString(item, StandardCharsets.UTF_8);
+    return UnsignedLong.fromLongBits(hashCode.asLong());
   }
 }
