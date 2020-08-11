@@ -30,6 +30,7 @@ class FarmHashFunction : public HashFunction {
   FarmHashFunction& operator=(FarmHashFunction&& other) = default;
   FarmHashFunction(const FarmHashFunction&) = delete;
   FarmHashFunction& operator=(const FarmHashFunction&) = delete;
+  FarmHashFunction() = default;
   ~FarmHashFunction() override = default;
 
   uint64_t Fingerprint(absl::Span<const unsigned char> item) const override;

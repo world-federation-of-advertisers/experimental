@@ -14,10 +14,10 @@
 
 #include "exponential_index_function.h"
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <cmath>
 
 #include "gtest/gtest.h"
 
@@ -28,7 +28,8 @@ TEST(ExponentialIndexFunctionTest, TestBasicBehavior) {
   ExponentialIndexFunction exponential_index_function(10, 10);
 
   EXPECT_EQ(exponential_index_function.max_value(), 9);
-  EXPECT_EQ(exponential_index_function.hash_max_value(), std::numeric_limits<int64_t>::max());
+  EXPECT_EQ(exponential_index_function.hash_max_value(),
+            std::numeric_limits<uint64_t>::max());
 }
 
 TEST(ExponentialIndexFunctionTest, TestGetIndexRateOneSuceeds) {
@@ -37,7 +38,8 @@ TEST(ExponentialIndexFunctionTest, TestGetIndexRateOneSuceeds) {
   uint64_t hash_input = 50;
 
   EXPECT_EQ(exponential_index_function.max_value(), 9);
-  EXPECT_EQ(exponential_index_function.hash_max_value(), std::numeric_limits<int64_t>::max());
+  EXPECT_EQ(exponential_index_function.hash_max_value(),
+            std::numeric_limits<uint64_t>::max());
   EXPECT_EQ(exponential_index_function.GetIndex(hash_input), 0);
 }
 
@@ -47,8 +49,9 @@ TEST(ExponentialIndexFunctionTest, TestGetIndexSuceeds) {
   uint64_t hash_input = 5 * std::pow(10, 18);
 
   EXPECT_EQ(exponential_index_function.max_value(), 9999);
-  EXPECT_EQ(exponential_index_function.hash_max_value(), std::numeric_limits<int64_t>::max());
-  EXPECT_EQ(exponential_index_function.GetIndex(hash_input), 3162);
+  EXPECT_EQ(exponential_index_function.hash_max_value(),
+            std::numeric_limits<uint64_t>::max());
+  EXPECT_EQ(exponential_index_function.GetIndex(hash_input), 1335);
 }
 
 TEST(ExponentialIndexFunctionTest, TestIllegalRateFails) {

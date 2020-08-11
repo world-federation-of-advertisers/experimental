@@ -1,26 +1,30 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "utils",
+    name = "estimators",
     srcs = [
-        "utils.cc",
+        "estimators.cc",
     ],
     hdrs = [
-        "utils.h",
+        "estimators.h",
     ],
     deps = [
+        "@absl//absl/base:core_headers",
+        "@absl//absl/functional:bind_front",
     ],
 )
 
 cc_test(
-    name = "utils_test",
+    name = "estimators_test",
     size = "small",
     srcs = [
-        "utils_test.cc",
+        "estimators_test.cc",
     ],
     deps = [
-        ":utils",
-        "@absl//absl/types:span",
+        ":estimators",
+        "//src/main/cc/any_sketch:exponential_index_function",
+        "//src/main/cc/any_sketch:farm_hash_function",
+        "@absl//absl/container:flat_hash_set",
         "@googletest//:gtest_main",
     ],
 )
