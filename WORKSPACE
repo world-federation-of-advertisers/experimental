@@ -121,13 +121,13 @@ git_repository(
     name = "wfa_rules_swig",
     commit = "4799cbfa2d0e335208d790729ed4b49d34968245",
     remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
-    shallow_since = "1595012448 -0700"
+    shallow_since = "1595012448 -0700",
 )
 
 # Measurement APIs.
 git_repository(
     name = "wfa_measurement_proto",
-    commit = "d6b42bb0fd73a287110e54203783b9c02e35a5b2",
+    commit = "c55656ca7d8c86f139fa3bb3b0d22a1cf5b74f77",
     remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
     shallow_since = "1590709328 +0000",
 )

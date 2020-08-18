@@ -20,8 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import java.util.List;
 import org.wfanet.anysketch.AnySketch.Register;
-import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig;
+import org.wfanet.measurement.api.v1alpha.Sketch;
+import org.wfanet.measurement.api.v1alpha.SketchConfig;
 
 /** SketchProtoConverter class converts {@link AnySketch} object into {@link Sketch} proto. */
 public class SketchProtoConverter {

@@ -23,9 +23,9 @@ import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch;
-import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch.Register;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig;
+import org.wfanet.measurement.api.v1alpha.Sketch;
+import org.wfanet.measurement.api.v1alpha.Sketch.Register;
+import org.wfanet.measurement.api.v1alpha.SketchConfig;
 
 @RunWith(JUnit4.class)
 public class SketchProtoConverterTest {

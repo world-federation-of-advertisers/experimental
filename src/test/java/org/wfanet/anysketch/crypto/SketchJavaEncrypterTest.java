@@ -22,11 +22,11 @@ import java.util.Random;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch;
-import wfa.measurement.api.v1alpha.SketchOuterClass.Sketch.Register;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.ValueSpec;
-import wfa.measurement.api.v1alpha.SketchOuterClass.SketchConfig.ValueSpec.Aggregator;
+import org.wfanet.measurement.api.v1alpha.Sketch;
+import org.wfanet.measurement.api.v1alpha.Sketch.Register;
+import org.wfanet.measurement.api.v1alpha.SketchConfig;
+import org.wfanet.measurement.api.v1alpha.SketchConfig.ValueSpec;
+import org.wfanet.measurement.api.v1alpha.SketchConfig.ValueSpec.Aggregator;
 
 @RunWith(JUnit4.class)
 public class SketchJavaEncrypterTest {
