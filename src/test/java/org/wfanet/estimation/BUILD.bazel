@@ -1,0 +1,13 @@
+load("@rules_java//java:defs.bzl", "java_test")
+
+java_test(
+    name = "tests",
+    srcs = [
+        "EstimatorsTest.java",
+    ],
+    test_class = "org.wfanet.estimation.EstimatorsTest",
+    deps = [
+        "//src/main/java/org/wfanet/estimation:estimators",
+        "@maven//:com_google_truth_truth",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("@wfa_rules_swig//java:defs.bzl", "java_wrap_cc")
+
+package(default_visibility = ["//visibility:public"])
+
+java_wrap_cc(
+    name = "estimators",
+    src = "estimators.swig",
+    module = "Estimators",
+    package = "org.wfanet.estimation",
+    deps = [
+        "//src/main/cc/estimation:estimators",
+    ],
+)
