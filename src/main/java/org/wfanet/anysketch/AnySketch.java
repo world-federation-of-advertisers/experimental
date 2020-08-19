@@ -14,15 +14,17 @@
 
 package org.wfanet.anysketch;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.UnsignedLong;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.wfanet.anysketch.AnySketch.Register;
+import org.wfanet.anysketch.distributions.Distribution;
 
 /**
  * A generalized sketch class. This sketch class generalizes the data structure required to capture
@@ -31,29 +33,25 @@ import org.wfanet.anysketch.AnySketch.Register;
  */
 public class AnySketch implements Iterable<Register> {
 
-  private final ImmutableList<IndexFunction> indexFunctions;
+  private final ImmutableList<Distribution> indexDistributions;
   private final ImmutableList<ValueFunction> valueFunctions;
-  private final HashFunction hashFunction;
-  private final Map<UnsignedLong, List<Long>> registers;
+  private final Map<Long, List<Long>> registers;
 
   /** Enriched cardinality sketch register class. */
   public static class Register {
 
     // Linearized register index
-    private UnsignedLong index;
+    private long index;
+
     // Values of the register
     private ImmutableList<Long> values;
 
-    Register(UnsignedLong index, ImmutableList<Long> values) {
+    Register(long index, ImmutableList<Long> values) {
       this.index = index;
       this.values = values;
     }
 
-    Register(long index, ImmutableList<Long> values) {
-      this(UnsignedLong.valueOf(index), values);
-    }
-
-    public UnsignedLong getIndex() {
+    public long getIndex() {
       return index;
     }
 
@@ -68,23 +66,23 @@ public class AnySketch implements Iterable<Register> {
   }
 
   /**
-   * Creates AnySketch object expecting IndexFunction, ValueFunction, and HashFunction arguments.
+   * Creates an AnySketch.
    *
-   * @param indexFunctions List of {@link IndexFunction} objects
-   * @param valueFunctions List of {@link ValueFunction} objects
-   * @param hashFunction a {@link HashFunction} object
+   * @param indexDistributions Distributions for determining register index
+   * @param valueFunctions Distributions for determining register values
    */
-  public AnySketch(
-      List<IndexFunction> indexFunctions,
-      List<ValueFunction> valueFunctions,
-      HashFunction hashFunction) {
-    this.indexFunctions = ImmutableList.copyOf(indexFunctions);
+  public AnySketch(List<Distribution> indexDistributions, List<ValueFunction> valueFunctions) {
+    this.indexDistributions = ImmutableList.copyOf(indexDistributions);
     this.valueFunctions = ImmutableList.copyOf(valueFunctions);
-    this.hashFunction = hashFunction;
     this.registers = new HashMap<>();
+
+    long indexesLeft = Long.MAX_VALUE;
+    for (Distribution distribution : indexDistributions) {
+      indexesLeft /= distribution.getSize();
+    }
+    Preconditions.checkArgument(indexesLeft > 0, "A register index could possibly exceed 2^63 - 1");
   }
 
-  /** Returns the list of ValueFunctions for the sketch. */
   public ImmutableList<ValueFunction> getValueFunctions() {
     return valueFunctions;
   }
@@ -94,73 +92,51 @@ public class AnySketch implements Iterable<Register> {
     return valueFunctions.size();
   }
 
-  // ConsumeBits divides the fingerprint into chunks with maxValue size
-  private UnsignedLong consumeBits(UnsignedLong fingerprint, UnsignedLong maxValue) {
-    Preconditions.checkArgument(!maxValue.equals(UnsignedLong.ZERO));
-    return fingerprint.mod(maxValue);
-  }
+  private long getLinearizedIndex(String item, Map<String, Long> itemMetadata) {
+    long product = 1L;
+    long linearizedIndex = 0;
 
-  private UnsignedLong getIndex(UnsignedLong fingerprint) {
-    UnsignedLong product = UnsignedLong.ONE;
-    UnsignedLong linearizedIndex = UnsignedLong.ZERO;
-    for (IndexFunction indexFunction : indexFunctions) {
-      UnsignedLong hashMaxValue = indexFunction.maxSupportedHash();
-
-      UnsignedLong indexFingerprint = consumeBits(fingerprint, hashMaxValue);
-      fingerprint = fingerprint.dividedBy(hashMaxValue);
-
-      UnsignedLong indexPart = indexFunction.getIndex(indexFingerprint);
-      linearizedIndex = linearizedIndex.plus(product.times(indexPart));
-      product = product.times(indexFunction.maxIndex());
+    for (Distribution distribution : indexDistributions) {
+      long indexPart = distribution.apply(item, itemMetadata) - distribution.getMinValue();
+      linearizedIndex = product * linearizedIndex + indexPart;
+      product *= distribution.getMaxValue() - distribution.getMinValue();
     }
     return linearizedIndex;
   }
 
-  private void insertPreHashed(UnsignedLong fingerprint, ImmutableList<Long> values) {
-    UnsignedLong index = getIndex(fingerprint);
-    List<Long> registerValues = registers.computeIfAbsent(index, key -> new ArrayList<>());
-    boolean inserted = registerValues.isEmpty();
-    Preconditions.checkState(inserted || registerValues.size() == registerSize());
+  void aggregateIntoRegister(long index, List<Long> values) {
+    registers.merge(index, new ArrayList<>(values), this::aggregateIntoExistingRegister);
+  }
+
+  private List<Long> aggregateIntoExistingRegister(List<Long> oldValues, List<Long> newValues) {
+    Preconditions.checkState(oldValues.size() == registerSize());
     for (int i = 0; i < registerSize(); i++) {
-      ValueFunction valueFunction = valueFunctions.get(i);
-      long value = values.get(i);
-      if (inserted) {
-        registerValues.add(valueFunction.getInitialValue(value));
-      } else {
-        registerValues.set(i, valueFunction.getValue(registerValues.get(i), value));
-      }
+      long oldValue = oldValues.get(i);
+      long newValue = valueFunctions.get(i).getAggregator().aggregate(oldValue, newValues.get(i));
+      oldValues.set(i, newValue);
     }
+    return oldValues;
   }
 
   /**
    * Adds `item` to the Sketch.
    *
-   * <p>Insert determines a register by hashing `item` and applying the index functions described in
-   * the config. The values in the register are updated by invoking the value functions described in
-   * the config with the old value and the value provided here to produce a new value.
+   * <p>While itemMetadata can contain arbitrary values, certain Distributions may require some keys
+   * to be present. In particular, OracleDistributions each require a specific key to exist.
    *
-   * @param item String key
-   * @param values Map of values
-   */
-  public void insert(String item, Map<String, Long> values) {
-    Preconditions.checkState(!values.containsValue(null));
-    List<Long> valuesArray = new ArrayList<>();
-    for (int i = 0; i < registerSize(); i++) {
-      valuesArray.add(values.get(valueFunctions.get(i).name()));
-    }
-    insert(item, valuesArray);
-  }
-
-  /**
-   * Inserts a new item to the AnySketch object with following arguments.
+   * <p>It is not an error to include unnecessary keys in itemMetadata--they will simply be ignored.
    *
-   * @param item String key
-   * @param values List of values
+   * @param item an element to insert into the sketch
+   * @param itemMetadata values that Distributions may access
    */
-  public void insert(String item, List<Long> values) {
-    Preconditions.checkState(values.size() == registerSize());
-    UnsignedLong fingerprint = hashFunction.fingerprint(item);
-    insertPreHashed(fingerprint, ImmutableList.copyOf(values));
+  public void insert(String item, Map<String, Long> itemMetadata) {
+    long index = getLinearizedIndex(item, itemMetadata);
+    @SuppressWarnings("UnstableApiUsage") // For toImmutableList()
+    ImmutableList<Long> values =
+        valueFunctions.stream()
+            .map(valueFunction -> valueFunction.getDistribution().apply(item, itemMetadata))
+            .collect(toImmutableList());
+    aggregateIntoRegister(index, values);
   }
 
   /**
@@ -174,24 +150,14 @@ public class AnySketch implements Iterable<Register> {
   }
 
   /**
-   * Inserts a new item to the AnySketch object with following arguments.
-   *
-   * @param item Long key
-   * @param values List of values
-   */
-  public void insert(Long item, List<Long> values) {
-    insert(item.toString(), values);
-  }
-
-  /**
    * Merges the other sketch into this one. The result is equivalent to sketching the union of the
    * sets that went into this and the other sketch.
    *
    * @param other {@link AnySketch} object
    */
   public void merge(AnySketch other) {
-    for (Map.Entry<UnsignedLong, List<Long>> entry : other.registers.entrySet()) {
-      insertPreHashed(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
+    for (Map.Entry<Long, List<Long>> entry : other.registers.entrySet()) {
+      aggregateIntoRegister(entry.getKey(), entry.getValue());
     }
   }
 
@@ -214,7 +180,7 @@ public class AnySketch implements Iterable<Register> {
    */
   @Override
   public Iterator<Register> iterator() {
-    Iterator<Map.Entry<UnsignedLong, List<Long>>> iterator = registers.entrySet().iterator();
+    Iterator<Map.Entry<Long, List<Long>>> iterator = registers.entrySet().iterator();
     return new Iterator<Register>() {
       @Override
       public boolean hasNext() {
@@ -223,7 +189,7 @@ public class AnySketch implements Iterable<Register> {
 
       @Override
       public Register next() {
-        Map.Entry<UnsignedLong, List<Long>> entry = iterator.next();
+        Map.Entry<Long, List<Long>> entry = iterator.next();
         return new Register(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
       }
     };

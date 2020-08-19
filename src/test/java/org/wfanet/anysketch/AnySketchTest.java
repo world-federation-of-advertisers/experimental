@@ -14,260 +14,196 @@
 
 package org.wfanet.anysketch;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.UnsignedLong;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Correspondence;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.wfanet.anysketch.AnySketch.Register;
+import org.wfanet.anysketch.aggregators.SumAggregator;
+import org.wfanet.anysketch.distributions.Distribution;
+import org.wfanet.anysketch.distributions.FingerprintingDistribution;
+import org.wfanet.anysketch.distributions.OracleDistribution;
+import org.wfanet.anysketch.distributions.UniformDistribution;
 
+@SuppressWarnings("UnstableApiUsage") // For toImmutableList.
 @RunWith(JUnit4.class)
 public class AnySketchTest {
 
-  static final Correspondence<Register, Register> EQUIVALENCE =
+  private static final Correspondence<Register, Register> EQUIVALENCE =
       Correspondence.from(AnySketchTest::registersEquivalent, "is equivalent to");
 
-  static boolean registersEquivalent(@Nullable Register actual, @Nullable Register expected) {
-    return actual.getIndex().equals(expected.getIndex())
+  private static boolean registersEquivalent(
+      @Nullable Register actual, @Nullable Register expected) {
+    if (actual == null || expected == null) {
+      return actual == expected;
+    }
+    return actual.getIndex() == expected.getIndex()
         && actual.getValues().containsAll(expected.getValues())
         && expected.getValues().containsAll(actual.getValues());
   }
 
-  class FakeIndexFunction implements IndexFunction {
-
-    @Override
-    public UnsignedLong getIndex(UnsignedLong hash) {
-      return hash.times(UnsignedLong.valueOf(10L));
+  private static class FakeDistribution extends Distribution {
+    public FakeDistribution() {
+      super(0, 999);
     }
 
     @Override
-    public UnsignedLong maxIndex() {
-      return UnsignedLong.valueOf(3L);
-    }
-
-    @Override
-    public UnsignedLong maxSupportedHash() {
-      return UnsignedLong.valueOf(5L);
+    public long apply(String item, Map<String, Long> itemMetadata) {
+      return (Long.parseLong(item) * 10L) % 1000;
     }
   }
 
-  class FakeHashFunction implements HashFunction {
-
-    @Override
-    public UnsignedLong fingerprint(String item) {
-      return UnsignedLong.valueOf(item);
-    }
+  private static Distribution makeOracleDistribution(String feature) {
+    return new OracleDistribution(feature, 5, 10_005);
   }
 
-  class FakeValueFunction implements ValueFunction {
+  private static AnySketch makeSingleIndexAnySketch(Distribution... distributions) {
+    return new AnySketch(
+        singletonList(new FakeDistribution()),
+        Arrays.stream(distributions)
+            .map(d -> new ValueFunction(new SumAggregator(), d))
+            .collect(toImmutableList()));
+  }
 
-    @Override
-    public String name() {
-      return "some-value-function-name";
-    }
-
-    @Override
-    public long getValue(long oldValue, long newValue) {
-      return oldValue + newValue;
-    }
-
-    @Override
-    public long getInitialValue(long newValue) {
-      return newValue * 100;
-    }
+  private void assertAnySketchIs(AnySketch sketch, Register... expectedRegisters) {
+    assertThat(sketch)
+        .comparingElementsUsing(EQUIVALENCE)
+        .containsExactlyElementsIn(expectedRegisters);
   }
 
   @Test
-  public void AnySketch_testBasicBehavior() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
+  public void testEmptyAnySketch() {
+    AnySketch anySketch = makeSingleIndexAnySketch(new FakeDistribution());
     assertThat(anySketch.iterator().hasNext()).isFalse();
   }
 
   @Test
-  public void AnySketch_testInsertMethodSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
-    anySketch.insert(1L, singletonList(1L));
+  public void testSingleOracleDistribution() {
+    Distribution distribution = makeOracleDistribution("some-feature");
+    AnySketch anySketch = makeSingleIndexAnySketch(distribution);
 
-    Register expected = new Register(10L, ImmutableList.of(100L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected);
+    anySketch.insert(1L, ImmutableMap.of("some-feature", 123L, "some-other-feature", 456L));
+    assertAnySketchIs(anySketch, new Register(10L, ImmutableList.of(123L)));
+
+    anySketch.insert(1L, ImmutableMap.of("some-feature", 789L));
+    assertAnySketchIs(anySketch, new Register(10L, ImmutableList.of(123L + 789L)));
   }
 
   @Test
-  public void AnySketch_testInsertMethodWithMultipleValuesSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            asList(new FakeValueFunction(), new FakeValueFunction(), new FakeValueFunction()),
-            new FakeHashFunction());
-    anySketch.insert(1L, asList(1L, 3L, 10L));
+  public void testMultipleOracleDistributions() {
+    Distribution distribution1 = makeOracleDistribution("feature1");
+    Distribution distribution2 = makeOracleDistribution("feature2");
+    AnySketch anySketch = makeSingleIndexAnySketch(distribution1, distribution2);
 
-    Register expected = new Register(10L, ImmutableList.of(100L, 300L, 1000L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected);
+    anySketch.insert(1L, ImmutableMap.of("feature1", 123L, "feature2", 456L));
+
+    assertAnySketchIs(anySketch, new Register(10L, ImmutableList.of(123L, 456L)));
   }
 
   @Test
-  public void AnySketch_testInsertMethodWithHashMapSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
-    Map<String, Long> values = new HashMap<>();
-    values.put("some-value-function-name", 1L);
-    anySketch.insert(1L, values);
-
-    Register expected = new Register(10L, ImmutableList.of(100L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected);
-  }
-
-  @Test
-  public void AnySketch_testInsertMethodWithHashMapWithNullValueFails() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
-    Map<String, Long> values = new HashMap<>();
-    values.put("some-value-function-name", null);
-
-    assertThrows(IllegalStateException.class, () -> anySketch.insert(1L, values));
-  }
-
-  @Test
-  public void AnySketch_testInsertMethodWithStringKeySucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
-    anySketch.insert("1", singletonList(1L));
-
-    Register expected = new Register(10L, ImmutableList.of(100L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected);
-  }
-
-  @Test
-  public void AnySketch_testInsertMethodWithStringKeyHashMapSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new FakeValueFunction()),
-            new FakeHashFunction());
-    Map<String, Long> values = new HashMap<>();
-    values.put("some-value-function-name", 1L);
-    anySketch.insert("1", values);
-
-    Register expected = new Register(10L, ImmutableList.of(100L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected);
-  }
-
-  @Test
-  public void AnySketch_testMergeMethodSucceeds() {
-    List<IndexFunction> indexFunctions = new ArrayList<>();
-    indexFunctions.add(new FakeIndexFunction());
-    List<ValueFunction> valueFunctions = new ArrayList<>();
-    valueFunctions.add(new FakeValueFunction());
-    AnySketch anySketch = new AnySketch(indexFunctions, valueFunctions, new FakeHashFunction());
-    AnySketch otherAnySketch =
-        new AnySketch(indexFunctions, valueFunctions, new FakeHashFunction());
-    anySketch.insert(1L, singletonList(1L));
-    otherAnySketch.insert(2L, singletonList(20L));
-    anySketch.merge(otherAnySketch);
-
-    Register expected = new Register(10L, ImmutableList.of(100L));
-    Register expected2 = new Register(0L, ImmutableList.of(200000L));
-    assertThat(anySketch).comparingElementsUsing(EQUIVALENCE).containsExactly(expected, expected2);
-  }
-
-  @Test
-  public void AnySketch_testMergeAllMethodSucceeds() {
-    List<IndexFunction> indexFunctions = singletonList(new FakeIndexFunction());
-    List<ValueFunction> valueFunctions = singletonList(new FakeValueFunction());
-    HashFunction hashFunction = new FakeHashFunction();
-
-    AnySketch anySketch = new AnySketch(indexFunctions, valueFunctions, hashFunction);
-    anySketch.insert(1L, singletonList(1L));
-
-    assertThat(anySketch)
-        .comparingElementsUsing(EQUIVALENCE)
-        .containsExactly(new Register(10L, ImmutableList.of(100L)));
-
-    AnySketch otherAnySketch = new AnySketch(indexFunctions, valueFunctions, hashFunction);
-    otherAnySketch.insert(10L, singletonList(20L));
-
-    assertThat(otherAnySketch)
-        .comparingElementsUsing(EQUIVALENCE)
-        .containsExactly(new Register(0L, ImmutableList.of(2000L)));
-
-    anySketch.mergeAll(singletonList(otherAnySketch));
-
-    // Note: we expect the "2000" value from the previous sketch to be run through FakeValueFunction
-    // again. This is a little counter-intuitive but correct; hence the value "200000" below.
-    assertThat(anySketch)
-        .comparingElementsUsing(EQUIVALENCE)
-        .containsExactly(
-            new Register(10L, ImmutableList.of(100L)), new Register(0L, ImmutableList.of(200000L)));
-  }
-
-  @Test
-  public void AnySketch_testInsertMethodMultipleIndexesBugSucceeds() {
-    IndexFunction indexFunction =
-        new IndexFunction() {
+  public void testConstantDistribution() {
+    // A distribution that maps everything to 12345.
+    Distribution distribution =
+        new Distribution(12345L, 12345L) {
           @Override
-          public UnsignedLong getIndex(UnsignedLong hash) {
-            return hash.dividedBy(UnsignedLong.valueOf(2L));
-          }
-
-          @Override
-          public UnsignedLong maxIndex() {
-            return UnsignedLong.valueOf(3L);
-          }
-
-          @Override
-          public UnsignedLong maxSupportedHash() {
-            return UnsignedLong.valueOf(6L);
+          public long apply(String item, Map<String, Long> itemMetadata) {
+            return 12345L;
           }
         };
-    AnySketch anySketch =
+
+    AnySketch anySketch = makeSingleIndexAnySketch(distribution);
+
+    anySketch.insert(1L, ImmutableMap.of());
+    anySketch.insert(2L, ImmutableMap.of());
+    assertAnySketchIs(
+        anySketch,
+        new Register(10L, ImmutableList.of(12345L)),
+        new Register(20L, ImmutableList.of(12345L)));
+  }
+
+  @Test
+  public void testFingerprintingDistribution() {
+    // A distribution that returns the fingerprint mod 1000. The fingerprinter always returns 9999,
+    // so this should map every element to 999.
+    Distribution distribution =
+        new FingerprintingDistribution("Foo", 0, 999, i -> 9999) {
+          @Override
+          protected long applyToFingerprint(long fingerprint, Map<String, Long> itemMetadata) {
+            return fingerprint % 1000;
+          }
+        };
+
+    AnySketch anySketch = makeSingleIndexAnySketch(distribution);
+
+    anySketch.insert(1L, ImmutableMap.of());
+    assertAnySketchIs(anySketch, new Register(10L, ImmutableList.of(999L)));
+  }
+
+  @Test
+  public void testMerge() {
+    Distribution distribution = makeOracleDistribution("feature1");
+    AnySketch sketch1 = makeSingleIndexAnySketch(distribution);
+    AnySketch sketch2 = makeSingleIndexAnySketch(distribution);
+
+    sketch1.insert(1L, ImmutableMap.of("feature1", 1000L));
+    sketch1.insert(2L, ImmutableMap.of("feature1", 2000L));
+
+    sketch2.insert(1L, ImmutableMap.of("feature1", 500L));
+    sketch2.insert(3L, ImmutableMap.of("feature1", 600L));
+
+    sketch1.merge(sketch2);
+
+    assertAnySketchIs(
+        sketch1,
+        new Register(10L, ImmutableList.of(1500L)),
+        new Register(20L, ImmutableList.of(2000L)),
+        new Register(30L, ImmutableList.of(600L)));
+
+    assertAnySketchIs(
+        sketch2,
+        new Register(10L, ImmutableList.of(500L)),
+        new Register(30L, ImmutableList.of(600L)));
+  }
+
+  @Test
+  public void testMultipleIndexes() {
+    AnySketch sketch =
         new AnySketch(
-            ImmutableList.of(indexFunction, indexFunction),
-            ImmutableList.of(new FakeValueFunction()),
-            new FakeHashFunction());
+            ImmutableList.of(
+                makeOracleDistribution("feature1"), makeOracleDistribution("feature2")),
+            ImmutableList.of(new ValueFunction(new SumAggregator(), new FakeDistribution())));
 
-    // Fill up every possible register
-    //
-    // Since the output of getIndex can be any value in {0, 1, 2},
-    // there should be 9 total registers that get populated
-    for (long i = 0; i < 10000; i++) {
-      anySketch.insert(i, singletonList(0L));
-    }
+    sketch.insert(0L, ImmutableMap.of("feature1", 6L, "feature2", 10L));
 
-    Set<Long> indexes = new HashSet<>();
-    for (Register register : anySketch) {
-      indexes.add(register.getIndex().longValue());
-    }
+    assertAnySketchIs(sketch, new Register(10_005L, ImmutableList.of(0L)));
+  }
 
-    assertThat(indexes).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
+  @Test
+  public void testTooBigIndexes() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new AnySketch(
+                ImmutableList.of(
+                    new UniformDistribution(Long::parseLong, "Foo", 0, 1L << 33L),
+                    new UniformDistribution(Long::parseLong, "Bar", 0, 1L << 33L)),
+                ImmutableList.of(new ValueFunction(new SumAggregator(), new FakeDistribution()))));
+  }
+
+  @Test
+  public void testNoValues() {
+    AnySketch sketch = makeSingleIndexAnySketch();
+    sketch.insert(1L, null);
+    assertAnySketchIs(sketch, new Register(10L, ImmutableList.of()));
   }
 }

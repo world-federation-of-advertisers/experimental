@@ -18,11 +18,17 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertThrows;
 
-import com.google.common.primitives.UnsignedLong;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
+import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.wfanet.anysketch.aggregators.SumAggregator;
+import org.wfanet.anysketch.aggregators.UniqueAggregator;
+import org.wfanet.anysketch.distributions.Distribution;
+import org.wfanet.anysketch.distributions.OracleDistribution;
 import org.wfanet.measurement.api.v1alpha.Sketch;
 import org.wfanet.measurement.api.v1alpha.Sketch.Register;
 import org.wfanet.measurement.api.v1alpha.SketchConfig;
@@ -32,74 +38,63 @@ public class SketchProtoConverterTest {
 
   private static final SketchConfig DEFAULT_CONFIG = SketchConfig.getDefaultInstance();
 
-  class FakeIndexFunction implements IndexFunction {
-
-    @Override
-    public UnsignedLong getIndex(UnsignedLong fingerprint) {
-      return fingerprint.times(UnsignedLong.valueOf(2L));
+  private static class Mod1000Distribution extends Distribution {
+    public Mod1000Distribution() {
+      super(0, 999);
     }
 
     @Override
-    public UnsignedLong maxIndex() {
-      return UnsignedLong.valueOf(20);
-    }
-
-    @Override
-    public UnsignedLong maxSupportedHash() {
-      return UnsignedLong.valueOf(10);
+    public long apply(String item, Map<String, Long> itemMetadata) {
+      return Long.parseLong(item) % 1000;
     }
   }
 
-  class FakeHashFunction implements HashFunction {
-
-    @Override
-    public UnsignedLong fingerprint(String item) {
-      return UnsignedLong.valueOf(item);
-    }
-  }
+  private final AnySketch anySketch =
+      new AnySketch(
+          singletonList(new Mod1000Distribution()),
+          ImmutableList.of(
+              new ValueFunction(new SumAggregator(), new OracleDistribution("feature1", 5, 105)),
+              new ValueFunction(
+                  new UniqueAggregator(), new OracleDistribution("feature2", 6, 15))));
 
   @Test
-  public void SketchProtoConverter_testInvalidArgumentsFails() {
+  public void testInvalidArgumentsFails() {
     assertThrows(NullPointerException.class, () -> SketchProtoConverter.convert(null, null));
     assertThrows(
         NullPointerException.class, () -> SketchProtoConverter.convert(null, DEFAULT_CONFIG));
   }
 
   @Test
-  public void SketchProtoConverter_testBasicBehaviorSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new UniqueValueFunction()),
-            new FakeHashFunction());
+  public void testEmptySketch() {
     Sketch sketch = SketchProtoConverter.convert(anySketch, DEFAULT_CONFIG);
     assertThat(sketch).isEqualTo(Sketch.newBuilder().setConfig(DEFAULT_CONFIG).build());
   }
 
   @Test
-  public void SketchProtoConverter_testSketchWithMultipleRegistersSucceeds() {
-    AnySketch anySketch =
-        new AnySketch(
-            singletonList(new FakeIndexFunction()),
-            singletonList(new UniqueValueFunction()),
-            new FakeHashFunction());
-    anySketch.insert(1L, singletonList(812L));
-    anySketch.insert(2L, singletonList(321L));
-    anySketch.insert(3L, singletonList(5L));
-    anySketch.insert(4L, singletonList(96L));
+  public void testSketchWithMultipleRegistersSucceeds() {
+    anySketch.insert(1L, ImmutableMap.of("feature1", 10L, "feature2", 6L));
+    anySketch.insert(2L, ImmutableMap.of("feature1", 11L, "feature2", 7L));
+    anySketch.insert(3L, ImmutableMap.of("feature1", 12L, "feature2", 8L));
+    anySketch.insert(4L, ImmutableMap.of("feature1", 13L, "feature2", 9L));
+
     Sketch sketch = SketchProtoConverter.convert(anySketch, DEFAULT_CONFIG);
 
-    // We expect the values to be incremented by 1, so that "-1" is represented as "0" in protos.
+    // We expect feature2 values to be incremented by 1, so that "-1" is represented as "0" in
+    // protos.
     Sketch expected =
         Sketch.newBuilder()
             .setConfig(DEFAULT_CONFIG)
             .addAllRegisters(
                 Arrays.asList(
-                    Register.newBuilder().setIndex(2).addValues(813L).build(),
-                    Register.newBuilder().setIndex(4).addValues(322L).build(),
-                    Register.newBuilder().setIndex(6).addValues(6L).build(),
-                    Register.newBuilder().setIndex(8).addValues(97L).build()))
+                    makeRegister(1L, 10L, 7L),
+                    makeRegister(2L, 11L, 8L),
+                    makeRegister(3L, 12L, 9L),
+                    makeRegister(4L, 13L, 10L)))
             .build();
     assertThat(sketch).isEqualTo(expected);
+  }
+
+  private static Register makeRegister(long index, Long... values) {
+    return Register.newBuilder().setIndex(index).addAllValues(Arrays.asList(values)).build();
   }
 }

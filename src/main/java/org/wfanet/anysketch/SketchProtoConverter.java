@@ -41,7 +41,7 @@ public class SketchProtoConverter {
     for (Register register : anySketch) {
       builder
           .addRegistersBuilder()
-          .setIndex(register.getIndex().longValue())
+          .setIndex(register.getIndex())
           .addAllValues(encodeValues(anySketch.getValueFunctions(), register.getValues()))
           .build();
     }
@@ -53,7 +53,7 @@ public class SketchProtoConverter {
     return Streams.zip(
             valueFunctions.stream(),
             values.stream(),
-            (valueFn, value) -> valueFn.encodeToProtoValue(value))
+            (valueFn, value) -> valueFn.getAggregator().encodeToProtoValue(value))
         .collect(toList());
   }
 }

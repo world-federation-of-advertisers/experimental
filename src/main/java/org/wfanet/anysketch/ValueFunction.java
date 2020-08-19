@@ -14,28 +14,35 @@
 
 package org.wfanet.anysketch;
 
+import org.wfanet.anysketch.aggregators.Aggregator;
+import org.wfanet.anysketch.distributions.Distribution;
+
 /**
- * ValueFunction is a commutative binary function that takes two values and combines them into one.
- * Addition is the canonical example.
+ * Represents how register values are updated. An AnySketch with k values per register must be
+ * initialized with k ValueFunctions.
+ *
+ * <p>TODO: rename ValueFunction to something more appropriate -- it's not really a function.
  */
-interface ValueFunction {
+class ValueFunction {
+  private Aggregator aggregator;
+  private Distribution distribution;
 
-  /** Returns the String name to find item in the map */
-  String name();
-
-  /** Returns the new value by computing old and new value related to the algorithm */
-  long getValue(long oldValue, long newValue);
-
-  /** Returns the initial value before any computation */
-  long getInitialValue(long newValue);
-
-  /** Converts a value into how its stored in sketch protos. */
-  default long encodeToProtoValue(long value) {
-    return value;
+  /**
+   * Constructs a ValueFunction.
+   *
+   * @param aggregator how to combine values
+   * @param distribution how to transform items and user-provided data to form a register value
+   */
+  public ValueFunction(Aggregator aggregator, Distribution distribution) {
+    this.aggregator = aggregator;
+    this.distribution = distribution;
   }
 
-  /** Converts a value stored in a proto for use in the AnySketch Java class. */
-  default long decodeFromProtoValue(long protoValue) {
-    return protoValue;
+  public Aggregator getAggregator() {
+    return aggregator;
+  }
+
+  public Distribution getDistribution() {
+    return distribution;
   }
 }

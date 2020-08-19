@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.wfanet.anysketch;
+package org.wfanet.anysketch.fingerprinters;
 
-import com.google.common.primitives.UnsignedLong;
+import com.google.common.hash.Hashing;
+import java.nio.charset.StandardCharsets;
 
-/** HashFunction class provides multiple hashing options to hash the key */
-interface HashFunction {
+/**
+ * Implementation of {@link Fingerprinter} using FarmHash's Fingerprint64 algorithm.
+ *
+ * <p>See {@link Hashing#farmHashFingerprint64} for details on the algorithm.
+ */
+public class FarmFingerprinter implements Fingerprinter {
 
-  /**
-   * Computes a deterministic fingerprint.
-   *
-   * @param item What to fingerprint
-   * @return a 64-bit fingerprint of the input
-   */
-  UnsignedLong fingerprint(String item);
+  @Override
+  public long fingerprint(String item) {
+    return Hashing.farmHashFingerprint64().hashString(item, StandardCharsets.UTF_8).asLong();
+  }
 }

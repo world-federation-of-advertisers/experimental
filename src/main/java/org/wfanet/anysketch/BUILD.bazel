@@ -3,17 +3,15 @@ load("@rules_java//java:defs.bzl", "java_library")
 package(default_visibility = ["//visibility:public"])
 
 java_library(
-    name = "any_sketch",
+    name = "anysketch",
     srcs = [
         "AnySketch.java",
-        "ExponentialIndexFunction.java",
-        "HashFunction.java",
-        "FarmHashFunction.java",
-        "IndexFunction.java",
-        "UniqueValueFunction.java",
         "ValueFunction.java",
     ],
     deps = [
+        "//src/main/java/org/wfanet/anysketch/aggregators",
+        "//src/main/java/org/wfanet/anysketch/distributions",
+        "//src/main/java/org/wfanet/anysketch/fingerprinters",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -21,11 +19,12 @@ java_library(
 java_library(
     name = "sketch_proto_converter",
     srcs = [
-        "SketchProtoConverter.java"
+        "SketchProtoConverter.java",
     ],
     deps = [
-        ":any_sketch",
-        "@maven//:com_google_guava_guava",
+        ":anysketch",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
+        "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
+        "@maven//:com_google_guava_guava",
     ],
 )

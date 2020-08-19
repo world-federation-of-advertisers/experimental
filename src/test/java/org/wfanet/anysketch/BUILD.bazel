@@ -5,40 +5,10 @@ java_test(
     srcs = ["AnySketchTest.java"],
     test_class = "org.wfanet.anysketch.AnySketchTest",
     deps = [
-        "//src/main/java/org/wfanet/anysketch:any_sketch",
-        "@maven//:com_google_truth_truth",
-        "@maven//:junit_junit",
-    ],
-)
-
-java_test(
-    name = "exponential_index_function_test",
-    srcs = ["ExponentialIndexFunctionTest.java"],
-    test_class = "org.wfanet.anysketch.ExponentialIndexFunctionTest",
-    deps = [
-        "//src/main/java/org/wfanet/anysketch:any_sketch",
-        "@maven//:com_google_truth_truth",
-        "@maven//:junit_junit",
-    ],
-)
-
-java_test(
-    name = "unique_value_function_test",
-    srcs = ["UniqueValueFunctionTest.java"],
-    test_class = "org.wfanet.anysketch.UniqueValueFunctionTest",
-    deps = [
-        "//src/main/java/org/wfanet/anysketch:any_sketch",
-        "@maven//:com_google_truth_truth",
-        "@maven//:junit_junit",
-    ],
-)
-
-java_test(
-    name = "farm_hash_function_test",
-    srcs = ["FarmHashFunctionTest.java"],
-    test_class = "org.wfanet.anysketch.FarmHashFunctionTest",
-    deps = [
-        "//src/main/java/org/wfanet/anysketch:any_sketch",
+        "//src/main/java/org/wfanet/anysketch",
+        "//src/main/java/org/wfanet/anysketch/aggregators",
+        "//src/main/java/org/wfanet/anysketch/distributions",
+        "//src/main/java/org/wfanet/anysketch/fingerprinters",
         "@maven//:com_google_truth_truth",
         "@maven//:junit_junit",
     ],
@@ -49,9 +19,13 @@ java_test(
     srcs = ["SketchProtoConverterTest.java"],
     test_class = "org.wfanet.anysketch.SketchProtoConverterTest",
     deps = [
-        "//src/main/java/org/wfanet/anysketch:any_sketch",
+        "//src/main/java/org/wfanet/anysketch",
         "//src/main/java/org/wfanet/anysketch:sketch_proto_converter",
+        "//src/main/java/org/wfanet/anysketch/aggregators",
+        "//src/main/java/org/wfanet/anysketch/distributions",
+        "//src/main/java/org/wfanet/anysketch/fingerprinters",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
+        "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
         "@maven//:com_google_truth_truth",
         "@maven//:junit_junit",
     ],

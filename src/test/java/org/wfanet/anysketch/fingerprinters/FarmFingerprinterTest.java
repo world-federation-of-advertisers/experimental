@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.wfanet.anysketch;
+package org.wfanet.anysketch.fingerprinters;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -22,27 +22,25 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class FarmHashFunctionTest {
+public class FarmFingerprinterTest {
+  private final FarmFingerprinter fingerprinter = new FarmFingerprinter();
 
   @Test
-  public void FarmHashFunctionTest_testFingerPrintWithNullValueFails() {
-    FarmHashFunction farmHashFunction = new FarmHashFunction();
-    assertThrows(NullPointerException.class, () -> farmHashFunction.fingerprint(null));
+  public void testFingerPrintWithNullValueFails() {
+    assertThrows(NullPointerException.class, () -> fingerprinter.fingerprint(null));
   }
 
   @Test
-  public void FarmHashFunctionTest_testTwoSameStringsMatchSucceeds() {
-    FarmHashFunction farmHashFunction = new FarmHashFunction();
+  public void testTwoSameStringsMatchSucceeds() {
     String x = "Foo";
     String y = "Foo";
-    assertThat(farmHashFunction.fingerprint(x)).isEqualTo(farmHashFunction.fingerprint(y));
+    assertThat(fingerprinter.fingerprint(x)).isEqualTo(fingerprinter.fingerprint(y));
   }
 
   @Test
-  public void FarmHashFunctionTest_testTwoDifferentStringsMatchFails() {
-    FarmHashFunction farmHashFunction = new FarmHashFunction();
+  public void testTwoDifferentStringsMatchFails() {
     String x = "Foo";
     String y = "Bar";
-    assertThat(farmHashFunction.fingerprint(x)).isNotEqualTo(farmHashFunction.fingerprint(y));
+    assertThat(fingerprinter.fingerprint(x)).isNotEqualTo(fingerprinter.fingerprint(y));
   }
 }
