@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ADS_XMEDIA_LANCELOT_ANY_SKETCH_ANY_SKETCH_H_
-#define ADS_XMEDIA_LANCELOT_ANY_SKETCH_ANY_SKETCH_H_
+#ifndef SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_
+#define SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_
 
 #include <cstdint>
 #include <memory>
@@ -26,9 +26,9 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
 #include "absl/random/bit_gen_ref.h"
-#include "hash_function.h"
-#include "index_function.h"
-#include "value_function.h"
+#include "src/main/cc/any_sketch/hash_function.h"
+#include "src/main/cc/any_sketch/index_function.h"
+#include "src/main/cc/any_sketch/value_function.h"
 
 namespace wfa::any_sketch {
 // A generalized sketch class.
@@ -146,4 +146,4 @@ class AnySketch {
 
 }  // namespace wfa::any_sketch
 
-#endif  // ADS_XMEDIA_LANCELOT_ANY_SKETCH_ANY_SKETCH_H_
+#endif  // SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_

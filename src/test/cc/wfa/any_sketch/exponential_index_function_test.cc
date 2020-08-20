@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "exponential_index_function.h"
+#include "src/main/cc/any_sketch/exponential_index_function.h"
 
 #include <cmath>
 #include <cstdint>

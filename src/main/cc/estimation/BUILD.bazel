@@ -13,18 +13,3 @@ cc_library(
         "@absl//absl/functional:bind_front",
     ],
 )
-
-cc_test(
-    name = "estimators_test",
-    size = "small",
-    srcs = [
-        "estimators_test.cc",
-    ],
-    deps = [
-        ":estimators",
-        "//src/main/cc/any_sketch:exponential_index_function",
-        "//src/main/cc/any_sketch:farm_hash_function",
-        "@absl//absl/container:flat_hash_set",
-        "@googletest//:gtest_main",
-    ],
-)

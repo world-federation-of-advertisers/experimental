@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
 
 #include <openssl/obj_mac.h>
 

@@ -16,18 +16,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "sketch_encrypter_test",
-    size = "small",
-    srcs = [
-        ":sketch_encrypter_test.cc",
-    ],
-    deps = [
-        ":sketch_encrypter",
-        "@googletest//:gtest_main",
-    ],
-)
-
 cc_library(
     name = "sketch_encrypter_adapter",
     srcs = [
@@ -40,18 +28,5 @@ cc_library(
         ":sketch_encrypter",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
         "@com_google_private_join_and_compute//util:status",
-    ],
-)
-
-cc_test(
-    name = "sketch_encrypter_adapter_test",
-    size = "small",
-    srcs = [
-        ":sketch_encrypter_adapter_test.cc",
-    ],
-    deps = [
-        ":sketch_encrypter_adapter",
-        "@googletest//:gtest_main",
-        "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
     ],
 )

@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <math.h>
+#include "src/main/cc/estimation/estimators.h"
 
+#include <cmath>
 #include <cstdint>
 #include <functional>
-#include <iostream>
-#include <memory>
-#include <string>
 
 #include "absl/base/macros.h"
 #include "absl/functional/bind_front.h"

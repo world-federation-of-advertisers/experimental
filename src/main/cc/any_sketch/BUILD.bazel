@@ -20,19 +20,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "any_sketch_test",
-    size = "small",
-    srcs = [
-        "any_sketch_test.cc",
-    ],
-    deps = [
-        ":any_sketch",
-        "@absl//absl/types:span",
-        "@googletest//:gtest_main",
-    ],
-)
-
 cc_library(
     name = "hash_function",
     srcs = [],
@@ -77,18 +64,6 @@ cc_library(
         ":index_function",
         "@absl//absl/base:core_headers",
         "@absl//absl/types:span",
-    ],
-)
-
-cc_test(
-    name = "exponential_index_function_test",
-    size = "small",
-    srcs = [
-        "exponential_index_function_test.cc",
-    ],
-    deps = [
-        ":exponential_index_function",
-        "@googletest//:gtest_main",
     ],
 )
 

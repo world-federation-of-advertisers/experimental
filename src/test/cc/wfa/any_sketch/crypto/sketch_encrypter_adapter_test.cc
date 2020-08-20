@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter_adapter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
 
 #include <openssl/obj_mac.h>
 
@@ -20,7 +20,7 @@
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {

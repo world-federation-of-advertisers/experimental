@@ -1,0 +1,24 @@
+cc_test(
+    name = "any_sketch_test",
+    size = "small",
+    srcs = [
+        "any_sketch_test.cc",
+    ],
+    deps = [
+        "//src/main/cc/any_sketch",
+        "@absl//absl/types:span",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "exponential_index_function_test",
+    size = "small",
+    srcs = [
+        "exponential_index_function_test.cc",
+    ],
+    deps = [
+        "//src/main/cc/any_sketch:exponential_index_function",
+        "@googletest//:gtest_main",
+    ],
+)

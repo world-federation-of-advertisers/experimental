@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "any_sketch.h"
+#include "src/main/cc/any_sketch/any_sketch.h"
 
 #include <cstdint>
 #include <memory>
