@@ -10,8 +10,8 @@ package org.wfanet.anysketch.aggregators;
  * fields) we shift each value up by 1. In other words, DESTROYED encodes as zero in protos, 0 as 1,
  * 1 as 2, etc.
  */
-public class UniqueAggregator implements Aggregator {
-  public static final long DESTROYED = -1;
+class UniqueAggregator implements Aggregator {
+  static final long DESTROYED = -1;
 
   @Override
   public long encodeToProtoValue(long value) {

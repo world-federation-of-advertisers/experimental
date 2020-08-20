@@ -9,7 +9,7 @@ import java.util.Map;
  * <p>If the item metadata does not include the specified key or it falls outside the range of
  * allowed values, this will throw.
  */
-public class OracleDistribution extends Distribution {
+class OracleDistribution extends Distribution {
   private String featureName;
 
   /**
@@ -19,7 +19,7 @@ public class OracleDistribution extends Distribution {
    * @param minValue the smallest value allowed
    * @param maxValue the largest value allowed
    */
-  public OracleDistribution(String featureName, long minValue, long maxValue) {
+  OracleDistribution(String featureName, long minValue, long maxValue) {
     super(minValue, maxValue);
     this.featureName = featureName;
   }

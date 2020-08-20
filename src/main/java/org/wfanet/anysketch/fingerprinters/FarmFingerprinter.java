@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
  *
  * <p>See {@link Hashing#farmHashFingerprint64} for details on the algorithm.
  */
+@SuppressWarnings("UnstableApiUsage") // For Hashing
 public class FarmFingerprinter implements Fingerprinter {
 
   @Override

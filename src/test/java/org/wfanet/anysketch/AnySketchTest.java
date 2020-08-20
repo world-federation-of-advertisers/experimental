@@ -29,11 +29,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.wfanet.anysketch.AnySketch.Register;
-import org.wfanet.anysketch.aggregators.SumAggregator;
+import org.wfanet.anysketch.aggregators.Aggregators;
 import org.wfanet.anysketch.distributions.Distribution;
-import org.wfanet.anysketch.distributions.FingerprintingDistribution;
-import org.wfanet.anysketch.distributions.OracleDistribution;
-import org.wfanet.anysketch.distributions.UniformDistribution;
+import org.wfanet.anysketch.distributions.Distributions;
 
 @SuppressWarnings("UnstableApiUsage") // For toImmutableList.
 @RunWith(JUnit4.class)
@@ -64,14 +62,14 @@ public class AnySketchTest {
   }
 
   private static Distribution makeOracleDistribution(String feature) {
-    return new OracleDistribution(feature, 5, 10_005);
+    return Distributions.oracle(feature, 5, 10_005);
   }
 
   private static AnySketch makeSingleIndexAnySketch(Distribution... distributions) {
     return new AnySketch(
         singletonList(new FakeDistribution()),
         Arrays.stream(distributions)
-            .map(d -> new ValueFunction(new SumAggregator(), d))
+            .map(d -> new ValueFunction(Aggregators.sum(), d))
             .collect(toImmutableList()));
   }
 
@@ -132,16 +130,9 @@ public class AnySketchTest {
   }
 
   @Test
-  public void testFingerprintingDistribution() {
-    // A distribution that returns the fingerprint mod 1000. The fingerprinter always returns 9999,
-    // so this should map every element to 999.
-    Distribution distribution =
-        new FingerprintingDistribution("Foo", 0, 999, i -> 9999) {
-          @Override
-          protected long applyToFingerprint(long fingerprint, Map<String, Long> itemMetadata) {
-            return fingerprint % 1000;
-          }
-        };
+  public void testUniformDistribution() {
+    // The fingerprinter always returns 9999, so this should map every element to 999.
+    Distribution distribution = Distributions.uniform(i -> 9999, 0, 999);
 
     AnySketch anySketch = makeSingleIndexAnySketch(distribution);
 
@@ -181,7 +172,7 @@ public class AnySketchTest {
         new AnySketch(
             ImmutableList.of(
                 makeOracleDistribution("feature1"), makeOracleDistribution("feature2")),
-            ImmutableList.of(new ValueFunction(new SumAggregator(), new FakeDistribution())));
+            ImmutableList.of(new ValueFunction(Aggregators.sum(), new FakeDistribution())));
 
     sketch.insert(0L, ImmutableMap.of("feature1", 6L, "feature2", 10L));
 
@@ -195,9 +186,9 @@ public class AnySketchTest {
         () ->
             new AnySketch(
                 ImmutableList.of(
-                    new UniformDistribution(Long::parseLong, "Foo", 0, 1L << 33L),
-                    new UniformDistribution(Long::parseLong, "Bar", 0, 1L << 33L)),
-                ImmutableList.of(new ValueFunction(new SumAggregator(), new FakeDistribution()))));
+                    Distributions.uniform(Long::parseLong, 0, 1L << 33L),
+                    Distributions.uniform(Long::parseLong, 0, 1L << 33L)),
+                ImmutableList.of(new ValueFunction(Aggregators.sum(), new FakeDistribution()))));
   }
 
   @Test

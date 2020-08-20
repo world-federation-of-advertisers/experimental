@@ -19,10 +19,13 @@ java_library(
 java_library(
     name = "sketch_proto_converter",
     srcs = [
-        "SketchProtoConverter.java",
+        "SketchProtos.java",
     ],
     deps = [
         ":anysketch",
+        "//src/main/java/org/wfanet/anysketch/aggregators",
+        "//src/main/java/org/wfanet/anysketch/distributions",
+        "//src/main/java/org/wfanet/anysketch/fingerprinters",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
         "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
         "@maven//:com_google_guava_guava",

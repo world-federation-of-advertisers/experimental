@@ -40,7 +40,7 @@ public class ExponentialDistributionTest {
   private final FakeFingerprinter fingerprinter = new FakeFingerprinter();
 
   private ExponentialDistribution makeDistribution(double rate, long size) {
-    return new ExponentialDistribution("Foo", fingerprinter, rate, size);
+    return new ExponentialDistribution(fingerprinter, rate, size);
   }
 
   @Test

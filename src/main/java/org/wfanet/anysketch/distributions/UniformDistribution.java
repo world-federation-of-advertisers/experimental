@@ -3,10 +3,9 @@ package org.wfanet.anysketch.distributions;
 import java.util.Map;
 import org.wfanet.anysketch.fingerprinters.Fingerprinter;
 
-public class UniformDistribution extends FingerprintingDistribution {
-  public UniformDistribution(
-      Fingerprinter fingerprinter, String distributionName, long min, long max) {
-    super(distributionName, min, max, fingerprinter);
+class UniformDistribution extends FingerprintingDistribution {
+  UniformDistribution(Fingerprinter fingerprinter, long min, long max) {
+    super(min, max, fingerprinter);
   }
 
   @Override

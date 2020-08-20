@@ -102,9 +102,11 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 # Maven
 maven_install(
     artifacts = [
+        "com.google.guava:guava:29.0-jre",
+        "com.google.truth.extensions:truth-liteproto-extension:1.0.1",
+        "com.google.truth.extensions:truth-proto-extension:1.0.1",
         "com.google.truth:truth:1.0.1",
         "junit:junit:4.13",
-        "com.google.guava:guava:29.0-jre",
     ],
     generate_compat_repositories = True,
     repositories = [

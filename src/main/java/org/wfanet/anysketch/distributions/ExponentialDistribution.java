@@ -23,7 +23,7 @@ import org.wfanet.anysketch.fingerprinters.Fingerprinter;
  * Maps the output of a {@link Fingerprinter} to a coordinate using an exponential distribution with
  * param rate and multiplies the output with param size.
  */
-public class ExponentialDistribution extends FingerprintingDistribution {
+class ExponentialDistribution extends FingerprintingDistribution {
 
   private final double rate;
   private final double expRate;
@@ -32,13 +32,11 @@ public class ExponentialDistribution extends FingerprintingDistribution {
   /**
    * Creates ExponentialIndexFunction object expecting rate and size arguments.
    *
-   * @param distributionName a unique name for the distribution, used as a salt when fingerprinting
    * @param rate Rate of the exponential distribution
    * @param size Number of legionaries
    */
-  public ExponentialDistribution(
-      String distributionName, Fingerprinter fingerprinter, double rate, long size) {
-    super(distributionName, 0, size - 1, fingerprinter);
+  ExponentialDistribution(Fingerprinter fingerprinter, double rate, long size) {
+    super(0, size - 1, fingerprinter);
     Preconditions.checkArgument(rate > 0);
     Preconditions.checkArgument(size > 0);
     this.rate = rate;

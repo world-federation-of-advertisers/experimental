@@ -29,15 +29,10 @@ import org.wfanet.anysketch.distributions.Distribution;
 /**
  * A generalized sketch class. This sketch class generalizes the data structure required to capture
  * Bloom filters, HLLs, Cascading Legions, Vector of Counts, and other sketch types. It uses a map
- * of register keys to a register value which is a tuple of counts.
+ * of register keys to a register value which is a tuple of numeric values.
  */
 public class AnySketch implements Iterable<Register> {
-
-  private final ImmutableList<Distribution> indexDistributions;
-  private final ImmutableList<ValueFunction> valueFunctions;
-  private final Map<Long, List<Long>> registers;
-
-  /** Enriched cardinality sketch register class. */
+  /** Represents a single register of an AnySketch. */
   public static class Register {
 
     // Linearized register index
@@ -65,6 +60,10 @@ public class AnySketch implements Iterable<Register> {
     }
   }
 
+  private final ImmutableList<Distribution> indexDistributions;
+  private final ImmutableList<ValueFunction> valueFunctions;
+  private final Map<Long, List<Long>> registers;
+
   /**
    * Creates an AnySketch.
    *
@@ -83,39 +82,15 @@ public class AnySketch implements Iterable<Register> {
     Preconditions.checkArgument(indexesLeft > 0, "A register index could possibly exceed 2^63 - 1");
   }
 
+  /** Retries the ValueFunctions that the AnySketch was constructed with. */
   public ImmutableList<ValueFunction> getValueFunctions() {
     return valueFunctions;
   }
 
-  // Returns the number of values per Register
-  private int registerSize() {
-    return valueFunctions.size();
-  }
-
-  private long getLinearizedIndex(String item, Map<String, Long> itemMetadata) {
-    long product = 1L;
-    long linearizedIndex = 0;
-
-    for (Distribution distribution : indexDistributions) {
-      long indexPart = distribution.apply(item, itemMetadata) - distribution.getMinValue();
-      linearizedIndex = product * linearizedIndex + indexPart;
-      product *= distribution.getMaxValue() - distribution.getMinValue();
-    }
-    return linearizedIndex;
-  }
-
+  /** Merges a set of values into a register. */
   void aggregateIntoRegister(long index, List<Long> values) {
+    Preconditions.checkArgument(values.size() == registerSize());
     registers.merge(index, new ArrayList<>(values), this::aggregateIntoExistingRegister);
-  }
-
-  private List<Long> aggregateIntoExistingRegister(List<Long> oldValues, List<Long> newValues) {
-    Preconditions.checkState(oldValues.size() == registerSize());
-    for (int i = 0; i < registerSize(); i++) {
-      long oldValue = oldValues.get(i);
-      long newValue = valueFunctions.get(i).getAggregator().aggregate(oldValue, newValues.get(i));
-      oldValues.set(i, newValue);
-    }
-    return oldValues;
   }
 
   /**
@@ -193,5 +168,31 @@ public class AnySketch implements Iterable<Register> {
         return new Register(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
       }
     };
+  }
+
+  private int registerSize() {
+    return valueFunctions.size();
+  }
+
+  private long getLinearizedIndex(String item, Map<String, Long> itemMetadata) {
+    long product = 1L;
+    long linearizedIndex = 0;
+
+    for (Distribution distribution : indexDistributions) {
+      long indexPart = distribution.apply(item, itemMetadata) - distribution.getMinValue();
+      linearizedIndex = product * linearizedIndex + indexPart;
+      product *= distribution.getMaxValue() - distribution.getMinValue();
+    }
+    return linearizedIndex;
+  }
+
+  private List<Long> aggregateIntoExistingRegister(List<Long> oldValues, List<Long> newValues) {
+    Preconditions.checkState(oldValues.size() == registerSize());
+    for (int i = 0; i < registerSize(); i++) {
+      long oldValue = oldValues.get(i);
+      long newValue = valueFunctions.get(i).getAggregator().aggregate(oldValue, newValues.get(i));
+      oldValues.set(i, newValue);
+    }
+    return oldValues;
   }
 }

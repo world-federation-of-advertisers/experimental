@@ -15,9 +15,12 @@ java_test(
 )
 
 java_test(
-    name = "sketch_proto_converter_test",
-    srcs = ["SketchProtoConverterTest.java"],
-    test_class = "org.wfanet.anysketch.SketchProtoConverterTest",
+    name = "sketch_protos_test",
+    srcs = ["SketchProtosTest.java"],
+    resources = [
+        "//src/test/java/org/wfanet/anysketch/testdata",
+    ],
+    test_class = "org.wfanet.anysketch.SketchProtosTest",
     deps = [
         "//src/main/java/org/wfanet/anysketch",
         "//src/main/java/org/wfanet/anysketch:sketch_proto_converter",
@@ -26,6 +29,9 @@ java_test(
         "//src/main/java/org/wfanet/anysketch/fingerprinters",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
         "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
+        "@com_google_protobuf//:protobuf_java",
+        "@maven//:com_google_truth_extensions_truth_liteproto_extension",
+        "@maven//:com_google_truth_extensions_truth_proto_extension",
         "@maven//:com_google_truth_truth",
         "@maven//:junit_junit",
     ],

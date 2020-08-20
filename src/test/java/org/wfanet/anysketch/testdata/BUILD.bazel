@@ -1,0 +1,7 @@
+filegroup(
+    name = "testdata",
+    srcs = [
+        "liquid_legions.textpb",
+    ],
+    visibility = ["//src/test/java/org/wfanet/anysketch:__pkg__"],
+)
