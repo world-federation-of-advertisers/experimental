@@ -10,6 +10,6 @@ class UniformDistribution extends FingerprintingDistribution {
 
   @Override
   protected long applyToFingerprint(long fingerprint, Map<String, Long> itemMetadata) {
-    return Math.floorMod(fingerprint, getSize()) + getMinValue();
+    return Long.remainderUnsigned(fingerprint, getSize()) + getMinValue();
   }
 }

@@ -18,9 +18,9 @@ public class UniformDistributionTest {
 
   @Test
   public void testNegativeFingerprint() {
-    UniformDistribution distribution = new UniformDistribution(i -> -7, 1, 5);
-    // -7 % 5 + 1 == -2 % 5 + 1 == 3 % 5 + 1 = 4
-    assertThat(distribution.apply("DoesNotMatter", null)).isEqualTo(4);
+    UniformDistribution distribution = new UniformDistribution(i -> -7, 1, 17);
+    // -7 signed is bit-equivalent to 2^64-7 unsigned, which is congruent to 11 mod 17.
+    assertThat(distribution.apply("DoesNotMatter", null)).isEqualTo(12);
   }
 
   @Test
