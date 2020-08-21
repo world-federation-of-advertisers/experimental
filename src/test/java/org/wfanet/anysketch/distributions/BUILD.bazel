@@ -13,6 +13,18 @@ java_test(
 )
 
 java_test(
+    name = "geometric_distribution_test",
+    srcs = ["GeometricDistributionTest.java"],
+    test_class = "org.wfanet.anysketch.distributions.GeometricDistributionTest",
+    deps = [
+        "//src/main/java/org/wfanet/anysketch/distributions",
+        "//src/main/java/org/wfanet/anysketch/fingerprinters",
+        "@maven//:com_google_truth_truth",
+        "@maven//:junit_junit",
+    ],
+)
+
+java_test(
     name = "oracle_distribution_test",
     srcs = ["OracleDistributionTest.java"],
     test_class = "org.wfanet.anysketch.distributions.OracleDistributionTest",

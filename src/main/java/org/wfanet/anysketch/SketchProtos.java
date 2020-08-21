@@ -29,6 +29,7 @@ import org.wfanet.anysketch.fingerprinters.Fingerprinter;
 import org.wfanet.anysketch.fingerprinters.SaltedFingerprinter;
 import org.wfanet.measurement.api.v1alpha.Distribution;
 import org.wfanet.measurement.api.v1alpha.ExponentialDistribution;
+import org.wfanet.measurement.api.v1alpha.GeometricDistribution;
 import org.wfanet.measurement.api.v1alpha.OracleDistribution;
 import org.wfanet.measurement.api.v1alpha.Sketch;
 import org.wfanet.measurement.api.v1alpha.SketchConfig;
@@ -142,6 +143,8 @@ public class SketchProtos {
         OracleDistribution oracle = distribution.getOracle();
         return Distributions.oracle(oracle.getKey(), Long.MIN_VALUE, Long.MAX_VALUE);
       case GEOMETRIC:
+        GeometricDistribution geometric = distribution.getGeometric();
+        return Distributions.geometric(makeFingerprinter(name), 0, geometric.getNumValues() - 1);
       case CONSTANT:
       case DIRAC_MIXTURE:
       case VERBATIM:

@@ -16,4 +16,8 @@ public class Distributions {
   public static Distribution exponential(Fingerprinter fingerprinter, double rate, long size) {
     return new ExponentialDistribution(fingerprinter, rate, size);
   }
+
+  public static Distribution geometric(Fingerprinter fingerprinter, long minValue, long maxValue) {
+    return new GeometricDistribution(minValue, maxValue, fingerprinter);
+  }
 }
