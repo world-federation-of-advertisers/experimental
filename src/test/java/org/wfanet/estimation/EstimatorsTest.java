@@ -29,7 +29,7 @@ public class EstimatorsTest {
 
   @Test
   public void EstimateCardinalityLiquidLegions_basicBehavior()  {
-    assertEquals(767430,
+    assertEquals(767430L,
         Estimators.EstimateCardinalityLiquidLegions(
             /* decay_rate= */ 10.0, /* size= */ 250000, /* active_register_count= */ 100000));
   }
