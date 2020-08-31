@@ -26,7 +26,7 @@ namespace wfa::any_sketch::crypto {
 StatusOr<std::string> EncryptSketch(const std::string& serialized_request) {
   wfa::any_sketch::crypto::EncryptSketchRequest request_proto;
   if (!request_proto.ParseFromString(serialized_request)) {
-    return private_join_and_compute::InternalError(
+    return private_join_and_compute::InvalidArgumentError(
         "failed to parse the EncryptSketchRequest proto.");
   }
   ASSIGN_OR_RETURN(auto sketch_encrypter,
@@ -38,6 +38,21 @@ StatusOr<std::string> EncryptSketch(const std::string& serialized_request) {
   wfa::any_sketch::crypto::EncryptSketchResponse response;
   ASSIGN_OR_RETURN(*response.mutable_encrypted_sketch(),
                    sketch_encrypter->Encrypt(request_proto.sketch()));
+  return response.SerializeAsString();
+}
+
+private_join_and_compute::StatusOr<std::string> CombineElGamalPublicKeys(
+    const std::string& serialized_request) {
+  wfa::any_sketch::crypto::CombineElGamalPublicKeysRequest request_proto;
+  if (!request_proto.ParseFromString(serialized_request)) {
+    return private_join_and_compute::InvalidArgumentError(
+        "failed to parse the CombineElGamalPublicKeysRequest proto.");
+  }
+  wfa::any_sketch::crypto::CombineElGamalPublicKeysResponse response;
+  std::vector<ElGamalPublicKeys> keys(request_proto.el_gamal_keys().begin(),
+                                      request_proto.el_gamal_keys().end());
+  ASSIGN_OR_RETURN(*response.mutable_el_gamal_keys(),
+                   CombineElGamalPublicKeys(request_proto.curve_id(), keys));
   return response.SerializeAsString();
 }
 

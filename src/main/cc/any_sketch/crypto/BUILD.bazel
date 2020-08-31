@@ -8,6 +8,7 @@ cc_library(
     ],
     deps = [
         "//src/main/cc/any_sketch/util:macros",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
         "@absl//absl/container:flat_hash_map",
         "@absl//absl/types:span",
         "@com_google_private_join_and_compute//crypto:commutative_elgamal",

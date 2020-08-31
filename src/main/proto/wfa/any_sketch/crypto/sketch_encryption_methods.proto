@@ -47,3 +47,17 @@ message EncryptSketchResponse {
   // The encrypted sketch
   bytes encrypted_sketch = 1;
 }
+
+// The request to combine a list of Elgamal public keys
+message CombineElGamalPublicKeysRequest {
+  // The elliptical curve to work on.
+  int64 curve_id = 1;
+  // Public keys to combine. All keys should contain the same generator.
+  repeated ElGamalPublicKeys el_gamal_keys = 2;
+}
+
+// The response of combining a list of Elgamal public keys
+message CombineElGamalPublicKeysResponse {
+  // The combined public keys.
+  ElGamalPublicKeys el_gamal_keys = 1;
+}

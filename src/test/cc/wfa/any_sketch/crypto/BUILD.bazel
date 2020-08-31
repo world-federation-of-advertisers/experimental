@@ -6,6 +6,7 @@ cc_test(
     ],
     deps = [
         "//src/main/cc/any_sketch/crypto:sketch_encrypter",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
         "@googletest//:gtest_main",
     ],
 )

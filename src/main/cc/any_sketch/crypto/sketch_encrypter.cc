@@ -30,6 +30,7 @@ using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::private_join_and_compute::InternalError;
+using ::private_join_and_compute::InvalidArgumentError;
 using ::private_join_and_compute::Status;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
@@ -245,6 +246,41 @@ StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
           std::move(el_gamal_cipher), std::move(ctx), std::move(ec_group),
           max_counter_value);
   return {std::move(result)};
+}
+
+StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
+    int curve_id, const std::vector<ElGamalPublicKeys>& keys) {
+  if (keys.empty()) {
+    return InvalidArgumentError("Keys cannot be empty");
+  }
+  if (keys.size() == 1) {
+    return keys[0];
+  }
+
+  ElGamalPublicKeys result;
+  result.set_el_gamal_g(keys[0].el_gamal_g());
+
+  Context ctx;
+  ASSIGN_OR_RETURN_ERROR(ECGroup ec_group, ECGroup::Create(curve_id, &ctx),
+                         absl::StrCat("Invalid Curve_id: ", curve_id));
+  ASSIGN_OR_RETURN_ERROR(
+      ECPoint combined_element_ec, ec_group.CreateECPoint(keys[0].el_gamal_y()),
+      absl::StrCat("Invalid ECPoint: ", keys[0].el_gamal_y()));
+
+  for (size_t i = 1; i < keys.size(); i++) {
+    if (keys[i].el_gamal_g() != result.el_gamal_g()) {
+      return InvalidArgumentError(absl::StrCat("Generators don't match",
+                                               keys[i].el_gamal_g(), " vs ",
+                                               result.el_gamal_g()));
+    }
+    ASSIGN_OR_RETURN_ERROR(
+        ECPoint element_ec, ec_group.CreateECPoint(keys[i].el_gamal_y()),
+        absl::StrCat("Invalid ECPoint: ", keys[i].el_gamal_y()));
+    ASSIGN_OR_RETURN(combined_element_ec, combined_element_ec.Add(element_ec));
+  }
+  ASSIGN_OR_RETURN(*result.mutable_el_gamal_y(),
+                   combined_element_ec.ToBytesCompressed());
+  return std::move(result);
 }
 
 }  // namespace wfa::any_sketch::crypto

@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "util/statusor.h"
+#include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 #include "wfa/measurement/api/v1alpha/sketch.pb.h"
 
 namespace wfa::any_sketch::crypto {
@@ -63,6 +64,10 @@ class SketchEncrypter {
 StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
     int curve_id, size_t max_counter_value,
     const CiphertextString& public_key_bytes);
+
+// Combine a vector of ElGamalPublicKeys whose contain the same generator.
+StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
+    int curve_id, const std::vector<ElGamalPublicKeys>& keys);
 
 }  // namespace wfa::any_sketch::crypto
 

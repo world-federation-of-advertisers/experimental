@@ -30,6 +30,9 @@ namespace wfa::any_sketch::crypto {
 private_join_and_compute::StatusOr<std::string> EncryptSketch(
     const std::string& serialized_request);
 
+private_join_and_compute::StatusOr<std::string> CombineElGamalPublicKeys(
+    const std::string& serialized_request);
+
 }  // namespace wfa::any_sketch::crypto
 
 #endif  // SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_ADAPTER_H_

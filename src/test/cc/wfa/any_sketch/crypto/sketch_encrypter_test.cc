@@ -21,6 +21,7 @@
 #include "absl/strings/string_view.h"
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
+#include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 
 namespace wfa::any_sketch::crypto {
@@ -31,6 +32,8 @@ using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::private_join_and_compute::InternalError;
+using ::private_join_and_compute::Status;
+using ::private_join_and_compute::StatusCode;
 using ::testing::SizeIs;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
@@ -38,6 +41,28 @@ using ::wfa::measurement::api::v1alpha::SketchConfig;
 constexpr int kTestCurveId = NID_X9_62_prime256v1;
 constexpr int kMaxCounterValue = 100;
 
+constexpr char kElGamalPublicKeyG[] =
+    "036b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296";
+constexpr char kElGamalPublicKeyY1[] =
+    "02d1432ca007a6c6d739fce2d21feb56d9a2c35cf968265f9093c4b691e11386b3";
+constexpr char kElGamalPublicKeyY2[] =
+    "039ef370ff4d216225401781d88a03f5a670a5040e6333492cb4e0cd991abbd5a3";
+constexpr char kElGamalPublicKeyY3[] =
+    "02d0f25ab445fc9c29e7e2509adc93308430f432522ffa93c2ae737ceb480b66d7";
+constexpr char kCombinedElGamalPublicKeyY[] =
+    "02505d7b3ac4c3c387c74132ab677a3421e883b90d4c83dc766e400fe67acc1f04";
+
+std::string HexStringToByteString(const std::string& hex) {
+  std::vector<char> bytes;
+  for (unsigned int i = 0; i < hex.length(); i += 2) {
+    std::string byteString = hex.substr(i, 2);
+    char byte = static_cast<char>(strtol(byteString.c_str(), NULL, 16));
+    bytes.push_back(byte);
+  }
+  return std::string(bytes.begin(), bytes.end());
+}
+
+// TODO: use protocol buffer matchers when they are available
 // Returns true if the decryption of expected is the same with that of arg.
 MATCHER_P2(HasSameDecryption, original_cipher, expected, "") {
   auto decrypted_actual =
@@ -46,6 +71,22 @@ MATCHER_P2(HasSameDecryption, original_cipher, expected, "") {
       original_cipher->Decrypt(std::make_pair(expected.u, expected.e)).value();
   return ExplainMatchResult(testing::Eq(decrypted_expected), decrypted_actual,
                             result_listener);
+}
+
+// Returns true if two proto messages are equal when ignoring the order of
+// repeated fields.
+MATCHER_P(EqualsProto, expected, "") {
+  ::google::protobuf::util::MessageDifferencer differencer;
+  differencer.set_repeated_field_comparison(
+      ::google::protobuf::util::MessageDifferencer::AS_SET);
+  return differencer.Compare(arg, expected);
+}
+
+MATCHER_P2(StatusIs, code, message, "") {
+  return ExplainMatchResult(
+      AllOf(testing::Property(&Status::code, code),
+            testing::Property(&Status::message, testing::HasSubstr(message))),
+      arg, result_listener);
 }
 
 // Helper function to create a SketchConfig.
@@ -233,6 +274,49 @@ TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
   ASSERT_FALSE(decryption.status().ok());
   EXPECT_NE(decryption.status().message().find("POINT_AT_INFINITY"),
             std::string::npos);
+}
+
+TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {
+  ElGamalPublicKeys key1;
+  key1.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
+  key1.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY1));
+  ElGamalPublicKeys key2;
+  key2.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
+  key2.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY2));
+  ElGamalPublicKeys key3;
+  key3.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
+  key3.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY3));
+  std::vector<ElGamalPublicKeys> keys{key1, key2, key3};
+
+  ElGamalPublicKeys combinedKey;
+  combinedKey.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
+  combinedKey.set_el_gamal_y(HexStringToByteString(kCombinedElGamalPublicKeyY));
+
+  auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
+  ASSERT_TRUE(result.ok());
+  EXPECT_THAT(result.value(), EqualsProto(combinedKey));
+}
+
+TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysEmptyInputShouldThrow) {
+  std::vector<ElGamalPublicKeys> keys;
+  auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
+  ASSERT_FALSE(result.ok());
+  EXPECT_THAT(result.status(), StatusIs(StatusCode::kInvalidArgument, "empty"));
+}
+
+TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysInvalidInputShouldThrow) {
+  ElGamalPublicKeys key1;
+  key1.set_el_gamal_g("foo");
+  key1.set_el_gamal_y("bar");
+  ElGamalPublicKeys key2;
+  key2.set_el_gamal_g("foo2");
+  key2.set_el_gamal_y("bar2");
+
+  std::vector<ElGamalPublicKeys> keys{key1, key2};
+  auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
+  ASSERT_FALSE(result.ok());
+  EXPECT_THAT(result.status(),
+              StatusIs(StatusCode::kInvalidArgument, "Invalid ECPoint"));
 }
 
 }  // namespace

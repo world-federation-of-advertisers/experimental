@@ -138,4 +138,23 @@ public class SketchJavaEncrypterTest {
             () -> SketchEncrypterAdapter.EncryptSketch(request.toByteArray()));
     assertThat(exception).hasMessageThat().contains("config");
   }
+
+  @Test
+  public void SketchJavaEncrypter_combineKeysBasicBehavior() throws Exception {
+    CombineElGamalPublicKeysRequest request =
+        CombineElGamalPublicKeysRequest.newBuilder()
+            .setCurveId(CURVE_ID)
+            .addElGamalKeys(
+                ElGamalPublicKeys.newBuilder()
+                    .setElGamalG(ByteString.copyFromUtf8("foo"))
+                    .setElGamalY(ByteString.copyFromUtf8("bar")))
+            .build();
+
+    CombineElGamalPublicKeysResponse response =
+        CombineElGamalPublicKeysResponse.parseFrom(
+            SketchEncrypterAdapter.CombineElGamalPublicKeys(request.toByteArray()));
+
+    // The result is equal to the only key in the request.
+    assertThat(response.getElGamalKeys()).isEqualTo(request.getElGamalKeys(0));
+  }
 }
