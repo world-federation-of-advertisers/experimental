@@ -106,6 +106,7 @@ public class SketchProtos {
 
   private static ValueFunction makeValueFunction(ValueSpec valueSpec) {
     return new ValueFunction(
+        valueSpec.getName(),
         makeAggregator(valueSpec.getAggregator()),
         makeDistribution(valueSpec.getName(), valueSpec.getDistribution()));
   }

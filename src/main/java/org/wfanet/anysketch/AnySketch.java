@@ -20,9 +20,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.OptionalInt;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import org.wfanet.anysketch.AnySketch.Register;
 import org.wfanet.anysketch.distributions.Distribution;
 
@@ -82,7 +84,14 @@ public class AnySketch implements Iterable<Register> {
     Preconditions.checkArgument(indexesLeft > 0, "A register index could possibly exceed 2^63 - 1");
   }
 
-  /** Retries the ValueFunctions that the AnySketch was constructed with. */
+  /** Retrieves the index of for the value function name. */
+  public OptionalInt getValueIndex(String valueName) {
+    return IntStream.range(0, valueFunctions.size())
+        .filter(i -> valueFunctions.get(i).getName().equals(valueName))
+        .findAny();
+  }
+
+  /** Retrieves the ValueFunctions that the AnySketch was constructed with. */
   public ImmutableList<ValueFunction> getValueFunctions() {
     return valueFunctions;
   }

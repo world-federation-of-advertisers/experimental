@@ -59,8 +59,10 @@ public class SketchProtosTest {
       new AnySketch(
           singletonList(new Mod1000Distribution()),
           ImmutableList.of(
-              new ValueFunction(Aggregators.sum(), Distributions.oracle("feature1", 5, 105)),
-              new ValueFunction(Aggregators.unique(), Distributions.oracle("feature2", 6, 15))));
+              new ValueFunction(
+                  "value-function-1", Aggregators.sum(), Distributions.oracle("feature1", 5, 105)),
+              new ValueFunction(
+                  "value-function-2", Aggregators.unique(), Distributions.oracle("feature2", 6, 15))));
 
   @Test
   public void fromAnySketch_invalidArgumentsFails() {
@@ -129,12 +131,14 @@ public class SketchProtosTest {
                     new SaltedFingerprinter("Index", new FarmFingerprinter()), 23.0, 330_000L)),
             ImmutableList.of(
                 new ValueFunction(
+                    "SamplingIndicator",
                     Aggregators.unique(),
                     Distributions.uniform(
                         new SaltedFingerprinter("SamplingIndicator", new FarmFingerprinter()),
                         0L,
                         9_999_999L)),
                 new ValueFunction(
+                    "Frequency",
                     Aggregators.sum(),
                     Distributions.oracle("frequency", Long.MIN_VALUE, Long.MAX_VALUE))));
     insertSomeItems.accept(anySketch3);

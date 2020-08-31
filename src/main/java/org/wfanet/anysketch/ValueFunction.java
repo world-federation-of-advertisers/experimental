@@ -26,16 +26,23 @@ import org.wfanet.anysketch.distributions.Distribution;
 class ValueFunction {
   private Aggregator aggregator;
   private Distribution distribution;
+  private String name;
 
   /**
    * Constructs a ValueFunction.
    *
+   * @param name name of the value function
    * @param aggregator how to combine values
    * @param distribution how to transform items and user-provided data to form a register value
    */
-  public ValueFunction(Aggregator aggregator, Distribution distribution) {
+  public ValueFunction(String name, Aggregator aggregator, Distribution distribution) {
+    this.name = name;
     this.aggregator = aggregator;
     this.distribution = distribution;
+  }
+
+  public String getName(){
+    return name;
   }
 
   public Aggregator getAggregator() {

@@ -69,7 +69,7 @@ public class AnySketchTest {
     return new AnySketch(
         singletonList(new FakeDistribution()),
         Arrays.stream(distributions)
-            .map(d -> new ValueFunction(Aggregators.sum(), d))
+            .map(d -> new ValueFunction("FakeValueFunction", Aggregators.sum(), d))
             .collect(toImmutableList()));
   }
 
@@ -172,7 +172,8 @@ public class AnySketchTest {
         new AnySketch(
             ImmutableList.of(
                 makeOracleDistribution("feature1"), makeOracleDistribution("feature2")),
-            ImmutableList.of(new ValueFunction(Aggregators.sum(), new FakeDistribution())));
+            ImmutableList.of(
+                new ValueFunction("FakeValueFunction", Aggregators.sum(), new FakeDistribution())));
 
     sketch.insert(0L, ImmutableMap.of("feature1", 6L, "feature2", 10L));
 
@@ -188,7 +189,9 @@ public class AnySketchTest {
                 ImmutableList.of(
                     Distributions.uniform(Long::parseLong, 0, 1L << 33L),
                     Distributions.uniform(Long::parseLong, 0, 1L << 33L)),
-                ImmutableList.of(new ValueFunction(Aggregators.sum(), new FakeDistribution()))));
+                ImmutableList.of(
+                    new ValueFunction(
+                        "FakeValueFunction", Aggregators.sum(), new FakeDistribution()))));
   }
 
   @Test

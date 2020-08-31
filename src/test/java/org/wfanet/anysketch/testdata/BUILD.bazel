@@ -3,5 +3,8 @@ filegroup(
     srcs = [
         "liquid_legions.textpb",
     ],
-    visibility = ["//src/test/java/org/wfanet/anysketch:__pkg__"],
+    visibility = [
+        "//src/test/java/org/wfanet/anysketch:__pkg__",
+        "//src/test/java/org/wfanet/estimation:__pkg__",
+    ],
 )

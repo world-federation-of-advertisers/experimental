@@ -11,3 +11,24 @@ java_test(
         "@maven//:com_google_truth_truth",
     ],
 )
+
+java_test(
+    name = "value_histogram_test",
+    resources = [
+        "//src/test/java/org/wfanet/anysketch/testdata",
+    ],
+    srcs = [
+        "ValueHistogramTest.java",
+    ],
+    test_class = "org.wfanet.estimation.ValueHistogramTest",
+    deps = [
+        "//src/main/java/org/wfanet/estimation:value_histogram",
+        "//src/main/java/org/wfanet/anysketch",
+        "//src/main/java/org/wfanet/anysketch:sketch_proto_converter",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_java_proto",
+        "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
+        "@com_google_protobuf//:protobuf_java",
+        "@maven//:com_google_truth_truth",
+        "@maven//:junit_junit",
+    ],
+)

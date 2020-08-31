@@ -12,3 +12,15 @@ java_wrap_cc(
         "//src/main/cc/estimation:estimators",
     ],
 )
+
+
+java_library(
+    name = "value_histogram",
+    srcs = [
+        "ValueHistogram.java",
+    ],
+    deps = [
+        "//src/main/java/org/wfanet/anysketch:anysketch",
+        "@maven//:com_google_guava_guava",
+    ],
+)
