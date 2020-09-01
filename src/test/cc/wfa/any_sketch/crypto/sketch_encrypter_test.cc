@@ -32,6 +32,7 @@ using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::private_join_and_compute::InternalError;
+using ::testing::Not;
 using ::private_join_and_compute::Status;
 using ::private_join_and_compute::StatusCode;
 using ::testing::SizeIs;
@@ -111,7 +112,7 @@ void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
       // The Aggregate type doesn't matter here.
       // Mod(kMaxCounterValue * 2) so we have some but not too many values
       // exceed the max.
-      last_register->add_values(rand() % (kMaxCounterValue * 2));
+      last_register->add_values(rand() % (kMaxCounterValue * 2) + 1);
     }
   }
 }
@@ -274,6 +275,33 @@ TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
   ASSERT_FALSE(decryption.status().ok());
   EXPECT_NE(decryption.status().message().find("POINT_AT_INFINITY"),
             std::string::npos);
+}
+
+TEST_F(SketchEncrypterTest, TestDestroyedRegisters) {
+  Context ctx;
+  ECGroup ec_group = ECGroup::Create(kTestCurveId, &ctx).value();
+
+  Sketch plain_sketch;
+  *plain_sketch.mutable_config() =
+      CreateSketchConfig(/* unique_cnt = */ 1, /* sum_cnt = */ 1);
+  auto sketch_register = plain_sketch.add_registers();
+  sketch_register->set_index(123);
+  sketch_register->add_values(-1);  // UNIQUE value -1 means destroyed
+  sketch_register->add_values(10);  // SUM value
+
+  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  std::vector<std::string> cipher_words = GetCipherStrings(result);
+  EXPECT_THAT(cipher_words, SizeIs(12));  // 2 regs * 3 vals * 2 words
+
+  CiphertextString index_a = {cipher_words[0], cipher_words[1]};
+  CiphertextString index_b = {cipher_words[6], cipher_words[7]};
+  CiphertextString key_a = {cipher_words[2], cipher_words[3]};
+  CiphertextString key_b = {cipher_words[8], cipher_words[9]};
+
+  // Index should be the same.
+  EXPECT_THAT(index_a, HasSameDecryption(original_cipher_.get(), index_b));
+  // Keys should be different.
+  EXPECT_THAT(key_a, Not(HasSameDecryption(original_cipher_.get(), key_b)));
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {

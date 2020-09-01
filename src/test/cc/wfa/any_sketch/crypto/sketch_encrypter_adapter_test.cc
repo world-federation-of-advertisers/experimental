@@ -64,8 +64,8 @@ void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
       // The Aggregate type doesn't matter here.
       // Mod(kMaxCounterValue * 2) so we have some but not too many values
       // exceed the max.
-      last_register->add_values(rand() %
-                                static_cast<int>(kMaxCounterValue * 2));
+      last_register->add_values(
+          rand() % static_cast<int>(kMaxCounterValue * 2) + 1);
     }
   }
 }
