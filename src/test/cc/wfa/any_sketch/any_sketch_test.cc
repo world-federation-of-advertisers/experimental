@@ -104,7 +104,7 @@ std::unique_ptr<AnySketch> MakeBasicAnySketch() {
 TEST(AnySketchTest, TestInsertMethod) {
   std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
 
-  any_sketch->Insert(1, {1});
+  any_sketch->Insert(1, std::vector<int64_t>{1});
 
   std::vector<AnySketch::Register> registers(any_sketch->begin(),
                                              any_sketch->end());
@@ -124,7 +124,7 @@ TEST(AnySketchTest, TestInsertMethodWithHashMap) {
 
 TEST(AnySketchTest, TestInsertMethodStringView) {
   std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-  any_sketch->Insert("1", {1});
+  any_sketch->Insert("1", std::vector<int64_t>{1});
   std::vector<AnySketch::Register> registers(any_sketch->begin(),
                                              any_sketch->end());
   // We expect the fingerprint of "1" to be the first byte, e.g. 49
@@ -147,7 +147,7 @@ TEST(AnySketchTest, TestInsertMethodStringViewWithHashMap) {
 TEST(AnySketchTest, TestInsertMethodUnsignedChar) {
   std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
 
-  any_sketch->Insert({'a', 'b', 'c'}, {999});
+  any_sketch->Insert({'a', 'b', 'c'}, std::vector<int64_t>{999});
 
   std::vector<AnySketch::Register> registers(any_sketch->begin(),
                                              any_sketch->end());
@@ -180,8 +180,8 @@ TEST(AnySketchTest, TestMergeMethod) {
                              std::move(other_value_functions),
                              std::move(other_hash_function));
 
-  any_sketch->Insert(1, {1});
-  other_any_sketch.Insert(2, {20});
+  any_sketch->Insert(1, std::vector<int64_t>{1});
+  other_any_sketch.Insert(2, std::vector<int64_t>{20});
   any_sketch->Merge(other_any_sketch);
 
   std::vector<AnySketch::Register> registers(any_sketch->begin(),
@@ -194,8 +194,8 @@ TEST(AnySketchTest, TestMergeAllMethod) {
   std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
   std::unique_ptr<AnySketch> other_any_sketch = MakeBasicAnySketch();
 
-  any_sketch->Insert(1, {1});
-  other_any_sketch->Insert(2, {20});
+  any_sketch->Insert(1, std::vector<int64_t>{1});
+  other_any_sketch->Insert(2, std::vector<int64_t>{20});
   any_sketch->MergeAll({std::move(other_any_sketch)});
 
   std::vector<AnySketch::Register> registers(any_sketch->begin(),
