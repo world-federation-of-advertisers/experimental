@@ -31,3 +31,16 @@ cc_library(
         "@com_google_private_join_and_compute//util:status",
     ],
 )
+
+cc_binary(
+    name = "combine_public_keys",
+    srcs = [
+        "key_combiner_main.cc",
+    ],
+    deps = [
+        ":sketch_encrypter",
+        "@absl//absl/flags:flag",
+        "@absl//absl/flags:parse",
+        "@absl//absl/strings",
+    ],
+)
