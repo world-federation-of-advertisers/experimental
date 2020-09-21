@@ -20,6 +20,7 @@ java_library(
     name = "sketch_proto_converter",
     srcs = [
         "SketchProtos.java",
+        "SketchSql.java",
     ],
     deps = [
         ":anysketch",
