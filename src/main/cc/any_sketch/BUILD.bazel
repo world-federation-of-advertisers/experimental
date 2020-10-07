@@ -21,6 +21,13 @@ cc_library(
 )
 
 cc_library(
+    name = "aggregators",
+    srcs = ["aggregators.cc"],
+    hdrs = ["aggregators.h"],
+    deps = [],
+)
+
+cc_library(
     name = "hash_function",
     srcs = [],
     hdrs = [

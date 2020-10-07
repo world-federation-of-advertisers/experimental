@@ -12,6 +12,16 @@ cc_test(
 )
 
 cc_test(
+    name = "aggregators_test",
+    size = "small",
+    srcs = ["aggregators_test.cc"],
+    deps = [
+        "//src/main/cc/any_sketch:aggregators",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "exponential_index_function_test",
     size = "small",
     srcs = [
