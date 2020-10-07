@@ -2,21 +2,17 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "any_sketch",
-    srcs = [
-        "any_sketch.cc",
-    ],
-    hdrs = [
-        "any_sketch.h",
-    ],
+    srcs = ["any_sketch.cc"],
+    hdrs = ["any_sketch.h"],
     deps = [
         ":hash_function",
         ":index_function",
         ":value_function",
-        "@absl//absl/base:core_headers",
-        "@absl//absl/container:fixed_array",
-        "@absl//absl/container:flat_hash_map",
-        "@absl//absl/container:node_hash_map",
-        "@absl//absl/random:bit_gen_ref",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/random:bit_gen_ref",
     ],
 )
 
@@ -24,41 +20,47 @@ cc_library(
     name = "aggregators",
     srcs = ["aggregators.cc"],
     hdrs = ["aggregators.h"],
-    deps = [],
+)
+
+cc_library(
+    name = "distributions",
+    srcs = ["distributions.cc"],
+    hdrs = ["distributions.h"],
+    deps = [
+        ":hash_function",
+        "//src/main/cc/any_sketch/util:macros",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(
     name = "hash_function",
-    srcs = [],
-    hdrs = [
-        "hash_function.h",
-    ],
+    hdrs = ["hash_function.h"],
     deps = [
-        "@absl//absl/types:span",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
 cc_library(
     name = "farm_hash_function",
     srcs = ["farm_hash_function.cc"],
-    hdrs = [
-        "farm_hash_function.h",
-    ],
+    hdrs = ["farm_hash_function.h"],
     deps = [
         ":hash_function",
-        "@absl//absl/types:span",
+        "@com_google_absl//absl/types:span",
         "@farmhash",
     ],
 )
 
 cc_library(
     name = "index_function",
-    srcs = [],
-    hdrs = [
-        "index_function.h",
-    ],
-    deps = [
-    ],
+    hdrs = ["index_function.h"],
 )
 
 cc_library(
@@ -69,18 +71,15 @@ cc_library(
     ],
     deps = [
         ":index_function",
-        "@absl//absl/base:core_headers",
-        "@absl//absl/types:span",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
 cc_library(
     name = "value_function",
-    srcs = [],
-    hdrs = [
-        "value_function.h",
-    ],
+    hdrs = ["value_function.h"],
     deps = [
-        "@absl//absl/strings",
+        "@com_google_absl//absl/strings",
     ],
 )

@@ -6,7 +6,8 @@ cc_test(
     ],
     deps = [
         "//src/main/cc/any_sketch",
-        "@absl//absl/types:span",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
         "@googletest//:gtest_main",
     ],
 )
@@ -17,6 +18,19 @@ cc_test(
     srcs = ["aggregators_test.cc"],
     deps = [
         "//src/main/cc/any_sketch:aggregators",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "distributions_test",
+    size = "small",
+    srcs = ["distributions_test.cc"],
+    deps = [
+        "//src/main/cc/any_sketch:distributions",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
         "@googletest//:gtest_main",
     ],
 )

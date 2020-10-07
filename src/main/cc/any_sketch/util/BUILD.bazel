@@ -4,7 +4,5 @@ package(default_visibility = [
 
 cc_library(
     name = "macros",
-    hdrs = [
-        "macros.h",
-    ],
+    hdrs = ["macros.h"],
 )

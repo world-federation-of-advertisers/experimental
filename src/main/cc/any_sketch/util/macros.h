@@ -23,19 +23,34 @@
     if (!_status.ok()) return _status; \
   } while (0)
 
-#define ASSIGN_OR_RETURN_ERROR(lhs, rexpr, message)                    \
+#ifndef ASSIGN_OR_RETURN
+#define ASSIGN_OR_RETURN(lhs, rhs)                                     \
   SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_IMPL_(                  \
       SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_or_value, \
                                                       __LINE__),       \
+      lhs, rhs)
+#endif
+
+// Internal helper.
+#define SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_IMPL_(statusor, lhs, \
+                                                           rexpr)         \
+  auto statusor = (rexpr);                                                \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) return statusor.status();       \
+  lhs = std::move(statusor).value()
+
+#define ASSIGN_OR_RETURN_ERROR(lhs, rexpr, message)                    \
+  SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_ERROR_IMPL_(            \
+      SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_or_value, \
+                                                      __COUNTER__),    \
       lhs, rexpr, message)
 
 // Internal helper.
-#define SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_IMPL_(statusor, lhs,  \
-                                                           rexpr, message) \
-  auto statusor = (rexpr);                                                 \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                                \
-    return InvalidArgumentError(message);                                  \
-  }                                                                        \
+#define SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_ERROR_IMPL_( \
+    statusor, lhs, rexpr, message)                                \
+  auto statusor = (rexpr);                                        \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                       \
+    return InvalidArgumentError(message);                         \
+  }                                                               \
   lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.
