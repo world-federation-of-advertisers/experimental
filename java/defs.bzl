@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Build definitions for SWIG Java."""
+
 def _create_src_jar(ctx, java_runtime_info, input_dir, output_jar):
     jar_args = ctx.actions.args()
     jar_args.add("cf", output_jar)
@@ -102,7 +104,14 @@ It's expected that the `swig` binary exists in the host's path.
     },
 )
 
-def java_wrap_cc(name, src, package, deps = [], module = "", **kwargs):
+def java_wrap_cc(
+        name,
+        src,
+        package,
+        deps = [],
+        module = None,
+        visibility = None,
+        **kwargs):
     """Wraps C++ in Java using Swig.
 
     It's expected that the `swig` binary exists in the host's path.
@@ -119,10 +128,10 @@ def java_wrap_cc(name, src, package, deps = [], module = "", **kwargs):
         lib{name}.so: cc_binary
     """
 
-    wrapper_name = name + "_wrapper"
+    wrapper_name = "_" + name + "_wrapper"
+    cc_name = "_" + name + "_cc"
     outfile = name + ".cc"
     srcjar = name + ".srcjar"
-    cc_name = name + "_cc"
     so_name = "lib%s.so" % name
 
     _java_wrap_cc(
@@ -133,6 +142,7 @@ def java_wrap_cc(name, src, package, deps = [], module = "", **kwargs):
         srcjar = srcjar,
         deps = deps,
         module = module,
+        visibility = ["//visibility:private"],
         **kwargs
     )
 
@@ -141,17 +151,22 @@ def java_wrap_cc(name, src, package, deps = [], module = "", **kwargs):
         srcs = [outfile],
         deps = deps + ["@bazel_tools//tools/jdk:jni"],
         alwayslink = True,
+        visibility = ["//visibility:private"],
+        **kwargs
     )
 
     native.cc_binary(
-        name = "lib%s.so" % name,
+        name = so_name,
         deps = [cc_name],
         linkshared = True,
+        visibility = visibility,
+        **kwargs
     )
 
     native.java_library(
         name = name,
         srcs = [srcjar],
         runtime_deps = [so_name],
+        visibility = visibility,
         **kwargs
     )
