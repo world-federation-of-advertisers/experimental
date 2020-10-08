@@ -24,10 +24,11 @@
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_map.h"
-#include "absl/container/node_hash_map.h"
-#include "absl/random/bit_gen_ref.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+#include "src/main/cc/any_sketch/distributions.h"
 #include "src/main/cc/any_sketch/hash_function.h"
-#include "src/main/cc/any_sketch/index_function.h"
 #include "src/main/cc/any_sketch/value_function.h"
 
 namespace wfa::any_sketch {
@@ -44,7 +45,7 @@ class AnySketch {
 
   struct Register {
     uint64_t index;
-    absl::FixedArray<ValueType> values;
+    absl::Span<const ValueType> values;
   };
 
   class Iterator {
@@ -64,84 +65,64 @@ class AnySketch {
    private:
     friend class AnySketch;
 
-    explicit Iterator(
-        absl::node_hash_map<uint64_t,
-                            absl::FixedArray<ValueType>>::const_iterator pos)
-        : pos_(pos) {}
-    absl::node_hash_map<uint64_t, absl::FixedArray<ValueType>>::const_iterator
-        pos_;
+    using MapType = absl::flat_hash_map<uint64_t, absl::FixedArray<ValueType>>;
+    using MapIteratorType = MapType::const_iterator;
+
+    explicit Iterator(MapIteratorType pos) : pos_(pos) {}
+
+    MapIteratorType pos_;
   };
 
-  // Creates AnySketch object expecting IndexFunction, ValueFunction,
-  // and HashFunction arguments.
-  // Takes many IndexFunction to determine the index of the hashmap.
-  // Takes many ValueFunction to be able to insert value into hashmap.
-  // Takes a single HashFunction to use one of the different hashing options.
-  AnySketch(absl::FixedArray<std::unique_ptr<IndexFunction>> index_functions,
-            absl::FixedArray<std::unique_ptr<ValueFunction>> value_functions,
-            std::unique_ptr<HashFunction> hash_function);
+  // Creates a new, empty AnySketch.
+  //
+  // The inputs will be moved from.
+  AnySketch(std::vector<std::unique_ptr<Distribution>> indexes,
+            std::vector<ValueFunction> values);
 
   AnySketch(const AnySketch &) = delete;
-
   AnySketch &operator=(const AnySketch &) = delete;
 
   ~AnySketch() = default;
 
+  // Merges a set of values into a register.
+  absl::Status AggregateIntoRegister(int64_t index,
+                                     absl::Span<const int64_t> values);
+
   // Adds `item` to the Sketch.
   //
-  // Insert determines a register by hashing `item` and applying the index
-  // functions described in the config. The values in the register are updated
-  // by invoking the value functions described in the config with the old value
-  // and the value provided here to produce a new value.
+  // While itemMetadata can contain arbitrary values, certain Distributions may
+  // require some keys to be present. In particular, OracleDistributions each
+  // require a specific key to exist.
   //
-  // If `values` is a flat_hash_map, it must contain a key for each value
-  // name in the config. If `values` is a Span, it must have the same number of
-  // values as in the config.
-  //
-  // The values are presumed to be in the same order as
-  // described in the config.
-  void Insert(absl::Span<const unsigned char> item,
-              const absl::flat_hash_map<std::string, ValueType> &values);
-
-  void Insert(absl::Span<const unsigned char> item,
-              absl::Span<const ValueType> values);
-
-  void Insert(uint64_t item,
-              const absl::flat_hash_map<std::string, ValueType> &values);
-
-  void Insert(uint64_t item, absl::Span<const ValueType> values);
-
-  void Insert(absl::string_view item,
-              const absl::flat_hash_map<std::string, ValueType> &values);
-
-  void Insert(absl::string_view item, absl::Span<const ValueType> values);
+  // It is not an error to include unnecessary keys in item_metadata--they will
+  // simply be ignored.
+  absl::Status Insert(absl::Span<const unsigned char> item,
+                      const ItemMetadata &item_metadata);
+  absl::Status Insert(uint64_t item, const ItemMetadata &item_metadata);
+  absl::Status Insert(absl::string_view item,
+                      const ItemMetadata &item_metadata);
 
   // Merges the other sketch into this one. The result is equivalent to
   // sketching the union of the sets that went into this and the other sketch.
-  void Merge(const AnySketch &other);
+  absl::Status Merge(const AnySketch &other);
 
   // Merges all the other sketches into this one. The resuls is equivalent to
   // sketching the union of all of the sets.
-  void MergeAll(absl::Span<const std::unique_ptr<AnySketch>> others);
+  absl::Status MergeAll(absl::Span<const std::unique_ptr<AnySketch>> others);
 
   Iterator begin() const;
 
   Iterator end() const;
 
  private:
-  absl::node_hash_map<uint64_t, absl::FixedArray<ValueType>> registers_;
-  std::unique_ptr<HashFunction> hash_function_;
-  absl::FixedArray<std::unique_ptr<IndexFunction>> index_functions_;
-  absl::FixedArray<std::unique_ptr<ValueFunction>> value_functions_;
-
-  uint64_t GetIndex(uint64_t partial_fingerprint) const;
+  absl::flat_hash_map<uint64_t, absl::FixedArray<ValueType>> registers_;
+  absl::FixedArray<std::unique_ptr<Distribution>> indexes_;
+  absl::FixedArray<ValueFunction> values_;
 
   size_t register_size() const;
 
-  uint64_t UpdateFingerprint(uint64_t *fingerprint, uint64_t max_value);
-
-  void InsertPreHashed(uint64_t fingerprint,
-                       absl::Span<const ValueType> values);
+  absl::StatusOr<int64_t> GetIndex(absl::string_view item,
+                                   const ItemMetadata &item_metadata) const;
 };
 
 }  // namespace wfa::any_sketch

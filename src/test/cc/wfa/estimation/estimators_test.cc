@@ -20,16 +20,16 @@
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "src/main/cc/any_sketch/exponential_index_function.h"
+#include "src/main/cc/any_sketch/distributions.h"
 #include "src/main/cc/any_sketch/farm_hash_function.h"
 
 namespace wfa::estimation {
 namespace {
-
-using ::wfa::any_sketch::ExponentialIndexFunction;
+using ::wfa::any_sketch::Distribution;
 using ::wfa::any_sketch::FarmHashFunction;
 
 MATCHER_P2(EqWithError, value, error, "") {
@@ -43,35 +43,32 @@ uint64_t GetExpectedActiveRegisterCount(double decay_rate,
   ABSL_ASSERT(decay_rate > 1.0);
   ABSL_ASSERT(num_of_total_registers > 0);
   if (cardinality == 0) return 0;
+  double exp_rate = std::exp(decay_rate);
   double t = cardinality / static_cast<double>(num_of_total_registers);
-  double negative_term =
-      -std::expint((-decay_rate * t) / (std::exp(decay_rate) - 1));
-  double positive_term = std::expint((-decay_rate * std::exp(decay_rate) * t) /
-                                     (std::exp(decay_rate) - 1));
+  double negative_term = -std::expint((-decay_rate * t) / (exp_rate - 1));
+  double positive_term =
+      std::expint((-decay_rate * exp_rate * t) / (exp_rate - 1));
   return (1 - (negative_term + positive_term) / decay_rate) *
          num_of_total_registers;
-}
-
-uint64_t GetItemHash(uint64_t item, uint64_t max_value,
-                     const FarmHashFunction& farm_hash_function) {
-  uint64_t index_fingerprint = item % max_value;
-  std::array<unsigned char, sizeof(index_fingerprint)> arr;
-  absl::little_endian::Store64(arr.data(), index_fingerprint);
-  return farm_hash_function.Fingerprint(arr);
 }
 
 uint64_t GenerateRandomSketchAndGetSize(double decay_rate,
                                         uint64_t num_of_total_registers,
                                         uint64_t num_of_fingerprints) {
-  absl::flat_hash_set<std::uint64_t> set_of_indexes;
-  ExponentialIndexFunction exponential_index_function(decay_rate,
-                                                      num_of_total_registers);
+  absl::flat_hash_set<int64_t> indexes;
+
   FarmHashFunction farm_hash_function;
+  std::unique_ptr<Distribution> exponential_distribution =
+      GetExponentialDistribution(&farm_hash_function, decay_rate,
+                                 num_of_total_registers);
+
   for (uint64_t i = 0; i < num_of_fingerprints; ++i) {
-    set_of_indexes.insert(exponential_index_function.GetIndex(GetItemHash(
-        i, exponential_index_function.hash_max_value(), farm_hash_function)));
+    absl::StatusOr<int64_t> value =
+        exponential_distribution->Apply(absl::StrCat(i), {});
+    ABSL_ASSERT(value.ok());
+    indexes.insert(value.value());
   }
-  return set_of_indexes.size();
+  return indexes.size();
 }
 
 TEST(UtilsTest, TestEmptyReturnsZero) {

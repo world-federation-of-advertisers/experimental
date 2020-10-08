@@ -22,7 +22,7 @@ namespace wfa::any_sketch {
 namespace {
 
 TEST(AggregatorsTest, SumAggregator) {
-  const Aggregator& aggregator = GetSumAggregator();
+  const Aggregator& aggregator = GetAggregator(AggregatorType::kSum);
 
   EXPECT_EQ(aggregator.Aggregate(0, 0), 0);
   EXPECT_EQ(aggregator.Aggregate(-1, 1), 0);
@@ -38,7 +38,7 @@ TEST(AggregatorsTest, SumAggregator) {
 }
 
 TEST(AggregatorsTest, UniqueAggregator) {
-  const Aggregator& aggregator = GetUniqueAggregator();
+  const Aggregator& aggregator = GetAggregator(AggregatorType::kUnique);
 
   EXPECT_EQ(aggregator.Aggregate(0, 0), 0);
   EXPECT_EQ(aggregator.Aggregate(-1, 1), kUniqueAggregatorDestroyedValue);

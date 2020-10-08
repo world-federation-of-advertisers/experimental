@@ -1,11 +1,28 @@
+cc_library(
+    name = "matchers",
+    testonly = True,
+    hdrs = ["matchers.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_test(
     name = "any_sketch_test",
     size = "small",
-    srcs = [
-        "any_sketch_test.cc",
-    ],
+    srcs = ["any_sketch_test.cc"],
     deps = [
+        ":matchers",
         "//src/main/cc/any_sketch",
+        "//src/main/cc/any_sketch:aggregators",
+        "//src/main/cc/any_sketch:distributions",
+        "//src/main/cc/any_sketch:value_function",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
         "@googletest//:gtest_main",
@@ -27,22 +44,11 @@ cc_test(
     size = "small",
     srcs = ["distributions_test.cc"],
     deps = [
+        ":matchers",
         "//src/main/cc/any_sketch:distributions",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "exponential_index_function_test",
-    size = "small",
-    srcs = [
-        "exponential_index_function_test.cc",
-    ],
-    deps = [
-        "//src/main/cc/any_sketch:exponential_index_function",
         "@googletest//:gtest_main",
     ],
 )

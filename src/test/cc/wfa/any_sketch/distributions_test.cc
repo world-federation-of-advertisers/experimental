@@ -17,26 +17,10 @@
 #include "absl/types/span.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "src/test/cc/wfa/any_sketch/matchers.h"
 
 namespace wfa::any_sketch {
 namespace {
-using ::testing::ExplainMatchResult;
-
-MATCHER_P(IsOkAndHolds, value, "") {
-  if (arg.ok()) {
-    return ExplainMatchResult(value, arg.value(), result_listener);
-  }
-
-  *result_listener << "expected OK status instead of error code "
-                   << absl::StatusCodeToString(arg.status().code())
-                   << " and message " << arg.status();
-  return false;
-}
-
-MATCHER(IsNotOk, "") {
-  return ExplainMatchResult(false, arg.ok(), result_listener);
-}
-
 class FakeFingerprinter : public HashFunction {
  public:
   uint64_t Fingerprint(absl::Span<const unsigned char> item) const override {

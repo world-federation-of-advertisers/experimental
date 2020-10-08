@@ -37,8 +37,7 @@ class BaseDistribution : public Distribution {
       : min_value_(min_value), max_value_(max_value) {}
 
   absl::StatusOr<int64_t> Apply(
-      absl::string_view item,
-      const DistributionMetadata& item_metadata) const override;
+      absl::string_view item, const ItemMetadata& item_metadata) const override;
 
   int64_t min_value() const override { return min_value_; }
 
@@ -50,12 +49,11 @@ class BaseDistribution : public Distribution {
   int64_t max_value_;
 
   virtual absl::StatusOr<int64_t> ApplyInternal(
-      absl::string_view item,
-      const DistributionMetadata& item_metadata) const = 0;
+      absl::string_view item, const ItemMetadata& item_metadata) const = 0;
 };
 
 absl::StatusOr<int64_t> BaseDistribution::Apply(
-    absl::string_view item, const DistributionMetadata& item_metadata) const {
+    absl::string_view item, const ItemMetadata& item_metadata) const {
   ASSIGN_OR_RETURN(int64_t value, ApplyInternal(item, item_metadata));
 
   if (value < min_value()) {
@@ -79,7 +77,7 @@ class OracleDistribution : public BaseDistribution {
  private:
   absl::StatusOr<int64_t> ApplyInternal(
       absl::string_view item,
-      const DistributionMetadata& item_metadata) const override {
+      const ItemMetadata& item_metadata) const override {
     if (auto itr = item_metadata.find(feature_name_);
         itr != item_metadata.end()) {
       return itr->second;
@@ -100,13 +98,12 @@ class FingerprintingDistribution : public BaseDistribution {
  private:
   absl::StatusOr<int64_t> ApplyInternal(
       absl::string_view item,
-      const DistributionMetadata& item_metadata) const override {
+      const ItemMetadata& item_metadata) const override {
     return ApplyToFingerprint(fingerprinter_->Fingerprint(item), item_metadata);
   }
 
   virtual absl::StatusOr<int64_t> ApplyToFingerprint(
-      uint64_t fingerprint,
-      const DistributionMetadata& item_metadata) const = 0;
+      uint64_t fingerprint, const ItemMetadata& item_metadata) const = 0;
 
   const HashFunction* fingerprinter_;
 };
@@ -119,8 +116,7 @@ class UniformDistribution : public FingerprintingDistribution {
 
  private:
   absl::StatusOr<int64_t> ApplyToFingerprint(
-      uint64_t fingerprint,
-      const DistributionMetadata& item_metadata) const override {
+      uint64_t fingerprint, const ItemMetadata& item_metadata) const override {
     return fingerprint % size() + min_value();
   }
 };
@@ -138,8 +134,7 @@ class ExponentialDistribution : public FingerprintingDistribution {
   double exp_rate_;
 
   absl::StatusOr<int64_t> ApplyToFingerprint(
-      uint64_t fingerprint,
-      const DistributionMetadata& item_metadata) const override {
+      uint64_t fingerprint, const ItemMetadata& item_metadata) const override {
     double u = static_cast<double>(fingerprint) /
                static_cast<double>(std::numeric_limits<uint64_t>::max());
     double x = 1 - std::log(exp_rate_ + u * (1 - exp_rate_)) / rate_;
@@ -170,8 +165,7 @@ class GeometricDistribution : public FingerprintingDistribution {
 
  private:
   absl::StatusOr<int64_t> ApplyToFingerprint(
-      uint64_t fingerprint,
-      const DistributionMetadata& item_metadata) const override {
+      uint64_t fingerprint, const ItemMetadata& item_metadata) const override {
     int trailing_zeroes = CountTrailingZeros(fingerprint);
     return std::min(max_value(), min_value() + trailing_zeroes);
   }

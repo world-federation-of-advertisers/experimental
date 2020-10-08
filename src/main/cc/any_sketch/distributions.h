@@ -27,7 +27,7 @@
 
 namespace wfa::any_sketch {
 
-using DistributionMetadata = absl::flat_hash_map<std::string, int64_t>;
+using ItemMetadata = absl::flat_hash_map<std::string, int64_t>;
 
 // Base for representing distributions -- a way of deterministically mapping an
 // item and associated metadata to a number.
@@ -50,8 +50,7 @@ class Distribution {
   // Calculates the value of the distribution for an item and associated
   // metadata.
   virtual absl::StatusOr<int64_t> Apply(
-      absl::string_view item,
-      const DistributionMetadata& item_metadata) const = 0;
+      absl::string_view item, const ItemMetadata& item_metadata) const = 0;
 
  protected:
   Distribution() = default;

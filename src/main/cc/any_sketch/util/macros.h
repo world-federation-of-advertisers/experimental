@@ -17,10 +17,15 @@
 #ifndef SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 #define SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 
-#define RETURN_IF_ERROR(status)        \
-  do {                                 \
-    Status _status = (status);         \
-    if (!_status.ok()) return _status; \
+#define RETURN_IF_ERROR(status)                                              \
+  RETURN_IF_ERROR_IMPL(                                                      \
+      SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_, __COUNTER__), \
+      status)
+
+#define RETURN_IF_ERROR_IMPL(var, status) \
+  do {                                    \
+    auto var = (status);                  \
+    if (!var.ok()) return var;            \
   } while (0)
 
 #ifndef ASSIGN_OR_RETURN

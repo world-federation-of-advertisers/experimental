@@ -14,6 +14,8 @@
 
 #include "src/main/cc/any_sketch/aggregators.h"
 
+#include <glog/logging.h>
+
 #include <cstdint>
 
 namespace wfa::any_sketch {
@@ -35,11 +37,6 @@ class UniqueAggregator : public Aggregator {
     return value - 1;
   }
 };
-}  // namespace
-
-int64_t Aggregator::EncodeToProtoValue(int64_t value) const { return value; }
-
-int64_t Aggregator::DecodeFromProtoValue(int64_t value) const { return value; }
 
 const Aggregator& GetSumAggregator() {
   static const Aggregator* const aggregator = new SumAggregator();
@@ -49,5 +46,20 @@ const Aggregator& GetSumAggregator() {
 const Aggregator& GetUniqueAggregator() {
   static const Aggregator* const aggregator = new UniqueAggregator();
   return *aggregator;
+}
+}  // namespace
+
+int64_t Aggregator::EncodeToProtoValue(int64_t value) const { return value; }
+
+int64_t Aggregator::DecodeFromProtoValue(int64_t value) const { return value; }
+
+const Aggregator& GetAggregator(AggregatorType type) {
+  switch (type) {
+    case AggregatorType::kSum:
+      return GetSumAggregator();
+    case AggregatorType::kUnique:
+      return GetUniqueAggregator();
+  }
+  LOG(FATAL) << "Unsupported AggregatorType: " << static_cast<int>(type);
 }
 }  // namespace wfa::any_sketch

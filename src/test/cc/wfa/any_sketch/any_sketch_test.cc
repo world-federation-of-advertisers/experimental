@@ -17,51 +17,31 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "absl/container/fixed_array.h"
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_join.h"
 #include "absl/types/span.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "src/test/cc/wfa/any_sketch/matchers.h"
 
 namespace wfa::any_sketch {
 namespace {
-
+using ::testing::ExplainMatchResult;
+using ::testing::IsEmpty;
 using ::testing::Matcher;
+using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::UnorderedElementsAre;
 
-class FakeIndexFunction : public IndexFunction {
- public:
-  FakeIndexFunction() = default;
-  uint64_t GetIndex(uint64_t hash) const override { return hash * 10; }
-
-  uint64_t max_value() const override { return 1000; }
-
-  uint64_t hash_max_value() const override { return 100; }
-};
-
-class FakeValueFunction : public ValueFunction {
- public:
-  FakeValueFunction() = default;
-  absl::string_view name() const override { return "some-value-function-name"; }
-
-  int64_t GetInitialValue(int64_t x) const override { return x * 100; }
-  int64_t GetValue(int64_t x, int64_t y) const override { return x + y; }
-};
-
-class FakeHashFunction : public HashFunction {
- public:
-  FakeHashFunction() = default;
-  uint64_t Fingerprint(absl::Span<const unsigned char> x) const override {
-    return x[0];
-  }
-};
-
-class RegisterIsMatcher
-    : public testing::MatcherInterface<const AnySketch::Register&> {
+class RegisterIsMatcher : public MatcherInterface<const AnySketch::Register&> {
  public:
   explicit RegisterIsMatcher(uint64_t index, absl::FixedArray<int64_t> values)
-      : index_(index), values_(values) {}
+      : index_(index), values_(std::move(values)) {}
 
   bool MatchAndExplain(const wfa::any_sketch::AnySketch::Register& reg,
                        MatchResultListener* /* listener */) const override {
@@ -85,125 +65,126 @@ class RegisterIsMatcher
 
 Matcher<AnySketch::Register> RegisterIs(uint64_t index,
                                         absl::FixedArray<int64_t> values) {
-  return Matcher<AnySketch::Register>(new RegisterIsMatcher(index, values));
+  return Matcher<AnySketch::Register>(
+      new RegisterIsMatcher(index, std::move(values)));
 }
 
-std::unique_ptr<AnySketch> MakeBasicAnySketch() {
-  absl::FixedArray<std::unique_ptr<IndexFunction>> index_functions(1);
-  index_functions[0] = absl::make_unique<FakeIndexFunction>();
+class FakeDistribution : public Distribution {
+ public:
+  absl::StatusOr<int64_t> Apply(
+      absl::string_view item,
+      const ItemMetadata& item_metadata) const override {
+    return item.size();
+  }
 
-  absl::FixedArray<std::unique_ptr<ValueFunction>> value_functions(1);
-  value_functions[0] = absl::make_unique<FakeValueFunction>();
+  int64_t min_value() const override { return 0; }
 
-  auto hash_function = absl::make_unique<FakeHashFunction>();
+  int64_t max_value() const override { return 10; }
+};
 
-  return absl::make_unique<AnySketch>(std::move(index_functions),
-                                      std::move(value_functions),
-                                      std::move(hash_function));
+std::unique_ptr<Distribution> MakeFakeDistribution() {
+  return absl::make_unique<FakeDistribution>();
 }
 
-TEST(AnySketchTest, TestInsertMethod) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-
-  any_sketch->Insert(1, std::vector<int64_t>{1});
-
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(10, {10})));
+template <class T>
+std::vector<T> MakeSingleItemVector(T&& t) {
+  std::vector<T> v;
+  v.push_back(std::forward<T>(t));
+  return v;
 }
 
-TEST(AnySketchTest, TestInsertMethodWithHashMap) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-
-  any_sketch->Insert(1, {
-                            {"some-value-function-name", 1},
-                        });
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(10, {10})));
+std::vector<std::unique_ptr<Distribution>> MakeFakeDistributionIndex() {
+  return MakeSingleItemVector(MakeFakeDistribution());
 }
 
-TEST(AnySketchTest, TestInsertMethodStringView) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-  any_sketch->Insert("1", std::vector<int64_t>{1});
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  // We expect the fingerprint of "1" to be the first byte, e.g. 49
-  // ('1' in ascii is 49). So the linearized index is 49 * 10 = 490.
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(490, {10})));
+ValueFunction MakeValueFunction(AggregatorType aggregator,
+                                std::unique_ptr<Distribution> distribution) {
+  return {.name = "SomeValueFunction",
+          .aggregator_type = aggregator,
+          .distribution = std::move(distribution)};
 }
 
-TEST(AnySketchTest, TestInsertMethodStringViewWithHashMap) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-  any_sketch->Insert("1", {
-                              {"some-value-function-name", 1},
-                          });
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  // We expect the fingerprint of "1" to be the first byte, e.g. 49
-  // ('1' in ascii is 49). So the linearized index is 49 * 10 = 490.
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(490, {10})));
+ValueFunction MakeOracleValueFunction(absl::string_view feature) {
+  return MakeValueFunction(AggregatorType::kSum,
+                           GetOracleDistribution(feature, 5, 15));
 }
 
-TEST(AnySketchTest, TestInsertMethodUnsignedChar) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-
-  any_sketch->Insert({'a', 'b', 'c'}, std::vector<int64_t>{999});
-
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(970, {9990})));
+std::vector<AnySketch::Register> GetRegisters(const AnySketch& sketch) {
+  return {sketch.begin(), sketch.end()};
 }
 
-TEST(AnySketchTest, TestInsertMethodUnsignedCharWithHashMap) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
+TEST(AnySketchTest, EmptySketch) {
+  AnySketch sketch(MakeFakeDistributionIndex(), {});
 
-  any_sketch->Insert({'a', 'b', 'c'}, {
-                                          {"some-value-function-name", 1},
-                                      });
-
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(970, {10})));
+  EXPECT_THAT(GetRegisters(sketch), IsEmpty());
 }
 
-TEST(AnySketchTest, TestMergeMethod) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
+TEST(AnySketchTest, SingleOracleDistribution) {
+  AnySketch sketch(MakeFakeDistributionIndex(),
+                   MakeSingleItemVector(MakeOracleValueFunction("foo")));
 
-  absl::FixedArray<std::unique_ptr<IndexFunction>> other_index_functions(1);
-  other_index_functions[0] = absl::make_unique<FakeIndexFunction>();
+  EXPECT_THAT(GetRegisters(sketch), IsEmpty());
 
-  absl::FixedArray<std::unique_ptr<ValueFunction>> other_value_functions(1);
-  other_value_functions[0] = absl::make_unique<FakeValueFunction>();
+  ASSERT_THAT(sketch.Insert("abc", {{"foo", 5}}), IsOk());
+  EXPECT_THAT(GetRegisters(sketch), UnorderedElementsAre(RegisterIs(3, {5})));
 
-  auto other_hash_function = absl::make_unique<FakeHashFunction>();
-  AnySketch other_any_sketch(std::move(other_index_functions),
-                             std::move(other_value_functions),
-                             std::move(other_hash_function));
+  // Should aggregate by summation
+  ASSERT_THAT(sketch.Insert("abc", {{"foo", 9}}), IsOk());
+  EXPECT_THAT(GetRegisters(sketch), UnorderedElementsAre(RegisterIs(3, {14})));
 
-  any_sketch->Insert(1, std::vector<int64_t>{1});
-  other_any_sketch.Insert(2, std::vector<int64_t>{20});
-  any_sketch->Merge(other_any_sketch);
+  // Different register
+  ASSERT_THAT(sketch.Insert("abcdef", {{"foo", 7}}), IsOk());
+  EXPECT_THAT(GetRegisters(sketch),
+              UnorderedElementsAre(RegisterIs(3, {14}), RegisterIs(6, {7})));
 
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(10, {100}),
-                                              RegisterIs(200, {200000})));
+  EXPECT_THAT(sketch.Insert("abcdef", {{"wrong-key", 7}}), IsNotOk());
 }
 
-TEST(AnySketchTest, TestMergeAllMethod) {
-  std::unique_ptr<AnySketch> any_sketch = MakeBasicAnySketch();
-  std::unique_ptr<AnySketch> other_any_sketch = MakeBasicAnySketch();
+TEST(AnySketchTest, MultipleOracleDistributions) {
+  std::vector<ValueFunction> value_functions;
+  value_functions.push_back(MakeOracleValueFunction("key1"));
+  value_functions.push_back(MakeOracleValueFunction("key2"));
+  AnySketch sketch(MakeFakeDistributionIndex(), std::move(value_functions));
 
-  any_sketch->Insert(1, std::vector<int64_t>{1});
-  other_any_sketch->Insert(2, std::vector<int64_t>{20});
-  any_sketch->MergeAll({std::move(other_any_sketch)});
+  ASSERT_THAT(sketch.Insert("ABCD", {{"key1", 10}, {"key2", 11}}), IsOk());
 
-  std::vector<AnySketch::Register> registers(any_sketch->begin(),
-                                             any_sketch->end());
-  EXPECT_THAT(registers, UnorderedElementsAre(RegisterIs(10, {100}),
-                                              RegisterIs(200, {200000})));
+  EXPECT_THAT(GetRegisters(sketch),
+              UnorderedElementsAre(RegisterIs(4, {10, 11})));
 }
 
+TEST(AnySketchTest, FakeDistribution) {
+  AnySketch sketch(MakeFakeDistributionIndex(),
+                   MakeSingleItemVector(MakeValueFunction(
+                       AggregatorType::kSum, MakeFakeDistribution())));
+
+  ASSERT_THAT(sketch.Insert("a", {}), IsOk());
+  ASSERT_THAT(sketch.Insert("b", {}), IsOk());
+  ASSERT_THAT(sketch.Insert("c", {}), IsOk());
+  ASSERT_THAT(sketch.Insert("aa", {}), IsOk());
+
+  EXPECT_THAT(GetRegisters(sketch),
+              UnorderedElementsAre(RegisterIs(1, {3}), RegisterIs(2, {2})));
+}
+
+TEST(AnySketchTest, Merge) {
+  auto make_sketch = []() {
+    return AnySketch(MakeFakeDistributionIndex(),
+                     MakeSingleItemVector(MakeOracleValueFunction("foo")));
+  };
+
+  AnySketch sketch1 = make_sketch();
+  AnySketch sketch2 = make_sketch();
+
+  ASSERT_THAT(sketch1.Insert("a", {{"foo", 5}}), IsOk());
+  ASSERT_THAT(sketch1.Insert("aa", {{"foo", 6}}), IsOk());
+
+  ASSERT_THAT(sketch2.Insert("a", {{"foo", 7}}), IsOk());
+  ASSERT_THAT(sketch2.Insert("aaa", {{"foo", 8}}), IsOk());
+
+  ASSERT_THAT(sketch1.Merge(sketch2), IsOk());
+  EXPECT_THAT(GetRegisters(sketch1),
+              UnorderedElementsAre(RegisterIs(1, {12}), RegisterIs(2, {6}),
+                                   RegisterIs(3, {8})));
+}
 }  // namespace
 }  // namespace wfa::any_sketch

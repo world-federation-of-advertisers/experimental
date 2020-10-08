@@ -5,14 +5,16 @@ cc_library(
     srcs = ["any_sketch.cc"],
     hdrs = ["any_sketch.h"],
     deps = [
-        ":hash_function",
-        ":index_function",
+        ":aggregators",
+        ":distributions",
         ":value_function",
+        "//src/main/cc/any_sketch/util:macros",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/random:bit_gen_ref",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -20,6 +22,9 @@ cc_library(
     name = "aggregators",
     srcs = ["aggregators.cc"],
     hdrs = ["aggregators.h"],
+    deps = [
+        "@com_github_glog_glog//:glog",
+    ],
 )
 
 cc_library(
@@ -59,27 +64,11 @@ cc_library(
 )
 
 cc_library(
-    name = "index_function",
-    hdrs = ["index_function.h"],
-)
-
-cc_library(
-    name = "exponential_index_function",
-    srcs = ["exponential_index_function.cc"],
-    hdrs = [
-        "exponential_index_function.h",
-    ],
-    deps = [
-        ":index_function",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-cc_library(
     name = "value_function",
     hdrs = ["value_function.h"],
     deps = [
+        ":aggregators",
+        ":distributions",
         "@com_google_absl//absl/strings",
     ],
 )

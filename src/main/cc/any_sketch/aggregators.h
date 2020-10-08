@@ -22,6 +22,8 @@
 
 namespace wfa::any_sketch {
 
+enum class AggregatorType { kSum, kUnique };
+
 // Interface for aggregating values.
 class Aggregator {
  public:
@@ -37,8 +39,8 @@ class Aggregator {
   virtual int64_t DecodeFromProtoValue(int64_t value) const;
 };
 
-const Aggregator& GetSumAggregator();
-const Aggregator& GetUniqueAggregator();
+// Returns a singleton instance of an Aggregator of the given type.
+const Aggregator& GetAggregator(AggregatorType type);
 
 inline constexpr int64_t kUniqueAggregatorDestroyedValue = -1;
 
