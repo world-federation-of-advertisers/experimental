@@ -18,11 +18,14 @@
 
 #include "absl/types/span.h"
 // TODO(wangyaopw): use "external/*" path for blinders headers
+#include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
+#include "src/test/cc/wfa/testutil/matchers.h"
+#include "src/test/cc/wfa/testutil/random.h"
 
 namespace wfa::any_sketch::crypto {
 namespace {
@@ -32,9 +35,9 @@ using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::private_join_and_compute::InternalError;
-using ::testing::Not;
 using ::private_join_and_compute::Status;
 using ::private_join_and_compute::StatusCode;
+using ::testing::Not;
 using ::testing::SizeIs;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
@@ -52,16 +55,6 @@ constexpr char kElGamalPublicKeyY3[] =
     "02d0f25ab445fc9c29e7e2509adc93308430f432522ffa93c2ae737ceb480b66d7";
 constexpr char kCombinedElGamalPublicKeyY[] =
     "02505d7b3ac4c3c387c74132ab677a3421e883b90d4c83dc766e400fe67acc1f04";
-
-std::string HexStringToByteString(const std::string& hex) {
-  std::vector<char> bytes;
-  for (unsigned int i = 0; i < hex.length(); i += 2) {
-    std::string byteString = hex.substr(i, 2);
-    char byte = static_cast<char>(strtol(byteString.c_str(), NULL, 16));
-    bytes.push_back(byte);
-  }
-  return std::string(bytes.begin(), bytes.end());
-}
 
 // TODO: use protocol buffer matchers when they are available
 // Returns true if the decryption of expected is the same with that of arg.
@@ -83,13 +76,6 @@ MATCHER_P(EqualsProto, expected, "") {
   return differencer.Compare(arg, expected);
 }
 
-MATCHER_P2(StatusIs, code, message, "") {
-  return ExplainMatchResult(
-      AllOf(testing::Property(&Status::code, code),
-            testing::Property(&Status::message, testing::HasSubstr(message))),
-      arg, result_listener);
-}
-
 // Helper function to create a SketchConfig.
 SketchConfig CreateSketchConfig(const int unique_cnt, const int sum_cnt) {
   SketchConfig sketch_config;
@@ -107,12 +93,12 @@ SketchConfig CreateSketchConfig(const int unique_cnt, const int sum_cnt) {
 void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
   for (int i = 0; i < register_cnt; ++i) {
     Sketch::Register* last_register = sketch.add_registers();
-    last_register->set_index(rand());
+    last_register->set_index(RandomInt64());
     for (int value_i = 0; value_i < sketch.config().values_size(); ++value_i) {
       // The Aggregate type doesn't matter here.
       // Mod(kMaxCounterValue * 2) so we have some but not too many values
       // exceed the max.
-      last_register->add_values(rand() % (kMaxCounterValue * 2) + 1);
+      last_register->add_values(RandomInt64(kMaxCounterValue * 2) + 1);
     }
   }
 }
@@ -165,8 +151,6 @@ class SketchEncrypterTest : public ::testing::Test {
         CreateWithPublicKey(kTestCurveId, kMaxCounterValue, public_key).value();
   }
 
-  ~SketchEncrypterTest() override {}
-
   // The ElGamal Cipher whose public key is used to create the SketchEncrypter.
   std::unique_ptr<CommutativeElGamal> original_cipher_;
   // The SketchEncrypter used in this test.
@@ -181,9 +165,12 @@ TEST_F(SketchEncrypterTest, ByteSizeShouldBeCorrect) {
   *plain_sketch.mutable_config() = CreateSketchConfig(unique_cnt, sum_cnt);
   AddRandomRegisters(register_size, plain_sketch);
 
+  ASSERT_EQ(plain_sketch.registers_size(), 1000);
+
   auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
 
-  EXPECT_THAT(result, SizeIs(register_size * (1 + unique_cnt + sum_cnt) * 66));
+  // Using SizeIs ends up printing all of "result", which is huge.
+  EXPECT_EQ(result.size(), register_size * (1 + unique_cnt + sum_cnt) * 66);
 }
 
 TEST_F(SketchEncrypterTest, EncryptionShouldBeNonDeterministic) {
@@ -306,19 +293,20 @@ TEST_F(SketchEncrypterTest, TestDestroyedRegisters) {
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {
   ElGamalPublicKeys key1;
-  key1.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
-  key1.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY1));
+  key1.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key1.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY1));
   ElGamalPublicKeys key2;
-  key2.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
-  key2.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY2));
+  key2.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key2.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY2));
   ElGamalPublicKeys key3;
-  key3.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
-  key3.set_el_gamal_y(HexStringToByteString(kElGamalPublicKeyY3));
+  key3.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key3.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY3));
   std::vector<ElGamalPublicKeys> keys{key1, key2, key3};
 
   ElGamalPublicKeys combinedKey;
-  combinedKey.set_el_gamal_g(HexStringToByteString(kElGamalPublicKeyG));
-  combinedKey.set_el_gamal_y(HexStringToByteString(kCombinedElGamalPublicKeyY));
+  combinedKey.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
+  combinedKey.set_el_gamal_y(
+      absl::HexStringToBytes(kCombinedElGamalPublicKeyY));
 
   auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
   ASSERT_TRUE(result.ok());

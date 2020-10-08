@@ -16,11 +16,10 @@
 
 #include <openssl/obj_mac.h>
 
-#include "absl/memory/memory.h"
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
+#include "src/test/cc/wfa/testutil/random.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {
@@ -59,13 +58,12 @@ SketchConfig CreateSketchConfig(const int index_cnt, const int unique_cnt,
 void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
   for (int i = 0; i < register_cnt; ++i) {
     Sketch::Register* last_register = sketch.add_registers();
-    last_register->set_index(rand());
+    last_register->set_index(RandomInt64());
     for (int value_i = 0; value_i < sketch.config().values_size(); ++value_i) {
       // The Aggregate type doesn't matter here.
       // Mod(kMaxCounterValue * 2) so we have some but not too many values
       // exceed the max.
-      last_register->add_values(
-          rand() % static_cast<int>(kMaxCounterValue * 2) + 1);
+      last_register->add_values(RandomInt64(kMaxCounterValue * 2) + 1);
     }
   }
 }

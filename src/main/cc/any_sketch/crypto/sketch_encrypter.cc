@@ -85,7 +85,7 @@ class SketchEncrypterImpl : public SketchEncrypter {
  private:
   // ElGamal cipher used to do the encryption
   std::unique_ptr<CommutativeElGamal> el_gamal_cipher_;
-  // Context used for storing temporary values to be resued across openssl
+  // Context used for storing temporary values to be reused across openssl
   // function calls for better performance.
   std::unique_ptr<Context> ctx_;
   // The EC Group representing the curve definition.
@@ -105,7 +105,7 @@ class SketchEncrypterImpl : public SketchEncrypter {
   // Append an encrypted register with all values equal to a provided number
   // to the sketch.
   Status AppendEncryptedRegisterWithSameValue(const std::string& index_ec,
-                                              size_t num_of_values, int value,
+                                              size_t num_of_values, int n,
                                               std::string& encrypted_sketch);
   // Encrypt a destroyed register by inserting a pair of registers with the
   // same actual index but different values.
@@ -142,7 +142,7 @@ SketchEncrypterImpl::SketchEncrypterImpl(
       max_counter_value_(max_counter_value) {}
 
 StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
-  // Lock the mutex since most of the crpyto computations here are NOT
+  // Lock the mutex since most of the crypto computations here are NOT
   // thread-safe.
   absl::WriterMutexLock l(&mutex_);
   if (!ValidateSketch(sketch)) {
@@ -173,7 +173,7 @@ Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
     RETURN_IF_ERROR(EncryptAdditionalECPoint(value_ec, encrypted_sketch));
   }
   return Status::OK;
-};
+}
 
 Status SketchEncrypterImpl::EncryptDestroyedRegister(
     const Sketch::Register& reg, std::string& encrypted_sketch) {

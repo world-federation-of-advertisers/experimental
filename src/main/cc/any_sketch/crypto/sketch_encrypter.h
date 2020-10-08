@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_
-#define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_
+#ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_H_
+#define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_H_
 
 #include <vector>
 
@@ -38,7 +38,13 @@ struct CiphertextString {
 // key.
 class SketchEncrypter {
  public:
-  virtual ~SketchEncrypter() {}
+  virtual ~SketchEncrypter() = default;
+
+  SketchEncrypter(SketchEncrypter&& other) = delete;
+  SketchEncrypter& operator=(SketchEncrypter&& other) = delete;
+  SketchEncrypter(const SketchEncrypter&) = delete;
+  SketchEncrypter& operator=(const SketchEncrypter&) = delete;
+
   // Return the word by word ElGamal encryption of the sketch. The result is
   // the concatenation of all ciphertext strings.
   virtual StatusOr<std::string> Encrypt(
@@ -46,10 +52,6 @@ class SketchEncrypter {
 
  protected:
   SketchEncrypter() = default;
-  SketchEncrypter(SketchEncrypter&& other) = delete;
-  SketchEncrypter& operator=(SketchEncrypter&& other) = delete;
-  SketchEncrypter(const SketchEncrypter&) = delete;
-  SketchEncrypter& operator=(const SketchEncrypter&) = delete;
 };
 
 // Creates a new SketchEncrypter object using the provided parameters.
@@ -71,4 +73,4 @@ StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
 
 }  // namespace wfa::any_sketch::crypto
 
-#endif  // SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTOR_H_
+#endif  // SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_H_

@@ -27,6 +27,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "src/main/cc/any_sketch/distributions.h"
 #include "src/main/cc/any_sketch/hash_function.h"
 #include "src/main/cc/any_sketch/value_function.h"
@@ -85,8 +86,8 @@ class AnySketch {
   ~AnySketch() = default;
 
   // Merges a set of values into a register.
-  absl::Status AggregateIntoRegister(int64_t index,
-                                     absl::Span<const int64_t> values);
+  ABSL_MUST_USE_RESULT absl::Status AggregateIntoRegister(
+      int64_t index, absl::Span<const int64_t> values);
 
   // Adds `item` to the Sketch.
   //
@@ -96,19 +97,21 @@ class AnySketch {
   //
   // It is not an error to include unnecessary keys in item_metadata--they will
   // simply be ignored.
-  absl::Status Insert(absl::Span<const unsigned char> item,
-                      const ItemMetadata &item_metadata);
-  absl::Status Insert(uint64_t item, const ItemMetadata &item_metadata);
-  absl::Status Insert(absl::string_view item,
-                      const ItemMetadata &item_metadata);
+  ABSL_MUST_USE_RESULT absl::Status Insert(absl::Span<const unsigned char> item,
+                                           const ItemMetadata &item_metadata);
+  ABSL_MUST_USE_RESULT absl::Status Insert(uint64_t item,
+                                           const ItemMetadata &item_metadata);
+  ABSL_MUST_USE_RESULT absl::Status Insert(absl::string_view item,
+                                           const ItemMetadata &item_metadata);
 
   // Merges the other sketch into this one. The result is equivalent to
   // sketching the union of the sets that went into this and the other sketch.
-  absl::Status Merge(const AnySketch &other);
+  ABSL_MUST_USE_RESULT absl::Status Merge(const AnySketch &other);
 
   // Merges all the other sketches into this one. The resuls is equivalent to
   // sketching the union of all of the sets.
-  absl::Status MergeAll(absl::Span<const std::unique_ptr<AnySketch>> others);
+  ABSL_MUST_USE_RESULT absl::Status MergeAll(
+      absl::Span<const std::unique_ptr<AnySketch>> others);
 
   Iterator begin() const;
 

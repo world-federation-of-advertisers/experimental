@@ -25,9 +25,9 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "src/main/cc/any_sketch/aggregators.h"
 #include "src/main/cc/any_sketch/distributions.h"
-#include "src/main/cc/any_sketch/hash_function.h"
 #include "src/main/cc/any_sketch/util/macros.h"
 #include "src/main/cc/any_sketch/value_function.h"
 
@@ -93,7 +93,7 @@ absl::Status AnySketch::Insert(absl::Span<const unsigned char> item,
 
 absl::Status AnySketch::Insert(uint64_t item,
                                const ItemMetadata& item_metadata) {
-  std::array<unsigned char, sizeof(item)> arr{};
+  std::array<unsigned char, sizeof(uint64_t)> arr{};
   absl::little_endian::Store64(arr.data(), item);
   return Insert(arr, item_metadata);
 }

@@ -1,6 +1,6 @@
-# Elgamal Public Key Combiner
+# ElGamal Public Key Combiner
 
-A valid Elgamal public Key contains a generator (g) and an element (y). In order
+A valid ElGamal public Key contains a generator (g) and an element (y). In order
 to combine the keys, all keys' generators should have the same value. Since we
 use the default generator for all keys, only the elements are required to use
 the combiner.

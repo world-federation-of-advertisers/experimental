@@ -1,0 +1,27 @@
+cc_library(
+    name = "matchers",
+    testonly = True,
+    hdrs = ["matchers.h"],
+    visibility = [
+        "//src/test/cc/wfa:__subpackages__",
+    ],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "random",
+    testonly = True,
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    visibility = [
+        "//src/test/cc/wfa:__subpackages__",
+    ],
+    deps = [
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+    ],
+)
