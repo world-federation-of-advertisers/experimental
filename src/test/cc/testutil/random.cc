@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/test/cc/wfa/testutil/random.h"
+#include "src/test/cc/testutil/random.h"
 
 #include "absl/random/distributions.h"
 #include "absl/random/random.h"

@@ -19,7 +19,7 @@
 #include "crypto/commutative_elgamal.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "src/test/cc/wfa/testutil/random.h"
+#include "src/test/cc/testutil/random.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {

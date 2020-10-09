@@ -24,8 +24,8 @@
 #include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
-#include "src/test/cc/wfa/testutil/matchers.h"
-#include "src/test/cc/wfa/testutil/random.h"
+#include "src/test/cc/testutil/matchers.h"
+#include "src/test/cc/testutil/random.h"
 
 namespace wfa::any_sketch::crypto {
 namespace {

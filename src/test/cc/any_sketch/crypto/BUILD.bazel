@@ -7,8 +7,8 @@ cc_test(
     deps = [
         "//src/main/cc/any_sketch/crypto:sketch_encrypter",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
-        "//src/test/cc/wfa/testutil:matchers",
-        "//src/test/cc/wfa/testutil:random",
+        "//src/test/cc/testutil:matchers",
+        "//src/test/cc/testutil:random",
         "@com_google_absl//absl/strings",
         "@googletest//:gtest_main",
     ],
@@ -22,7 +22,7 @@ cc_test(
     ],
     deps = [
         "//src/main/cc/any_sketch/crypto:sketch_encrypter_adapter",
-        "//src/test/cc/wfa/testutil:random",
+        "//src/test/cc/testutil:random",
         "@googletest//:gtest_main",
         "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
     ],

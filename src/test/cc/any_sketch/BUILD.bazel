@@ -7,7 +7,7 @@ cc_test(
         "//src/main/cc/any_sketch:aggregators",
         "//src/main/cc/any_sketch:distributions",
         "//src/main/cc/any_sketch:value_function",
-        "//src/test/cc/wfa/testutil:matchers",
+        "//src/test/cc/testutil:matchers",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
@@ -34,7 +34,7 @@ cc_test(
     srcs = ["distributions_test.cc"],
     deps = [
         "//src/main/cc/any_sketch:distributions",
-        "//src/test/cc/wfa/testutil:matchers",
+        "//src/test/cc/testutil:matchers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
