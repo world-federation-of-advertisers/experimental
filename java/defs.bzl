@@ -30,35 +30,40 @@ def _create_src_jar(ctx, java_runtime_info, input_dir, output_jar):
 
 def _java_wrap_cc_impl(ctx):
     name = ctx.attr.name
-
     src = ctx.file.src
-    inputs = [src]
-
-    # Add headers from deps as swig inputs.
-    for target in ctx.attr.deps:
-        inputs.extend(target[CcInfo].compilation_context.headers.to_list())
-
     outfile = ctx.outputs.outfile
-    java_files_dir = ctx.actions.declare_directory(
-        "java_files",
-        sibling = outfile,
-    )
+
+    header_sets = []  # depsets of Files
+    include_path_sets = []  # depsets of strings
+
+    # Include headers from deps.
+    for target in ctx.attr.deps:
+        cc_context = target[CcInfo].compilation_context
+        header_sets.append(cc_context.headers)
+        include_path_sets.append(cc_context.includes)
+
+    # Include workspace root in include path for when target is defined in an
+    # external workspace.
+    if ctx.label.workspace_root:
+        include_path_sets.append(depset([ctx.label.workspace_root]))
+
+    java_files_dir = ctx.actions.declare_directory("java_files")
 
     swig_args = ctx.actions.args()
     swig_args.add("-c++")
     swig_args.add("-java")
     swig_args.add("-package", ctx.attr.package)
-    swig_args.add("-outdir", java_files_dir.path)
+    swig_args.add_all("-outdir", [java_files_dir], expand_directories = False)
     swig_args.add("-o", outfile)
     if ctx.attr.module:
         swig_args.add("-module", ctx.attr.module)
-    if ctx.label.workspace_root:
-        swig_args.add("-I" + ctx.label.workspace_root)
+    for include_path in depset(transitive = include_path_sets).to_list():
+        swig_args.add("-I" + include_path)
     swig_args.add(src.path)
 
     ctx.actions.run(
         outputs = [outfile, java_files_dir],
-        inputs = inputs,
+        inputs = depset([src], transitive = header_sets),
         executable = "swig",
         arguments = [swig_args],
         mnemonic = "SwigCompile",
