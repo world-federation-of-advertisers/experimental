@@ -87,44 +87,6 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-# Support Maven sources
-
-http_archive(
-    name = "rules_jvm_external",
-    sha256 = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a",
-    strip_prefix = "rules_jvm_external-3.0",
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/3.0.zip",
-)
-
-load("@rules_jvm_external//:defs.bzl", "maven_install")
-
-# Maven
-maven_install(
-    artifacts = [
-        "com.google.guava:guava:29.0-jre",
-        "com.google.truth.extensions:truth-liteproto-extension:1.0.1",
-        "com.google.truth.extensions:truth-proto-extension:1.0.1",
-        "com.google.truth:truth:1.0.1",
-        "junit:junit:4.13",
-    ],
-    generate_compat_repositories = True,
-    repositories = [
-        "https://repo.maven.apache.org/maven2/",
-    ],
-)
-
-load("@maven//:compat.bzl", "compat_repositories")
-
-compat_repositories()
-
-# Swig rules.
-git_repository(
-    name = "wfa_rules_swig",
-    commit = "4799cbfa2d0e335208d790729ed4b49d34968245",
-    remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
-    shallow_since = "1595012448 -0700",
-)
-
 # Measurement APIs.
 git_repository(
     name = "wfa_measurement_proto",
