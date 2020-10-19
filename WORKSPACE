@@ -136,6 +136,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any-sketch",
-    branch = "master",
+    commit = "523107ea635c4aabb39496d1bd776bd439dc65c9",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
+    shallow_since = "1603139261 +0000",
 )
