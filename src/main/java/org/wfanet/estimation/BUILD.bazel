@@ -1,0 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("@wfa_rules_swig//java:defs.bzl", "java_wrap_cc")
+
+package(default_visibility = ["//visibility:public"])
+
+java_wrap_cc(
+    name = "estimators",
+    src = "estimators.swig",
+    module = "Estimators",
+    package = "org.wfanet.estimation",
+    deps = [
+        "@any-sketch//src/main/cc/estimation:estimators",
+    ],
+)
+
+java_library(
+    name = "value_histogram",
+    srcs = [
+        "ValueHistogram.java",
+    ],
+    deps = [
+        "//src/main/java/org/wfanet/anysketch",
+        "@maven//:com_google_guava_guava",
+    ],
+)

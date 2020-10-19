@@ -1,0 +1,33 @@
+load("@rules_java//java:defs.bzl", "java_test")
+
+java_test(
+    name = "tests",
+    srcs = [
+        "EstimatorsTest.java",
+    ],
+    test_class = "org.wfanet.estimation.EstimatorsTest",
+    deps = [
+        "//src/main/java/org/wfanet/estimation:estimators",
+        "@maven//:com_google_truth_truth",
+    ],
+)
+
+java_test(
+    name = "value_histogram_test",
+    srcs = [
+        "ValueHistogramTest.java",
+    ],
+    resources = [
+        "//src/test/java/org/wfanet/anysketch/testdata",
+    ],
+    test_class = "org.wfanet.estimation.ValueHistogramTest",
+    deps = [
+        "//src/main/java/org/wfanet/anysketch",
+        "//src/main/java/org/wfanet/anysketch:sketch_proto_converter",
+        "//src/main/java/org/wfanet/estimation:value_histogram",
+        "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
+        "@com_google_protobuf//:protobuf_java",
+        "@maven//:com_google_truth_truth",
+        "@maven//:junit_junit",
+    ],
+)

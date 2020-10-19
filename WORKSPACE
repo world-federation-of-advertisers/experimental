@@ -1,5 +1,52 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "com_google_absl",
+    strip_prefix = "abseil-cpp-b56cbdd23834a65682c0b46f367f8679e83bc894",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/b56cbdd23834a65682c0b46f367f8679e83bc894.zip"],
+)
+
+http_archive(
+    name = "googletest",
+    sha256 = "94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91",
+    strip_prefix = "googletest-release-1.10.0",
+    urls = ["https://github.com/google/googletest/archive/release-1.10.0.zip"],
+)
+
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
+new_git_repository(
+    name = "farmhash",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "farmhash",
+    hdrs = ["src/farmhash.h"],
+    srcs = ["src/farmhash.cc"],
+    deps = [],
+)""",
+    commit = "2f0e005b81e296fa6963e395626137cf729b710c",
+    remote = "https://github.com/google/farmhash.git",
+)
+
+http_archive(
+    name = "com_github_glog_glog",
+    sha256 = "f28359aeba12f30d73d9e4711ef356dc842886968112162bc73002645139c39c",
+    strip_prefix = "glog-0.4.0",
+    urls = ["https://github.com/google/glog/archive/v0.4.0.tar.gz"],
+)
+
+# gflags
+# Needed for glog
+http_archive(
+    name = "com_github_gflags_gflags",
+    sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
+    strip_prefix = "gflags-2.2.2",
+    urls = [
+        "https://mirror.bazel.build/github.com/gflags/gflags/archive/v2.2.2.tar.gz",
+        "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
+    ],
+)
 
 # gRPC
 http_archive(
@@ -86,8 +133,9 @@ git_repository(
     shallow_since = "1590709328 +0000",
 )
 
-# Base AnySketch
+# Core AnySketch.
 git_repository(
     name = "any-sketch",
+    branch = "master",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
 )
