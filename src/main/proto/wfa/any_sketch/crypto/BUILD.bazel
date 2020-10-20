@@ -5,6 +5,6 @@ package(default_visibility = ["//visibility:public"])
 java_proto_library(
     name = "sketch_encryption_methods_java_proto",
     deps = [
-        "@any-sketch//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_proto",
+        "@any_sketch//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_proto",
     ],
 )

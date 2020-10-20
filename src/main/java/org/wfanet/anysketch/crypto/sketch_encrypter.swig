@@ -14,7 +14,7 @@
 
 %include "exception.i"
 %{
-#include "external/any-sketch/src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
 %}
 
 // Convert C++ ::private_join_and_compute::StatusOr<std::string> to a Java byte
@@ -61,4 +61,4 @@
   return $jnicall;
 }
 
-%include "external/any-sketch/src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
+%include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"

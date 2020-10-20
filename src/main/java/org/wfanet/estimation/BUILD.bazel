@@ -9,7 +9,7 @@ java_wrap_cc(
     module = "Estimators",
     package = "org.wfanet.estimation",
     deps = [
-        "@any-sketch//src/main/cc/estimation:estimators",
+        "@any_sketch//src/main/cc/estimation:estimators",
     ],
 )
 

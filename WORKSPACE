@@ -1,3 +1,5 @@
+workspace(name = "any_sketch_java")
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
@@ -120,9 +122,9 @@ compat_repositories()
 # Swig rules.
 git_repository(
     name = "wfa_rules_swig",
-    commit = "4799cbfa2d0e335208d790729ed4b49d34968245",
+    commit = "ad4f1bcf5747cb26b480b45c582069fb1488f8c1",
     remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
-    shallow_since = "1595012448 -0700",
+    shallow_since = "1603231045 -0700"
 )
 
 # Measurement APIs.
@@ -135,7 +137,7 @@ git_repository(
 
 # Core AnySketch.
 git_repository(
-    name = "any-sketch",
+    name = "any_sketch",
     commit = "523107ea635c4aabb39496d1bd776bd439dc65c9",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
     shallow_since = "1603139261 +0000",

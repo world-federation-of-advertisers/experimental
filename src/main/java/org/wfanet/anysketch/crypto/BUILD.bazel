@@ -9,6 +9,6 @@ java_wrap_cc(
     module = "SketchEncrypterAdapter",
     package = "org.wfanet.anysketch.crypto",
     deps = [
-        "@any-sketch//src/main/cc/any_sketch/crypto:sketch_encrypter_adapter",
+        "@any_sketch//src/main/cc/any_sketch/crypto:sketch_encrypter_adapter",
     ],
 )
