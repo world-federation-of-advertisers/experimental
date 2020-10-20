@@ -42,10 +42,10 @@ def _java_wrap_cc_impl(ctx):
         header_sets.append(cc_context.headers)
         include_path_sets.append(cc_context.includes)
 
-    # Include workspace root in include path for when target is defined in an
-    # external workspace.
-    if ctx.label.workspace_root:
-        include_path_sets.append(depset([ctx.label.workspace_root]))
+        # Include workspace root in include path for when target is defined in an
+        # external workspace.
+        if target.label.workspace_root:
+            include_path_sets.append(depset([target.label.workspace_root]))
 
     java_files_dir = ctx.actions.declare_directory("java_files")
 
