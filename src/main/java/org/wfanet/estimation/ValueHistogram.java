@@ -14,8 +14,10 @@
 
 package org.wfanet.estimation;
 
-import com.google.common.collect.ImmutableMap;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 import org.wfanet.anysketch.AnySketch;
@@ -27,11 +29,15 @@ import org.wfanet.anysketch.AnySketch.Register;
  */
 public class ValueHistogram {
 
-  public static ImmutableMap<Long, Long> calculateHistogram(
+  public static ImmutableMap<Long, Double> calculateHistogram(
       AnySketch anySketch, String valueName, Predicate<Register> valueFilter) {
     final int valueIndex = anySketch.getValueIndex(valueName).getAsInt();
-    return StreamSupport.stream(anySketch.spliterator(), /*  parallel= */ false)
-        .filter(valueFilter)
-        .collect(toImmutableMap(r -> r.getValues().get(valueIndex), r -> 1L, Long::sum));
+    ImmutableMap<Long, Long> unNormalized =
+        StreamSupport.stream(anySketch.spliterator(), /*  parallel= */ false)
+            .filter(valueFilter)
+            .collect(toImmutableMap(r -> r.getValues().get(valueIndex), r -> 1L, Long::sum));
+    Long total = unNormalized.values().stream().reduce(Long::sum).orElse(0L);
+
+    return ImmutableMap.copyOf(Maps.transformValues(unNormalized, i -> (double) i / total));
   }
 }

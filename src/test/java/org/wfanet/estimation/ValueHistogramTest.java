@@ -16,6 +16,7 @@ package org.wfanet.estimation;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
@@ -63,8 +64,11 @@ public class ValueHistogramTest {
     anySketch.insert("personne trois", ImmutableMap.of(DIST_FREQ, 3L));
     anySketch.insert("qof afar", ImmutableMap.of(DIST_FREQ, 4L));
 
-    assertThat(ValueHistogram.calculateHistogram(anySketch, VAL_FREQ, r -> true))
-        .isEqualTo(ImmutableMap.of(3L, 2L, 4L, 1L));
+    ImmutableMap<Long, Double> result =
+        ValueHistogram.calculateHistogram(anySketch, VAL_FREQ, r -> true);
+    assertThat(result).hasSize(2);
+    assertEquals(0.667, result.get(3L), 0.01);
+    assertEquals(0.333, result.get(4L), 0.01);
   }
 
   @Test
