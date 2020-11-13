@@ -1,0 +1,21 @@
+indexes {
+  name: "Index"
+  distribution {
+    dirac_mixture {
+      deltas {
+        alpha: 1
+        activity: 1
+      }
+      num_values: 10
+    }
+  }
+}
+values {
+  name: "Frequency"
+  aggregator: SUM
+  distribution {
+    oracle {
+      key: "frequency"
+    }
+  }
+}

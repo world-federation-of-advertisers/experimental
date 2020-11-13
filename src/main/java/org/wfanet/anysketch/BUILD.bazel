@@ -22,6 +22,9 @@ java_library(
         "SketchProtos.java",
         "SketchSql.java",
     ],
+    resources = [
+        "//src/main/java/org/wfanet/anysketch/sql",
+    ],
     deps = [
         ":anysketch",
         "//src/main/java/org/wfanet/anysketch/aggregators",

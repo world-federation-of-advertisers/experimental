@@ -1,0 +1,19 @@
+indexes {
+  name: "SomeIndex"
+  distribution {
+    verbatim {
+      index_probability: 0.5
+      index_probability: 0.3
+      index_probability: 0.2
+    }
+  }
+}
+values {
+  name: "Frequency"
+  aggregator: SUM
+  distribution {
+    oracle {
+      key: "frequency"
+    }
+  }
+}

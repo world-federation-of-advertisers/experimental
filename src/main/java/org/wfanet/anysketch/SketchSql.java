@@ -14,11 +14,22 @@
 
 package org.wfanet.anysketch;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.base.Suppliers;
+import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URL;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.wfanet.measurement.api.v1alpha.Distribution;
+import org.wfanet.measurement.api.v1alpha.Distribution.DistributionChoiceCase;
 import org.wfanet.measurement.api.v1alpha.ExponentialDistribution;
 import org.wfanet.measurement.api.v1alpha.SketchConfig;
+import org.wfanet.measurement.api.v1alpha.SketchConfig.IndexSpec;
 import org.wfanet.measurement.api.v1alpha.SketchConfig.ValueSpec;
 import org.wfanet.measurement.api.v1alpha.SketchConfig.ValueSpec.Aggregator;
 
@@ -26,65 +37,138 @@ import org.wfanet.measurement.api.v1alpha.SketchConfig.ValueSpec.Aggregator;
 public class SketchSql {
   private SketchSql() {}
 
+  @SuppressWarnings("UnstableApiUsage")
+  private static final Supplier<String> SQL_TEMPLATE =
+      Suppliers.memoize(
+          () -> {
+            URL sqlTemplateResource = SketchSql.class.getResource("sql/bigquery_template.sql");
+            Preconditions.checkNotNull(sqlTemplateResource);
+            try {
+              return Resources.toString(sqlTemplateResource, Charsets.UTF_8);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+
   /**
-   * Converts `config` into an SQL query.
+   * Converts `config` into a BigQuery-compatible SQL query.
    *
    * <p>The output query will select one row per register of the sketch. The columns are the indexes
    * (in order listed in the config) followed by the values (in order listed in the config). The
    * column names are given by the IndexSpec.name and ValueSpec.name fields.
    *
+   * <p>The impressionTable must have a column called "VirtualId", as well as a column for each
+   * metadata key referenced by any distribution.
+   *
    * @param impressionTable the table or subquery containing exactly the impressions to sketch
    * @param config the SketchConfig
    * @return SQL to produce a sketch
    */
-  public static String fromConfig(String impressionTable, SketchConfig config) {
-    StringBuilder sql = new StringBuilder();
+  public static String forBigQuery(String impressionTable, SketchConfig config) {
+    String fingerprintSelect = selectFingerprintsSql(config);
+    String distributionSelect = selectDistributionSql(config);
+    String aggregationSelect = selectAggregations(config);
 
-    // In intermediate table T1, select a row for each impression. Each row in T1 is equivalent to
-    // a sketch containing only that impression.
-    sql.append("WITH T1 AS (\n");
-    sql.append("  SELECT\n");
-
-    config
-        .getIndexesList()
-        .forEach(i -> sql.append(selectDistributionSql(i.getName(), i.getDistribution())));
-
-    config
-        .getValuesList()
-        .forEach(i -> sql.append(selectDistributionSql(i.getName(), i.getDistribution())));
-
-    sql.append(String.format("  FROM %s AS Impressions\n)\n", impressionTable));
-
-    // Aggregate the individual sketches in T1 by grouping by the index columns of T1.
-    sql.append("SELECT\n");
-
-    config.getIndexesList().forEach(i -> sql.append(String.format("  T1.%s,\n", i.getName())));
-
-    for (ValueSpec value : config.getValuesList()) {
-      sql.append(selectAggregateSql(value.getName(), value.getAggregator()));
-    }
-
-    sql.append("FROM T1\nGROUP BY ");
-
-    String groupByFields =
+    String groupByColumns =
         IntStream.range(1, config.getIndexesCount() + 1)
             .mapToObj(Integer::toString)
             .collect(Collectors.joining(", "));
-    sql.append(groupByFields);
+
+    return SQL_TEMPLATE
+        .get()
+        .replace("$FINGERPRINT_SELECT", fingerprintSelect.trim())
+        .replace("$ORIGINAL_TABLE", impressionTable.trim())
+        .replace("$DISTRIBUTION_SELECT", distributionSelect.trim())
+        .replace("$AGGREGATION_SELECT", aggregationSelect.trim())
+        .replace("$GROUP_BY_COLUMNS", groupByColumns.trim());
+  }
+
+  private static String selectOnDistributions(
+      SketchConfig config, BiFunction<String, Distribution, String> distributionMapper) {
+    StringBuilder sql = new StringBuilder();
+
+    for (IndexSpec indexSpec : config.getIndexesList()) {
+      sql.append(distributionMapper.apply(indexSpec.getName(), indexSpec.getDistribution()));
+    }
+
+    for (ValueSpec i : config.getValuesList()) {
+      sql.append(distributionMapper.apply(i.getName(), i.getDistribution()));
+    }
 
     return sql.toString();
   }
 
-  private static String selectAggregateSql(String name, Aggregator aggregator) {
-    return String.format("  (%s) AS %s,\n", aggregateSql(name, aggregator), name);
+  private static String selectFingerprintsSql(SketchConfig config) {
+    return selectOnDistributions(
+        config, (n, d) -> selectAs(selectSingleFingerprintSql(n, d), n, /* spaces = */ 4));
+  }
+
+  private static String selectDistributionSql(SketchConfig config) {
+    return selectOnDistributions(
+        config, (n, d) -> selectAs(selectSingleDistributionSql(n, d), n, /* spaces = */ 4));
+  }
+
+  private static String selectSingleFingerprintSql(String name, Distribution distribution) {
+    if (distribution.getDistributionChoiceCase() == DistributionChoiceCase.ORACLE) {
+      return "Impressions." + distribution.getOracle().getKey();
+    }
+    String template = "FINGERPRINT(\"%s\", Impressions.VirtualId)";
+    return String.format(template, name);
+  }
+
+  private static String selectSingleDistributionSql(String name, Distribution distribution) {
+    switch (distribution.getDistributionChoiceCase()) {
+      case EXPONENTIAL:
+        {
+          ExponentialDistribution e = distribution.getExponential();
+          double rate = e.getRate();
+          long size = e.getNumValues();
+          String template = "EXPONENTIAL_DISTRIBUTION(%s, %f, %d)";
+          return String.format(template, name, rate, size);
+        }
+      case UNIFORM:
+        {
+          String template = "UNIFORM_DISTRIBUTION(%s, %s)";
+          return String.format(template, name, distribution.getUniform().getNumValues());
+        }
+      case ORACLE:
+        return name;
+      case GEOMETRIC:
+        return String.format("GEOMETRIC_DISTRIBUTION(%s)", name);
+      case CONSTANT:
+        return String.valueOf(distribution.getConstant().getValue());
+      case DIRAC_MIXTURE:
+      case VERBATIM:
+      case DISTRIBUTIONCHOICE_NOT_SET:
+        break;
+    }
+    throw new IllegalArgumentException("Unsupported distribution: " + distribution);
+  }
+
+  private static String selectAggregations(SketchConfig config) {
+    StringBuilder sql = new StringBuilder();
+
+    for (IndexSpec i : config.getIndexesList()) {
+      sql.append(String.format("  T2.%s,\n", i.getName()));
+    }
+
+    for (ValueSpec value : config.getValuesList()) {
+      sql.append(selectSingleAggregationSql(value.getName(), value.getAggregator()));
+    }
+
+    return sql.toString();
+  }
+
+  private static String selectSingleAggregationSql(String name, Aggregator aggregator) {
+    return selectAs(aggregateSql(name, aggregator), name, 2);
   }
 
   private static String aggregateSql(String name, Aggregator aggregator) {
     switch (aggregator) {
       case SUM:
-        return String.format("SUM(T1.%s)", name);
+        return String.format("SUM(T2.%s)", name);
       case UNIQUE:
-        return String.format("IF(MIN(T1.%s) = MAX(T1.%s), ANY_VALUE(T1.%s), -1)", name, name, name);
+        return String.format("IF(MIN(T2.%s) = MAX(T2.%s), ANY_VALUE(T2.%s), -1)", name, name, name);
       case UNRECOGNIZED:
       case AGGREGATOR_UNSPECIFIED:
         break;
@@ -92,36 +176,10 @@ public class SketchSql {
     throw new IllegalArgumentException("Unsupported aggregator: " + aggregator);
   }
 
-  private static String selectDistributionSql(String name, Distribution distribution) {
-    return String.format("    (%s) AS %s,\n", distributionSql(name, distribution), name);
-  }
-
-  private static String distributionSql(String name, Distribution distribution) {
-    switch (distribution.getDistributionChoiceCase()) {
-      case EXPONENTIAL:
-        ExponentialDistribution e = distribution.getExponential();
-        return String.format(
-            "CAST(LOG(EXP(%f) + %s / BIT_CAST_TO_UINT64(-1) * (1 - EXP(%f)) / %f * %d AS INT64)",
-            e.getRate(), fingerprintSql(name), e.getRate(), e.getRate(), e.getNumValues());
-      case UNIFORM:
-        return String.format(
-            "MOD(%s, %s)", fingerprintSql(name), distribution.getUniform().getNumValues());
-      case ORACLE:
-        return "Impressions." + distribution.getOracle().getKey();
-      case GEOMETRIC:
-        return String.format(
-            "CAST(FLOOR(LOG(%s / BIT_CAST_TO_UINT64(-1), 2)) AS INT64)", fingerprintSql(name));
-      case DIRAC_MIXTURE:
-      case VERBATIM:
-      case CONSTANT:
-      case DISTRIBUTIONCHOICE_NOT_SET:
-        break;
+  private static String selectAs(String expression, String name, int spaces) {
+    if (expression.isEmpty()) {
+      return expression;
     }
-    throw new IllegalArgumentException("Unsupported distribution: " + distribution);
-  }
-
-  private static String fingerprintSql(String name) {
-    return String.format(
-        "BIT_CAST_TO_UINT64(FARM_FINGERPRINT(CONCAT(%s, Impressions.VirtualId)))", name);
+    return String.format("%s(%s) AS %s,\n", Strings.repeat(" ", spaces), expression, name);
   }
 }
