@@ -17,7 +17,7 @@
 #ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_ADAPTER_H_
 #define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_ADAPTER_H_
 
-#include "util/statusor.h"
+#include "absl/status/statusor.h"
 
 // Wrapper methods used to generate the swig/JNI Java classes.
 // The only functionality of these methods are converting between proto messages
@@ -27,10 +27,10 @@
 // directly.
 namespace wfa::any_sketch::crypto {
 
-private_join_and_compute::StatusOr<std::string> EncryptSketch(
+absl::StatusOr<std::string> EncryptSketch(
     const std::string& serialized_request);
 
-private_join_and_compute::StatusOr<std::string> CombineElGamalPublicKeys(
+absl::StatusOr<std::string> CombineElGamalPublicKeys(
     const std::string& serialized_request);
 
 }  // namespace wfa::any_sketch::crypto

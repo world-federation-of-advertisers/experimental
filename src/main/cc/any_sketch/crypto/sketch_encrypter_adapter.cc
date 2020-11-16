@@ -16,17 +16,16 @@
 
 #include "absl/memory/memory.h"
 #include "sketch_encrypter.h"
-#include "util/canonical_errors.h"
 #include "util/status_macros.h"
-#include "util/statusor.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {
 
-StatusOr<std::string> EncryptSketch(const std::string& serialized_request) {
+absl::StatusOr<std::string> EncryptSketch(
+    const std::string& serialized_request) {
   wfa::any_sketch::crypto::EncryptSketchRequest request_proto;
   if (!request_proto.ParseFromString(serialized_request)) {
-    return private_join_and_compute::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "failed to parse the EncryptSketchRequest proto.");
   }
   ASSIGN_OR_RETURN(auto sketch_encrypter,
@@ -41,11 +40,11 @@ StatusOr<std::string> EncryptSketch(const std::string& serialized_request) {
   return response.SerializeAsString();
 }
 
-private_join_and_compute::StatusOr<std::string> CombineElGamalPublicKeys(
+absl::StatusOr<std::string> CombineElGamalPublicKeys(
     const std::string& serialized_request) {
   wfa::any_sketch::crypto::CombineElGamalPublicKeysRequest request_proto;
   if (!request_proto.ParseFromString(serialized_request)) {
-    return private_join_and_compute::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "failed to parse the CombineElGamalPublicKeysRequest proto.");
   }
   wfa::any_sketch::crypto::CombineElGamalPublicKeysResponse response;

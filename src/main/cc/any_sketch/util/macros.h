@@ -54,7 +54,7 @@
     statusor, lhs, rexpr, message)                                \
   auto statusor = (rexpr);                                        \
   if (ABSL_PREDICT_FALSE(!statusor.ok())) {                       \
-    return InvalidArgumentError(message);                         \
+    return absl::InvalidArgumentError(message);                   \
   }                                                               \
   lhs = std::move(statusor).value()
 

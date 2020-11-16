@@ -28,7 +28,6 @@ cc_library(
     deps = [
         ":sketch_encrypter",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
-        "@com_google_private_join_and_compute//util:status",
     ],
 )
 

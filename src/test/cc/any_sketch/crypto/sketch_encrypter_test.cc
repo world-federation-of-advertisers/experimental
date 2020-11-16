@@ -34,9 +34,6 @@ using ::private_join_and_compute::CommutativeElGamal;
 using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
-using ::private_join_and_compute::InternalError;
-using ::private_join_and_compute::Status;
-using ::private_join_and_compute::StatusCode;
 using ::testing::Not;
 using ::testing::SizeIs;
 using ::wfa::measurement::api::v1alpha::Sketch;
@@ -317,7 +314,8 @@ TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysEmptyInputShouldThrow) {
   std::vector<ElGamalPublicKeys> keys;
   auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
   ASSERT_FALSE(result.ok());
-  EXPECT_THAT(result.status(), StatusIs(StatusCode::kInvalidArgument, "empty"));
+  EXPECT_THAT(result.status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, "empty"));
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysInvalidInputShouldThrow) {
@@ -332,7 +330,7 @@ TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysInvalidInputShouldThrow) {
   auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
   ASSERT_FALSE(result.ok());
   EXPECT_THAT(result.status(),
-              StatusIs(StatusCode::kInvalidArgument, "Invalid ECPoint"));
+              StatusIs(absl::StatusCode::kInvalidArgument, "Invalid ECPoint"));
 }
 
 }  // namespace

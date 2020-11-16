@@ -19,14 +19,11 @@
 
 #include <vector>
 
-#include "util/statusor.h"
+#include "absl/status/statusor.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 #include "wfa/measurement/api/v1alpha/sketch.pb.h"
 
 namespace wfa::any_sketch::crypto {
-
-// TODO(wangyaopw): update to ::absl::StatusOr when it is open sourced.
-using ::private_join_and_compute::StatusOr;
 
 // ElGamal Encryption of an ECPoint m using randomness r, under public key (g,y)
 struct CiphertextString {
@@ -47,7 +44,7 @@ class SketchEncrypter {
 
   // Return the word by word ElGamal encryption of the sketch. The result is
   // the concatenation of all ciphertext strings.
-  virtual StatusOr<std::string> Encrypt(
+  virtual absl::StatusOr<std::string> Encrypt(
       const wfa::measurement::api::v1alpha::Sketch& sketch) = 0;
 
  protected:
@@ -63,12 +60,12 @@ class SketchEncrypter {
 //   max_counter_value: max decipherable counter value. Greater values are
 //     encrypted as the max_counter_value.
 //   public_key_bytes: the public key of the ElGamal cipher used for encryption.
-StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
+absl::StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
     int curve_id, size_t max_counter_value,
     const CiphertextString& public_key_bytes);
 
 // Combine a vector of ElGamalPublicKeys whose contain the same generator.
-StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
+absl::StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
     int curve_id, const std::vector<ElGamalPublicKeys>& keys);
 
 }  // namespace wfa::any_sketch::crypto

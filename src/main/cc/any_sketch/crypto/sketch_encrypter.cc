@@ -29,9 +29,6 @@ using ::private_join_and_compute::CommutativeElGamal;
 using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
-using ::private_join_and_compute::InternalError;
-using ::private_join_and_compute::InvalidArgumentError;
-using ::private_join_and_compute::Status;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 using BlindersCiphertext = std::pair<std::string, std::string>;
@@ -80,7 +77,7 @@ class SketchEncrypterImpl : public SketchEncrypter {
   SketchEncrypterImpl(const SketchEncrypterImpl&) = delete;
   SketchEncrypterImpl& operator=(const SketchEncrypterImpl&) = delete;
 
-  StatusOr<std::string> Encrypt(const Sketch& sketch) override;
+  absl::StatusOr<std::string> Encrypt(const Sketch& sketch) override;
 
  private:
   // ElGamal cipher used to do the encryption
@@ -104,32 +101,32 @@ class SketchEncrypterImpl : public SketchEncrypter {
 
   // Append an encrypted register with all values equal to a provided number
   // to the sketch.
-  Status AppendEncryptedRegisterWithSameValue(const std::string& index_ec,
-                                              size_t num_of_values, int n,
-                                              std::string& encrypted_sketch);
+  absl::Status AppendEncryptedRegisterWithSameValue(
+      const std::string& index_ec, size_t num_of_values, int n,
+      std::string& encrypted_sketch);
   // Encrypt a destroyed register by inserting a pair of registers with the
   // same actual index but different values.
-  Status EncryptDestroyedRegister(const Sketch::Register& reg,
-                                  std::string& encrypted_sketch);
+  absl::Status EncryptDestroyedRegister(const Sketch::Register& reg,
+                                        std::string& encrypted_sketch);
   // Encrypt a non-destroyed register according to the exact values.
-  Status EncryptNonDestroyedRegister(const Sketch::Register& reg,
-                                     const SketchConfig& sketch_config,
-                                     std::string& encrypted_sketch);
+  absl::Status EncryptNonDestroyedRegister(const Sketch::Register& reg,
+                                           const SketchConfig& sketch_config,
+                                           std::string& encrypted_sketch);
   // Encrypt a Register and append the result to the encrypted_sketch.
-  Status EncryptAdditionalRegister(const Sketch::Register& reg,
-                                   const SketchConfig& sketch_config,
-                                   std::string& encrypted_sketch);
+  absl::Status EncryptAdditionalRegister(const Sketch::Register& reg,
+                                         const SketchConfig& sketch_config,
+                                         std::string& encrypted_sketch);
   // Encrypt an ECPoint and append the result to the encrypted_sketch.
-  Status EncryptAdditionalECPoint(const std::string& ec_point,
-                                  std::string& encrypted_sketch) const;
+  absl::Status EncryptAdditionalECPoint(const std::string& ec_point,
+                                        std::string& encrypted_sketch) const;
   // Lookup the corresponding ECPoint of the input integer in the map.
   // If the ECPoint doesn't exist in the map, calculate it and insert the result
   // to the map. n can not be 0 since there is no string representation of the
   // identity element (Point At Infinity) in the ECGroup.
-  StatusOr<std::string> GetECPointForInteger(uint64_t n);
+  absl::StatusOr<std::string> GetECPointForInteger(uint64_t n);
   // Hash a plaintext string to the elliptical curve and return the compressed
   // bytes of the corresponding ECPoint.
-  StatusOr<std::string> MapToCurve(const std::string& plaintext);
+  absl::StatusOr<std::string> MapToCurve(const std::string& plaintext);
 };
 
 SketchEncrypterImpl::SketchEncrypterImpl(
@@ -141,12 +138,12 @@ SketchEncrypterImpl::SketchEncrypterImpl(
       ec_group_(std::move(ec_group)),
       max_counter_value_(max_counter_value) {}
 
-StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
+absl::StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
   // Lock the mutex since most of the crypto computations here are NOT
   // thread-safe.
   absl::WriterMutexLock l(&mutex_);
   if (!ValidateSketch(sketch)) {
-    return InternalError("Sketch data doesn't match the config.");
+    return absl::InternalError("Sketch data doesn't match the config.");
   }
   const int num_registers = sketch.registers_size();
   // number of plaintext(ciphertext) indexes and values in a
@@ -164,18 +161,18 @@ StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
   return encrypted_sketch;
 }
 
-Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
+absl::Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
     const std::string& index_ec, size_t num_of_values, int n,
     std::string& encrypted_sketch) {
-  EncryptAdditionalECPoint(index_ec, encrypted_sketch);
+  RETURN_IF_ERROR(EncryptAdditionalECPoint(index_ec, encrypted_sketch));
   ASSIGN_OR_RETURN(std::string value_ec, GetECPointForInteger(n));
   for (size_t i = 0; i < num_of_values; ++i) {
     RETURN_IF_ERROR(EncryptAdditionalECPoint(value_ec, encrypted_sketch));
   }
-  return Status::OK;
+  return absl::OkStatus();
 }
 
-Status SketchEncrypterImpl::EncryptDestroyedRegister(
+absl::Status SketchEncrypterImpl::EncryptDestroyedRegister(
     const Sketch::Register& reg, std::string& encrypted_sketch) {
   ASSIGN_OR_RETURN(std::string index_ec,
                    MapToCurve(std::to_string(reg.index())));
@@ -185,10 +182,10 @@ Status SketchEncrypterImpl::EncryptDestroyedRegister(
       index_ec, reg.values_size(), 1, encrypted_sketch));
   RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
       index_ec, reg.values_size(), 2, encrypted_sketch));
-  return Status::OK;
+  return absl::OkStatus();
 }
 
-Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
+absl::Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
     const Sketch::Register& reg, const SketchConfig& sketch_config,
     std::string& encrypted_sketch) {
   // We encrypt the index as a string, since we don't need to do
@@ -231,33 +228,32 @@ Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
       }
       case SketchConfig::ValueSpec::AGGREGATOR_UNSPECIFIED:
       default:
-        return InternalError("Invalid Aggregator type.");
+        return absl::InternalError("Invalid Aggregator type.");
     }
   }
-  return Status::OK;
+  return absl::OkStatus();
 }
 
-Status SketchEncrypterImpl::EncryptAdditionalRegister(
+absl::Status SketchEncrypterImpl::EncryptAdditionalRegister(
     const Sketch::Register& reg, const SketchConfig& sketch_config,
     std::string& encrypted_sketch) {
   if (IsRegisterDestroyed(reg, sketch_config)) {
-    EncryptDestroyedRegister(reg, encrypted_sketch);
+    return EncryptDestroyedRegister(reg, encrypted_sketch);
   } else {
-    EncryptNonDestroyedRegister(reg, sketch_config, encrypted_sketch);
+    return EncryptNonDestroyedRegister(reg, sketch_config, encrypted_sketch);
   }
-  return Status::OK;
 }
 
-Status SketchEncrypterImpl::EncryptAdditionalECPoint(
+absl::Status SketchEncrypterImpl::EncryptAdditionalECPoint(
     const std::string& ec_point, std::string& encrypted_sketch) const {
   ASSIGN_OR_RETURN(BlindersCiphertext ciphertext,
                    el_gamal_cipher_->Encrypt(ec_point));
   encrypted_sketch.append(ciphertext.first);
   encrypted_sketch.append(ciphertext.second);
-  return Status::OK;
+  return absl::OkStatus();
 }
 
-StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
+absl::StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
     const uint64_t n) {
   if (auto ec_point = integer_to_ec_point_map_.find(n);
       ec_point != integer_to_ec_point_map_.end()) {
@@ -269,7 +265,7 @@ StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
   std::string ec_point_string;
   if (n == 0) {
     // There is no string representation for 0 (ECPoint At Infinity).
-    return InternalError("n shouldn't be 0 for GetECPointForInteger().");
+    return absl::InternalError("n shouldn't be 0 for GetECPointForInteger().");
   } else if (n == 1) {
     ASSIGN_OR_RETURN(ec_point_string, MapToCurve(KUnitECPointSeed));
   } else {
@@ -283,7 +279,7 @@ StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
   return {std::move(ec_point_string)};
 }
 
-StatusOr<std::string> SketchEncrypterImpl::MapToCurve(
+absl::StatusOr<std::string> SketchEncrypterImpl::MapToCurve(
     const std::string& plaintext) {
   ASSIGN_OR_RETURN(ECPoint ec_point,
                    ec_group_->GetPointByHashingToCurveSha256(plaintext));
@@ -292,7 +288,7 @@ StatusOr<std::string> SketchEncrypterImpl::MapToCurve(
 
 }  // namespace
 
-StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
+absl::StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
     int curve_id, size_t max_counter_value,
     const CiphertextString& public_key_bytes) {
   auto ctx = absl::make_unique<Context>();
@@ -309,10 +305,10 @@ StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
   return {std::move(result)};
 }
 
-StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
+absl::StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
     int curve_id, const std::vector<ElGamalPublicKeys>& keys) {
   if (keys.empty()) {
-    return InvalidArgumentError("Keys cannot be empty");
+    return absl::InvalidArgumentError("Keys cannot be empty");
   }
   if (keys.size() == 1) {
     return keys[0];
@@ -330,9 +326,9 @@ StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
 
   for (size_t i = 1; i < keys.size(); i++) {
     if (keys[i].el_gamal_g() != result.el_gamal_g()) {
-      return InvalidArgumentError(absl::StrCat("Generators don't match",
-                                               keys[i].el_gamal_g(), " vs ",
-                                               result.el_gamal_g()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("Generators don't match", keys[i].el_gamal_g(), " vs ",
+                       result.el_gamal_g()));
     }
     ASSIGN_OR_RETURN_ERROR(
         ECPoint element_ec, ec_group.CreateECPoint(keys[i].el_gamal_y()),
