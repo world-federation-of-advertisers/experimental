@@ -1,11 +1,14 @@
 workspace(name = "any_sketch_java")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
-http_archive(
+# Abseil C++ libraries
+git_repository(
     name = "com_google_absl",
-    strip_prefix = "abseil-cpp-b56cbdd23834a65682c0b46f367f8679e83bc894",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/b56cbdd23834a65682c0b46f367f8679e83bc894.zip"],
+    remote = "https://github.com/abseil/abseil-cpp.git",
+    commit = "0f3bb466b868b523cf1dc9b2aaaed65c77b28862",
+    shallow_since = "1603283562 -0400",
 )
 
 http_archive(
@@ -15,7 +18,6 @@ http_archive(
     urls = ["https://github.com/google/googletest/archive/release-1.10.0.zip"],
 )
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 new_git_repository(
     name = "farmhash",
@@ -53,10 +55,10 @@ http_archive(
 # gRPC
 http_archive(
     name = "com_github_grpc_grpc",
-    sha256 = "4cbce7f708917b6e58b631c24c59fe720acc8fef5f959df9a58cdf9558d0a79b",
-    strip_prefix = "grpc-1.28.1",
+    sha256 = "2060769f2d4b0d3535ba594b2ab614d7f68a492f786ab94b4318788d45e3278a",
+    strip_prefix = "grpc-1.33.2",
     urls = [
-        "https://github.com/grpc/grpc/archive/v1.28.1.tar.gz",
+        "https://github.com/grpc/grpc/archive/v1.33.2.tar.gz",
     ],
 )
 
@@ -70,13 +72,11 @@ load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
 # Loads transitive dependencies of GRPC.
 grpc_extra_deps()
 
-http_archive(
+git_repository(
     name = "com_google_private_join_and_compute",
-    sha256 = "dd39c10723f5471d5727c12adb34d2225d1aeb591106fe457f0a88320ee0329c",
-    strip_prefix = "private-join-and-compute-master",
-    urls = [
-        "https://github.com/google/private-join-and-compute/archive/master.zip",
-    ],
+    remote = "https://github.com/google/private-join-and-compute.git",
+    commit = "aa2d68e68193547e88a120c667e173662abd7478",
+    shallow_since = "1605559721 -0400",
 )
 
 http_archive(
@@ -138,7 +138,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any_sketch",
-    commit = "523107ea635c4aabb39496d1bd776bd439dc65c9",
+    commit = "5415eec38253c3bd3f250cb12fdc24242743e426",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
     shallow_since = "1603139261 +0000",
 )
