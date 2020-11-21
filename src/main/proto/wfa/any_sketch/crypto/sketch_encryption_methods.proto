@@ -40,6 +40,23 @@ message EncryptSketchRequest {
   // Maximum value to encrypt. Every value greater than the maximum_value
   // is mapping to the encryption of the maximum_value.
   int32 maximum_value = 4;
+
+  // Strategies of encrypting destroyed register.
+  enum DestroyedRegisterStrategy {
+    // The destroy strategy is unspecified. Should never be used.
+    UNSPECIFIED = 0;
+    // Maps a destroyed register to two normal registers with the same
+    // register_id but different keys, such that these two registers would be
+    // destroyed in the Same Key Aggregation later.
+    CONFLICTING_KEYS = 1;
+    // Sets the keys in all destroyed registers to a pre-defined constant. The
+    // MPC workers would be able to figure out that the registers are destroyed
+    // using such information.
+    FLAGGED_KEY = 2;
+  }
+
+  // Strategies of encrypting destroyed register.
+  DestroyedRegisterStrategy destroyed_register_strategy = 5;
 }
 
 // Response of the EncryptSketch method.
