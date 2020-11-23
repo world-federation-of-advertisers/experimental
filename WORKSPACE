@@ -4,8 +4,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 # Abseil C++ libraries
 git_repository(
     name = "com_google_absl",
-    remote = "https://github.com/abseil/abseil-cpp.git",
     commit = "0f3bb466b868b523cf1dc9b2aaaed65c77b28862",
+    remote = "https://github.com/abseil/abseil-cpp.git",
     shallow_since = "1603283562 -0400",
 )
 
@@ -71,8 +71,8 @@ grpc_extra_deps()
 
 git_repository(
     name = "com_google_private_join_and_compute",
+    commit = "99fbcf79c5aded3694973086651f535d08a645c5",
     remote = "https://github.com/google/private-join-and-compute.git",
-    commit = "aa2d68e68193547e88a120c667e173662abd7478",
     shallow_since = "1605559721 -0400",
 )
 

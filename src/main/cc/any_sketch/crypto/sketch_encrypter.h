@@ -45,7 +45,9 @@ class SketchEncrypter {
   // Return the word by word ElGamal encryption of the sketch. The result is
   // the concatenation of all ciphertext strings.
   virtual absl::StatusOr<std::string> Encrypt(
-      const wfa::measurement::api::v1alpha::Sketch& sketch) = 0;
+      const wfa::measurement::api::v1alpha::Sketch& sketch,
+      EncryptSketchRequest::DestroyedRegisterStrategy
+          destroyed_register_strategy) = 0;
 
  protected:
   SketchEncrypter() = default;

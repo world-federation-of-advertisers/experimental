@@ -20,6 +20,7 @@
 #include "crypto/context.h"
 #include "crypto/ec_group.h"
 #include "src/main/cc/any_sketch/util/macros.h"
+#include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {
 
@@ -31,11 +32,14 @@ using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
+using DestroyedRegisterStrategy =
+    ::wfa::any_sketch::crypto::EncryptSketchRequest::DestroyedRegisterStrategy;
 using BlindersCiphertext = std::pair<std::string, std::string>;
 // Each Compression of ECPoint has size 33-bytes (32 bytes for x, 1 byte for the
 // sign of y). An ElGamal ciphertext contains two ECPoints, i.e., u and e.
 constexpr int kBytesPerCipherText = 66;
 constexpr char KUnitECPointSeed[] = "unit_ec_point";
+constexpr char KDestroyedRegisterKey[] = "destroyed_register_key";
 
 // Check if the sketch is valid or not.
 // A Sketch is valid if and only if all its registers contain the same number
@@ -77,7 +81,9 @@ class SketchEncrypterImpl : public SketchEncrypter {
   SketchEncrypterImpl(const SketchEncrypterImpl&) = delete;
   SketchEncrypterImpl& operator=(const SketchEncrypterImpl&) = delete;
 
-  absl::StatusOr<std::string> Encrypt(const Sketch& sketch) override;
+  absl::StatusOr<std::string> Encrypt(
+      const Sketch& sketch,
+      DestroyedRegisterStrategy destroyed_register_strategy) override;
 
  private:
   // ElGamal cipher used to do the encryption
@@ -94,6 +100,8 @@ class SketchEncrypterImpl : public SketchEncrypter {
   // Once a new integer is mapped to the curve, we store the value for future
   // reference.
   absl::flat_hash_map<uint64_t, std::string> integer_to_ec_point_map_;
+  // The cached ECPoint representation of constant "KDestroyedRegisterKey"
+  std::string destroyed_register_key_ec_;
 
   // Since the underlying private-join-and-computer::CommutativeElGamal is NOT
   // thread safe, we use mutex to enforce thread safety in this class.
@@ -102,22 +110,30 @@ class SketchEncrypterImpl : public SketchEncrypter {
   // Append an encrypted register with all values equal to a provided number
   // to the sketch.
   absl::Status AppendEncryptedRegisterWithSameValue(
-      const std::string& index_ec, size_t num_of_values, int n,
+      absl::string_view index_ec, size_t num_of_values, int n,
       std::string& encrypted_sketch);
+  // Append an encrypted destroyed register with all values equal to the
+  // encryption of the KDestroyedRegisterKey constant.
+  absl::Status AppendFlaggedDestroyedRegister(absl::string_view index_ec,
+                                              size_t num_of_values,
+                                              std::string& encrypted_sketch);
   // Encrypt a destroyed register by inserting a pair of registers with the
   // same actual index but different values.
-  absl::Status EncryptDestroyedRegister(const Sketch::Register& reg,
-                                        std::string& encrypted_sketch);
+  absl::Status EncryptDestroyedRegister(
+      const Sketch::Register& reg,
+      DestroyedRegisterStrategy destroyed_register_strategy,
+      std::string& encrypted_sketch);
   // Encrypt a non-destroyed register according to the exact values.
   absl::Status EncryptNonDestroyedRegister(const Sketch::Register& reg,
                                            const SketchConfig& sketch_config,
                                            std::string& encrypted_sketch);
   // Encrypt a Register and append the result to the encrypted_sketch.
-  absl::Status EncryptAdditionalRegister(const Sketch::Register& reg,
-                                         const SketchConfig& sketch_config,
-                                         std::string& encrypted_sketch);
+  absl::Status EncryptAdditionalRegister(
+      const Sketch::Register& reg, const SketchConfig& sketch_config,
+      DestroyedRegisterStrategy destroyed_register_strategy,
+      std::string& encrypted_sketch);
   // Encrypt an ECPoint and append the result to the encrypted_sketch.
-  absl::Status EncryptAdditionalECPoint(const std::string& ec_point,
+  absl::Status EncryptAdditionalECPoint(absl::string_view ec_point,
                                         std::string& encrypted_sketch) const;
   // Lookup the corresponding ECPoint of the input integer in the map.
   // If the ECPoint doesn't exist in the map, calculate it and insert the result
@@ -126,7 +142,10 @@ class SketchEncrypterImpl : public SketchEncrypter {
   absl::StatusOr<std::string> GetECPointForInteger(uint64_t n);
   // Hash a plaintext string to the elliptical curve and return the compressed
   // bytes of the corresponding ECPoint.
-  absl::StatusOr<std::string> MapToCurve(const std::string& plaintext);
+  absl::StatusOr<std::string> MapToCurve(absl::string_view plaintext);
+  // Hash a plaintext integer to the elliptical curve and return the compressed
+  // bytes of the corresponding ECPoint.
+  absl::StatusOr<std::string> MapToCurve(int64_t plaintext);
 };
 
 SketchEncrypterImpl::SketchEncrypterImpl(
@@ -138,7 +157,9 @@ SketchEncrypterImpl::SketchEncrypterImpl(
       ec_group_(std::move(ec_group)),
       max_counter_value_(max_counter_value) {}
 
-absl::StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
+absl::StatusOr<std::string> SketchEncrypterImpl::Encrypt(
+    const Sketch& sketch,
+    DestroyedRegisterStrategy destroyed_register_strategy) {
   // Lock the mutex since most of the crypto computations here are NOT
   // thread-safe.
   absl::WriterMutexLock l(&mutex_);
@@ -155,14 +176,14 @@ absl::StatusOr<std::string> SketchEncrypterImpl::Encrypt(const Sketch& sketch) {
   std::string encrypted_sketch;
   encrypted_sketch.reserve(total_cipher_sketch_bytes);
   for (auto& reg : sketch.registers()) {
-    RETURN_IF_ERROR(
-        EncryptAdditionalRegister(reg, sketch.config(), encrypted_sketch));
+    RETURN_IF_ERROR(EncryptAdditionalRegister(
+        reg, sketch.config(), destroyed_register_strategy, encrypted_sketch));
   }
   return encrypted_sketch;
 }
 
 absl::Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
-    const std::string& index_ec, size_t num_of_values, int n,
+    absl::string_view index_ec, size_t num_of_values, int n,
     std::string& encrypted_sketch) {
   RETURN_IF_ERROR(EncryptAdditionalECPoint(index_ec, encrypted_sketch));
   ASSIGN_OR_RETURN(std::string value_ec, GetECPointForInteger(n));
@@ -172,16 +193,45 @@ absl::Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
   return absl::OkStatus();
 }
 
+absl::Status SketchEncrypterImpl::AppendFlaggedDestroyedRegister(
+    absl::string_view index_ec, size_t num_of_values,
+    std::string& encrypted_sketch) {
+  RETURN_IF_ERROR(EncryptAdditionalECPoint(index_ec, encrypted_sketch));
+  if (destroyed_register_key_ec_.empty()) {
+    // Do the mapping if there is no cached value.
+    ASSIGN_OR_RETURN(destroyed_register_key_ec_,
+                     MapToCurve(KDestroyedRegisterKey));
+  }
+  for (size_t i = 0; i < num_of_values; ++i) {
+    RETURN_IF_ERROR(
+        EncryptAdditionalECPoint(destroyed_register_key_ec_, encrypted_sketch));
+  }
+  return absl::OkStatus();
+}
+
 absl::Status SketchEncrypterImpl::EncryptDestroyedRegister(
-    const Sketch::Register& reg, std::string& encrypted_sketch) {
-  ASSIGN_OR_RETURN(std::string index_ec,
-                   MapToCurve(std::to_string(reg.index())));
-  // Add two registers with the same index for a destroyed register but
-  // different values.
-  RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
-      index_ec, reg.values_size(), 1, encrypted_sketch));
-  RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
-      index_ec, reg.values_size(), 2, encrypted_sketch));
+    const Sketch::Register& reg,
+    DestroyedRegisterStrategy destroyed_register_strategy,
+    std::string& encrypted_sketch) {
+  ASSIGN_OR_RETURN(std::string index_ec, MapToCurve(reg.index()));
+  switch (destroyed_register_strategy) {
+    case EncryptSketchRequest::CONFLICTING_KEYS:
+      // Add two registers with the same index for a destroyed register but
+      // different values.
+      RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
+          index_ec, reg.values_size(), 1, encrypted_sketch));
+      RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
+          index_ec, reg.values_size(), 2, encrypted_sketch));
+      break;
+    case EncryptSketchRequest::FLAGGED_KEY:
+      // ADD one register with all values being the encryption of the
+      // KDestroyedRegisterKey constant.
+      RETURN_IF_ERROR(AppendFlaggedDestroyedRegister(
+          index_ec, reg.values_size(), encrypted_sketch));
+      break;
+    default:
+      return absl::InvalidArgumentError("Invalid DestroyedRegisterStrategy.");
+  }
   return absl::OkStatus();
 }
 
@@ -190,18 +240,16 @@ absl::Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
     std::string& encrypted_sketch) {
   // We encrypt the index as a string, since we don't need to do
   // addition on it.
-  ASSIGN_OR_RETURN(std::string index_ec,
-                   MapToCurve(std::to_string(reg.index())));
+  ASSIGN_OR_RETURN(std::string index_ec, MapToCurve(reg.index()));
   RETURN_IF_ERROR(EncryptAdditionalECPoint(index_ec, encrypted_sketch));
 
   for (int i = 0; i < reg.values_size(); ++i) {
-    CiphertextString cipher_index;
     // For values, we encrypt the value as a string if it uses UNIQUE
     // aggregator, or as an integer if it uses SUM aggregator.
     switch (sketch_config.values(i).aggregator()) {
       case SketchConfig::ValueSpec::UNIQUE: {
         ASSIGN_OR_RETURN(std::string ec_point_string,
-                         MapToCurve(std::to_string(reg.values(i))));
+                         MapToCurve(reg.values(i)));
         RETURN_IF_ERROR(
             EncryptAdditionalECPoint(ec_point_string, encrypted_sketch));
         break;
@@ -228,7 +276,7 @@ absl::Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
       }
       case SketchConfig::ValueSpec::AGGREGATOR_UNSPECIFIED:
       default:
-        return absl::InternalError("Invalid Aggregator type.");
+        return absl::InvalidArgumentError("Invalid Aggregator type.");
     }
   }
   return absl::OkStatus();
@@ -236,16 +284,18 @@ absl::Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
 
 absl::Status SketchEncrypterImpl::EncryptAdditionalRegister(
     const Sketch::Register& reg, const SketchConfig& sketch_config,
+    DestroyedRegisterStrategy destroyed_register_strategy,
     std::string& encrypted_sketch) {
   if (IsRegisterDestroyed(reg, sketch_config)) {
-    return EncryptDestroyedRegister(reg, encrypted_sketch);
+    return EncryptDestroyedRegister(reg, destroyed_register_strategy,
+                                    encrypted_sketch);
   } else {
     return EncryptNonDestroyedRegister(reg, sketch_config, encrypted_sketch);
   }
 }
 
 absl::Status SketchEncrypterImpl::EncryptAdditionalECPoint(
-    const std::string& ec_point, std::string& encrypted_sketch) const {
+    absl::string_view ec_point, std::string& encrypted_sketch) const {
   ASSIGN_OR_RETURN(BlindersCiphertext ciphertext,
                    el_gamal_cipher_->Encrypt(ec_point));
   encrypted_sketch.append(ciphertext.first);
@@ -280,10 +330,14 @@ absl::StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
 }
 
 absl::StatusOr<std::string> SketchEncrypterImpl::MapToCurve(
-    const std::string& plaintext) {
+    absl::string_view plaintext) {
   ASSIGN_OR_RETURN(ECPoint ec_point,
                    ec_group_->GetPointByHashingToCurveSha256(plaintext));
   return ec_point.ToBytesCompressed();
+}
+
+absl::StatusOr<std::string> SketchEncrypterImpl::MapToCurve(int64_t plaintext) {
+  return MapToCurve(std::to_string(plaintext));
 }
 
 }  // namespace

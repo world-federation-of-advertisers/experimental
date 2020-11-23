@@ -26,6 +26,7 @@
 #include "gtest/gtest.h"
 #include "src/test/cc/testutil/matchers.h"
 #include "src/test/cc/testutil/random.h"
+#include "src/test/cc/testutil/status_macros.h"
 
 namespace wfa::any_sketch::crypto {
 namespace {
@@ -56,11 +57,41 @@ constexpr char kCombinedElGamalPublicKeyY[] =
 // TODO: use protocol buffer matchers when they are available
 // Returns true if the decryption of expected is the same with that of arg.
 MATCHER_P2(HasSameDecryption, original_cipher, expected, "") {
-  auto decrypted_actual =
-      original_cipher->Decrypt(std::make_pair(arg.u, arg.e)).value();
-  auto decrypted_expected =
-      original_cipher->Decrypt(std::make_pair(expected.u, expected.e)).value();
-  return ExplainMatchResult(testing::Eq(decrypted_expected), decrypted_actual,
+  absl::StatusOr<std::string> decrypted_actual =
+      original_cipher->Decrypt(std::make_pair(arg.u, arg.e));
+  if (!decrypted_actual.ok()) {
+    *result_listener << "cannot decrypt ciphertext: " << arg.u << arg.e << ": "
+                     << decrypted_actual.status();
+    return false;
+  }
+  absl::StatusOr<std::string> decrypted_expected =
+      original_cipher->Decrypt(std::make_pair(expected.u, expected.e));
+  if (!decrypted_expected.ok()) {
+    *result_listener << "cannot decrypt ciphertext: " << expected.u
+                     << expected.e << ": " << decrypted_expected.status();
+    return false;
+  }
+  return ExplainMatchResult(testing::Eq(decrypted_expected.value()),
+                            decrypted_actual.value(), result_listener);
+}
+
+// Returns true if the arg is an encryption of the provided plaintext.
+MATCHER_P2(IsEncryptionOf, original_cipher, plaintext, "") {
+  absl::StatusOr<std::string> decrypted =
+      original_cipher->Decrypt(std::make_pair(arg.u, arg.e));
+  if (!decrypted.ok()) {
+    *result_listener << "cannot decrypt ciphertext: " << arg.u << arg.e << ": "
+                     << decrypted.status();
+    return false;
+  }
+  Context context;
+  std::string plaintext_ec = ECGroup::Create(kTestCurveId, &context)
+                                 .value()
+                                 .GetPointByHashingToCurveSha256(plaintext)
+                                 .value()
+                                 .ToBytesCompressed()
+                                 .value();
+  return ExplainMatchResult(testing::Eq(decrypted.value()), plaintext_ec,
                             result_listener);
 }
 
@@ -113,39 +144,49 @@ std::vector<std::string> GetCipherStrings(absl::string_view bytes) {
 }
 
 // Add two ElGamal ciphertexts on the specified ECGroup.
-CiphertextString AddCiphertext(const CiphertextString& a,
-                               const CiphertextString& b,
-                               const ECGroup& ec_group) {
-  std::string sum_u = ec_group.CreateECPoint(a.u)
-                          .value()
-                          .Add(ec_group.CreateECPoint(b.u).value())
-                          .value()
-                          .ToBytesCompressed()
-                          .value();
-  std::string sum_e = ec_group.CreateECPoint(a.e)
-                          .value()
-                          .Add(ec_group.CreateECPoint(b.e).value())
-                          .value()
-                          .ToBytesCompressed()
-                          .value();
-  return {
-      .u = sum_u,
-      .e = sum_e,
-  };
+absl::StatusOr<CiphertextString> AddCiphertext(const CiphertextString& a,
+                                               const CiphertextString& b,
+                                               const ECGroup& ec_group) {
+  CiphertextString result;
+  ASSIGN_OR_RETURN(ECPoint a_u, ec_group.CreateECPoint(a.u));
+  ASSIGN_OR_RETURN(ECPoint b_u, ec_group.CreateECPoint(b.u));
+  ASSIGN_OR_RETURN(ECPoint sum_u, a_u.Add(b_u));
+  ASSIGN_OR_RETURN(result.u, sum_u.ToBytesCompressed());
+  ASSIGN_OR_RETURN(ECPoint a_e, ec_group.CreateECPoint(a.e));
+  ASSIGN_OR_RETURN(ECPoint b_e, ec_group.CreateECPoint(b.e));
+  ASSIGN_OR_RETURN(ECPoint sum_e, a_e.Add(b_e));
+  ASSIGN_OR_RETURN(result.e, sum_e.ToBytesCompressed());
+
+  return std::move(result);
 }
 
 class SketchEncrypterTest : public ::testing::Test {
  protected:
-  SketchEncrypterTest() {
-    original_cipher_ =
-        CommutativeElGamal::CreateWithNewKeyPair(kTestCurveId).value();
-    auto public_key_pair = original_cipher_->GetPublicKeyBytes().value();
+  SketchEncrypterTest() {}
+
+  void SetUp() {
+    ASSERT_OK_AND_ASSIGN(
+        original_cipher_,
+        CommutativeElGamal::CreateWithNewKeyPair(kTestCurveId));
+    ASSERT_OK_AND_ASSIGN(auto public_key_pair,
+                         original_cipher_->GetPublicKeyBytes());
     CiphertextString public_key = {
         .u = public_key_pair.first,
         .e = public_key_pair.second,
     };
-    sketch_encrypter_ =
-        CreateWithPublicKey(kTestCurveId, kMaxCounterValue, public_key).value();
+    ASSERT_OK_AND_ASSIGN(
+        sketch_encrypter_,
+        CreateWithPublicKey(kTestCurveId, kMaxCounterValue, public_key));
+  }
+
+  absl::StatusOr<std::string> EncryptWithConflictingKeys(const Sketch& sketch) {
+    return sketch_encrypter_->Encrypt(sketch,
+                                      EncryptSketchRequest::CONFLICTING_KEYS);
+  }
+
+  absl::StatusOr<std::string> EncryptWithFlaggedKey(const Sketch& sketch) {
+    return sketch_encrypter_->Encrypt(sketch,
+                                      EncryptSketchRequest::FLAGGED_KEY);
   }
 
   // The ElGamal Cipher whose public key is used to create the SketchEncrypter.
@@ -164,7 +205,8 @@ TEST_F(SketchEncrypterTest, ByteSizeShouldBeCorrect) {
 
   ASSERT_EQ(plain_sketch.registers_size(), 1000);
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
 
   // Using SizeIs ends up printing all of "result", which is huge.
   EXPECT_EQ(result.size(), register_size * (1 + unique_cnt + sum_cnt) * 66);
@@ -177,9 +219,10 @@ TEST_F(SketchEncrypterTest, EncryptionShouldBeNonDeterministic) {
   plain_sketch.add_registers()->set_index(1);
   plain_sketch.add_registers()->set_index(1);
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
   std::vector<std::string> cipher_words = GetCipherStrings(result);
-  EXPECT_THAT(cipher_words, SizeIs(4));  // 2 regs * 1 vals * 2 words
+  ASSERT_THAT(cipher_words, SizeIs(4));  // 2 regs * 1 vals * 2 words
 
   CiphertextString cipher_index_1_a = {cipher_words[0], cipher_words[1]};
   CiphertextString cipher_index_1_b = {cipher_words[2], cipher_words[3]};
@@ -192,7 +235,7 @@ TEST_F(SketchEncrypterTest, EncryptionShouldBeNonDeterministic) {
 
 TEST_F(SketchEncrypterTest, EncryptionOfCountValueShouldBeAdditiveHomomorphic) {
   Context ctx;
-  ECGroup ec_group = ECGroup::Create(kTestCurveId, &ctx).value();
+  ASSERT_OK_AND_ASSIGN(ECGroup ec_group, ECGroup::Create(kTestCurveId, &ctx));
 
   Sketch plain_sketch;
   *plain_sketch.mutable_config() = CreateSketchConfig(
@@ -203,9 +246,10 @@ TEST_F(SketchEncrypterTest, EncryptionOfCountValueShouldBeAdditiveHomomorphic) {
   plain_sketch.add_registers()->add_values(4);
   plain_sketch.add_registers()->add_values(5);
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
   std::vector<std::string> cipher_words = GetCipherStrings(result);
-  EXPECT_THAT(cipher_words, SizeIs(20));  // 5 regs * 2 vals * 2 words
+  ASSERT_THAT(cipher_words, SizeIs(20));  // 5 regs * 2 vals * 2 words
 
   CiphertextString cipher_1 = {cipher_words[2], cipher_words[3]};
   CiphertextString cipher_2 = {cipher_words[6], cipher_words[7]};
@@ -213,8 +257,10 @@ TEST_F(SketchEncrypterTest, EncryptionOfCountValueShouldBeAdditiveHomomorphic) {
   CiphertextString cipher_4 = {cipher_words[14], cipher_words[15]};
   CiphertextString cipher_5 = {cipher_words[18], cipher_words[19]};
 
-  CiphertextString cipher_1_add_4 = AddCiphertext(cipher_1, cipher_4, ec_group);
-  CiphertextString cipher_2_add_3 = AddCiphertext(cipher_2, cipher_3, ec_group);
+  ASSERT_OK_AND_ASSIGN(CiphertextString cipher_1_add_4,
+                       AddCiphertext(cipher_1, cipher_4, ec_group));
+  ASSERT_OK_AND_ASSIGN(CiphertextString cipher_2_add_3,
+                       AddCiphertext(cipher_2, cipher_3, ec_group));
 
   EXPECT_THAT(cipher_5,
               HasSameDecryption(original_cipher_.get(), cipher_1_add_4));
@@ -224,7 +270,7 @@ TEST_F(SketchEncrypterTest, EncryptionOfCountValueShouldBeAdditiveHomomorphic) {
 
 TEST_F(SketchEncrypterTest, MaximumCountValueShouldWork) {
   Context ctx;
-  ECGroup ec_group = ECGroup::Create(kTestCurveId, &ctx).value();
+  ASSERT_OK_AND_ASSIGN(ECGroup ec_group, ECGroup::Create(kTestCurveId, &ctx));
 
   Sketch plain_sketch;
   *plain_sketch.mutable_config() =
@@ -232,9 +278,10 @@ TEST_F(SketchEncrypterTest, MaximumCountValueShouldWork) {
   plain_sketch.add_registers()->add_values(kMaxCounterValue + 10);
   plain_sketch.add_registers()->add_values(kMaxCounterValue);
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
   std::vector<std::string> cipher_words = GetCipherStrings(result);
-  EXPECT_THAT(cipher_words, SizeIs(8));  // 2 regs * 2 vals * 2 words
+  ASSERT_THAT(cipher_words, SizeIs(8));  // 2 regs * 2 vals * 2 words
 
   CiphertextString count_a = {cipher_words[2], cipher_words[3]};
   CiphertextString count_b = {cipher_words[6], cipher_words[7]};
@@ -249,9 +296,10 @@ TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
       CreateSketchConfig(/* unique_cnt = */ 0, /* sum_cnt = */ 1);
   plain_sketch.add_registers()->add_values(0);
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
   std::vector<std::string> cipher_words = GetCipherStrings(result);
-  EXPECT_THAT(cipher_words, SizeIs(4));
+  ASSERT_THAT(cipher_words, SizeIs(4));
 
   auto decryption = original_cipher_->Decrypt(
       std::make_pair(cipher_words[2], cipher_words[3]));
@@ -261,9 +309,9 @@ TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
             std::string::npos);
 }
 
-TEST_F(SketchEncrypterTest, TestDestroyedRegisters) {
+TEST_F(SketchEncrypterTest, TestDestroyedRegistersUsingConflictingKeys) {
   Context ctx;
-  ECGroup ec_group = ECGroup::Create(kTestCurveId, &ctx).value();
+  ASSERT_OK_AND_ASSIGN(ECGroup ec_group, ECGroup::Create(kTestCurveId, &ctx));
 
   Sketch plain_sketch;
   *plain_sketch.mutable_config() =
@@ -273,9 +321,10 @@ TEST_F(SketchEncrypterTest, TestDestroyedRegisters) {
   sketch_register->add_values(-1);  // UNIQUE value -1 means destroyed
   sketch_register->add_values(10);  // SUM value
 
-  auto result = sketch_encrypter_->Encrypt(plain_sketch).value();
+  ASSERT_OK_AND_ASSIGN(std::string result,
+                       EncryptWithConflictingKeys(plain_sketch));
   std::vector<std::string> cipher_words = GetCipherStrings(result);
-  EXPECT_THAT(cipher_words, SizeIs(12));  // 2 regs * 3 vals * 2 words
+  ASSERT_THAT(cipher_words, SizeIs(12));  // 2 regs * 3 vals * 2 words
 
   CiphertextString index_a = {cipher_words[0], cipher_words[1]};
   CiphertextString index_b = {cipher_words[6], cipher_words[7]};
@@ -286,6 +335,33 @@ TEST_F(SketchEncrypterTest, TestDestroyedRegisters) {
   EXPECT_THAT(index_a, HasSameDecryption(original_cipher_.get(), index_b));
   // Keys should be different.
   EXPECT_THAT(key_a, Not(HasSameDecryption(original_cipher_.get(), key_b)));
+}
+
+TEST_F(SketchEncrypterTest, TestDestroyedRegistersUsingFlaggedKey) {
+  Context ctx;
+  ASSERT_OK_AND_ASSIGN(ECGroup ec_group, ECGroup::Create(kTestCurveId, &ctx));
+
+  Sketch plain_sketch;
+  *plain_sketch.mutable_config() =
+      CreateSketchConfig(/* unique_cnt = */ 1, /* sum_cnt = */ 1);
+  auto sketch_register = plain_sketch.add_registers();
+  sketch_register->set_index(123);
+  sketch_register->add_values(-1);  // UNIQUE value -1 means destroyed
+  sketch_register->add_values(10);  // SUM value
+
+  ASSERT_OK_AND_ASSIGN(std::string result, EncryptWithFlaggedKey(plain_sketch));
+  std::vector<std::string> cipher_words = GetCipherStrings(result);
+  ASSERT_THAT(cipher_words, SizeIs(6));  // 1 regs * 3 vals * 2 words
+
+  CiphertextString index = {cipher_words[0], cipher_words[1]};
+  CiphertextString key = {cipher_words[2], cipher_words[3]};
+  CiphertextString value = {cipher_words[4], cipher_words[5]};
+
+  EXPECT_THAT(index, IsEncryptionOf(original_cipher_.get(), "123"));
+  EXPECT_THAT(key,
+              IsEncryptionOf(original_cipher_.get(), "destroyed_register_key"));
+  EXPECT_THAT(value,
+              IsEncryptionOf(original_cipher_.get(), "destroyed_register_key"));
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {
@@ -305,9 +381,9 @@ TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {
   combinedKey.set_el_gamal_y(
       absl::HexStringToBytes(kCombinedElGamalPublicKeyY));
 
-  auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
-  ASSERT_TRUE(result.ok());
-  EXPECT_THAT(result.value(), EqualsProto(combinedKey));
+  ASSERT_OK_AND_ASSIGN(ElGamalPublicKeys result,
+                       CombineElGamalPublicKeys(kTestCurveId, keys));
+  EXPECT_THAT(result, EqualsProto(combinedKey));
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysEmptyInputShouldThrow) {

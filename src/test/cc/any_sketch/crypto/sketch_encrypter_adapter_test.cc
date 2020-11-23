@@ -20,6 +20,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "src/test/cc/testutil/random.h"
+#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {
@@ -70,10 +71,10 @@ void AddRandomRegisters(const int register_cnt, Sketch& sketch) {
 
 TEST(SketchEncrypterJavaAdapterTest, basicBehavior) {
   // Generate a key for testing.
-  auto commutativeElGamal =
-      CommutativeElGamal::CreateWithNewKeyPair(kTestCurveId).value();
-  std::pair<std::string, std::string> public_key_pair =
-      commutativeElGamal->GetPublicKeyBytes().value();
+  ASSERT_OK_AND_ASSIGN(auto commutativeElGamal,
+                       CommutativeElGamal::CreateWithNewKeyPair(kTestCurveId));
+  ASSERT_OK_AND_ASSIGN(auto public_key_pair,
+                       commutativeElGamal->GetPublicKeyBytes());
 
   const int index_cnt = 1;
   const int unique_cnt = 2;
@@ -90,8 +91,10 @@ TEST(SketchEncrypterJavaAdapterTest, basicBehavior) {
       CreateSketchConfig(index_cnt, unique_cnt, sum_cnt);
   AddRandomRegisters(register_size, *request.mutable_sketch());
 
+  ASSERT_OK_AND_ASSIGN(std::string encrypted_sketch,
+                       EncryptSketch(request.SerializeAsString()));
   wfa::any_sketch::crypto::EncryptSketchResponse response;
-  response.ParseFromString(EncryptSketch(request.SerializeAsString()).value());
+  response.ParseFromString(encrypted_sketch);
 
   EXPECT_THAT(response.encrypted_sketch(),
               SizeIs(register_size * (index_cnt + unique_cnt + sum_cnt) * 66));
