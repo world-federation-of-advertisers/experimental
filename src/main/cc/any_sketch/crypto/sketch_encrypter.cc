@@ -38,8 +38,8 @@ using BlindersCiphertext = std::pair<std::string, std::string>;
 // Each Compression of ECPoint has size 33-bytes (32 bytes for x, 1 byte for the
 // sign of y). An ElGamal ciphertext contains two ECPoints, i.e., u and e.
 constexpr int kBytesPerCipherText = 66;
-constexpr char KUnitECPointSeed[] = "unit_ec_point";
-constexpr char KDestroyedRegisterKey[] = "destroyed_register_key";
+constexpr absl::string_view KUnitECPointSeed = "unit_ec_point";
+constexpr absl::string_view KDestroyedRegisterKey = "destroyed_register_key";
 
 // Check if the sketch is valid or not.
 // A Sketch is valid if and only if all its registers contain the same number
