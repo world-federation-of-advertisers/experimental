@@ -80,6 +80,7 @@ int64_t EstimateCardinalityLiquidLegions(double decay_rate,
   std::function<uint64_t(uint64_t)> get_expected_active_register_count =
       absl::bind_front(GetExpectedActiveRegisterCount, decay_rate,
                        num_of_total_registers);
+  ABSL_ASSERT(active_register_count < num_of_total_registers);
   return GetCardinality(get_expected_active_register_count,
                         active_register_count);
 }
