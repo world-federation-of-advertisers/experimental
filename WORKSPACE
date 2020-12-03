@@ -72,10 +72,11 @@ load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
 # Loads transitive dependencies of GRPC.
 grpc_extra_deps()
 
+# @com_google_private_join_and_compute
 git_repository(
     name = "com_google_private_join_and_compute",
+    commit = "99fbcf79c5aded3694973086651f535d08a645c5",
     remote = "https://github.com/google/private-join-and-compute.git",
-    commit = "aa2d68e68193547e88a120c667e173662abd7478",
     shallow_since = "1605559721 -0400",
 )
 
@@ -138,7 +139,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any_sketch",
-    commit = "5415eec38253c3bd3f250cb12fdc24242743e426",
+    commit = "2691dcd099b5f63a2eacd571b010d9dbe832f14d",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
-    shallow_since = "1603139261 +0000",
+    shallow_since = "1605572796 -0500"
 )
