@@ -290,22 +290,16 @@ TEST_F(SketchEncrypterTest, MaximumCountValueShouldWork) {
   EXPECT_THAT(count_a, HasSameDecryption(original_cipher_.get(), count_b));
 }
 
-TEST_F(SketchEncrypterTest, ZeroCountValueShouldHaveValidEncrpytion) {
+TEST_F(SketchEncrypterTest, ZeroCountValueShouldThrow) {
   Sketch plain_sketch;
   *plain_sketch.mutable_config() =
       CreateSketchConfig(/* unique_cnt = */ 0, /* sum_cnt = */ 1);
   plain_sketch.add_registers()->add_values(0);
 
-  ASSERT_OK_AND_ASSIGN(std::string result,
-                       EncryptWithConflictingKeys(plain_sketch));
-  std::vector<std::string> cipher_words = GetCipherStrings(result);
-  ASSERT_THAT(cipher_words, SizeIs(4));
+  absl::StatusOr<std::string> result = EncryptWithConflictingKeys(plain_sketch);
 
-  auto decryption = original_cipher_->Decrypt(
-      std::make_pair(cipher_words[2], cipher_words[3]));
-  // The decryption of 0 should return internal Error: POINT_AT_INFINITY.
-  ASSERT_FALSE(decryption.status().ok());
-  EXPECT_NE(decryption.status().message().find("POINT_AT_INFINITY"),
+  ASSERT_FALSE(result.status().ok());
+  EXPECT_NE(result.status().message().find("should be positive"),
             std::string::npos);
 }
 

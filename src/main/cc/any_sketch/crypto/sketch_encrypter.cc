@@ -255,15 +255,8 @@ absl::Status SketchEncrypterImpl::EncryptNonDestroyedRegister(
         break;
       }
       case SketchConfig::ValueSpec::SUM: {
-        if (reg.values(i) == 0) {
-          // 0 is mapping to the PAI (Point At Infinity), which has no string
-          // representation. As a result, we cannot first get this ECPoint and
-          // then call Encrypt() on it. But instead, we get the encryption of
-          // the PAI directly by calling EncryptIdentityElement();
-          ASSIGN_OR_RETURN(BlindersCiphertext zero,
-                           el_gamal_cipher_->EncryptIdentityElement());
-          encrypted_sketch.append(zero.first);
-          encrypted_sketch.append(zero.second);
+        if (reg.values(i) <= 0) {
+          return absl::InvalidArgumentError("A SUM value should be positive.");
         } else {
           // All other values are calculated based on the unit ECPoint P, which
           // is defined by KUnitECPointSeed. Integer n is mapping to nP.
