@@ -94,7 +94,7 @@ class SketchEncrypterImpl : public SketchEncrypter {
   // The EC Group representing the curve definition.
   std::unique_ptr<ECGroup> ec_group_;
   // The max distinguishable counter value, all greater values are encrypted as
-  // this max_counter_value_.
+  // this max_counter_value_+1.
   size_t max_counter_value_;
   // A cache storing the mapping of integers to their corresponding ECPoints.
   // Once a new integer is mapped to the curve, we store the value for future
@@ -302,8 +302,8 @@ absl::StatusOr<std::string> SketchEncrypterImpl::GetECPointForInteger(
       ec_point != integer_to_ec_point_map_.end()) {
     return ec_point->second;
   }
-  if (n > max_counter_value_) {
-    return GetECPointForInteger(max_counter_value_);
+  if (n > max_counter_value_ + 1) {
+    return GetECPointForInteger(max_counter_value_ + 1);
   }
   std::string ec_point_string;
   if (n == 0) {

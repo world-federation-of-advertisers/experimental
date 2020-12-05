@@ -276,7 +276,7 @@ TEST_F(SketchEncrypterTest, MaximumCountValueShouldWork) {
   *plain_sketch.mutable_config() =
       CreateSketchConfig(/* unique_cnt = */ 0, /* sum_cnt = */ 1);
   plain_sketch.add_registers()->add_values(kMaxCounterValue + 10);
-  plain_sketch.add_registers()->add_values(kMaxCounterValue);
+  plain_sketch.add_registers()->add_values(kMaxCounterValue + 1);
 
   ASSERT_OK_AND_ASSIGN(std::string result,
                        EncryptWithConflictingKeys(plain_sketch));
@@ -286,7 +286,8 @@ TEST_F(SketchEncrypterTest, MaximumCountValueShouldWork) {
   CiphertextString count_a = {cipher_words[2], cipher_words[3]};
   CiphertextString count_b = {cipher_words[6], cipher_words[7]};
 
-  // Encryption of kMaxCounterValue +10 and kMaxCounterValue should be the same.
+  // Encryption of kMaxCounterValue +10 and kMaxCounterValue+1 should be the
+  // same.
   EXPECT_THAT(count_a, HasSameDecryption(original_cipher_.get(), count_b));
 }
 
