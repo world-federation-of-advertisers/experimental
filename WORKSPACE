@@ -139,7 +139,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any_sketch",
-    commit = "2691dcd099b5f63a2eacd571b010d9dbe832f14d",
+    commit = "450bf2edae40f53a87f7c765a417302d3eaad2cb",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
-    shallow_since = "1605572796 -0500"
+    shallow_since = "1607130905 -0500"
 )
