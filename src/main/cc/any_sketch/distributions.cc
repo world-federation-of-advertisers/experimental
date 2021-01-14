@@ -26,7 +26,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "src/main/cc/any_sketch/hash_function.h"
+#include "src/main/cc/any_sketch/fingerprinters.h"
 #include "src/main/cc/any_sketch/util/macros.h"
 
 namespace wfa::any_sketch {
@@ -92,7 +92,7 @@ class OracleDistribution : public BaseDistribution {
 class FingerprintingDistribution : public BaseDistribution {
  public:
   FingerprintingDistribution(int64_t min_value, int64_t max_value,
-                             const HashFunction* fingerprinter)
+                             const Fingerprinter* fingerprinter)
       : BaseDistribution(min_value, max_value), fingerprinter_(fingerprinter) {}
 
  private:
@@ -105,13 +105,13 @@ class FingerprintingDistribution : public BaseDistribution {
   virtual absl::StatusOr<int64_t> ApplyToFingerprint(
       uint64_t fingerprint, const ItemMetadata& item_metadata) const = 0;
 
-  const HashFunction* fingerprinter_;
+  const Fingerprinter* fingerprinter_;
 };
 
 class UniformDistribution : public FingerprintingDistribution {
  public:
   UniformDistribution(int64_t min_value, int64_t max_value,
-                      const HashFunction* fingerprinter)
+                      const Fingerprinter* fingerprinter)
       : FingerprintingDistribution(min_value, max_value, fingerprinter) {}
 
  private:
@@ -124,7 +124,7 @@ class UniformDistribution : public FingerprintingDistribution {
 class ExponentialDistribution : public FingerprintingDistribution {
  public:
   ExponentialDistribution(double rate, int64_t size,
-                          const HashFunction* fingerprinter)
+                          const Fingerprinter* fingerprinter)
       : FingerprintingDistribution(0, size - 1, fingerprinter),
         rate_(rate),
         exp_rate_(std::exp(rate)) {}
@@ -160,7 +160,7 @@ int CountTrailingZeros(uint64_t n) {
 class GeometricDistribution : public FingerprintingDistribution {
  public:
   GeometricDistribution(int64_t min_value, int64_t max_value,
-                        const HashFunction* fingerprinter)
+                        const Fingerprinter* fingerprinter)
       : FingerprintingDistribution(min_value, max_value, fingerprinter) {}
 
  private:
@@ -178,18 +178,18 @@ std::unique_ptr<Distribution> GetOracleDistribution(
                                                feature_name);
 }
 std::unique_ptr<Distribution> GetUniformDistribution(
-    const HashFunction* fingerprinter, int64_t min_value, int64_t max_value) {
+    const Fingerprinter* fingerprinter, int64_t min_value, int64_t max_value) {
   return absl::make_unique<UniformDistribution>(min_value, max_value,
                                                 fingerprinter);
 }
 std::unique_ptr<Distribution> GetExponentialDistribution(
-    const HashFunction* fingerprinter, double rate, int64_t size) {
+    const Fingerprinter* fingerprinter, double rate, int64_t size) {
   ABSL_ASSERT(rate > 0.0);
   ABSL_ASSERT(size > 0);
   return absl::make_unique<ExponentialDistribution>(rate, size, fingerprinter);
 }
 std::unique_ptr<Distribution> GetGeometricDistribution(
-    const HashFunction* fingerprinter, int64_t min_value, int64_t max_value) {
+    const Fingerprinter* fingerprinter, int64_t min_value, int64_t max_value) {
   return absl::make_unique<GeometricDistribution>(min_value, max_value,
                                                   fingerprinter);
 }

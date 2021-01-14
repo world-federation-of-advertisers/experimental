@@ -21,7 +21,7 @@
 
 namespace wfa::any_sketch {
 namespace {
-class FakeFingerprinter : public HashFunction {
+class FakeFingerprinter : public Fingerprinter {
  public:
   uint64_t Fingerprint(absl::Span<const unsigned char> item) const override {
     return fingerprint_;

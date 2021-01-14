@@ -6,7 +6,7 @@ cc_test(
     ],
     deps = [
         "//src/main/cc/any_sketch:distributions",
-        "//src/main/cc/any_sketch:farm_hash_function",
+        "//src/main/cc/any_sketch:fingerprinters",
         "//src/main/cc/estimation:estimators",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",

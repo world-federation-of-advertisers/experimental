@@ -23,7 +23,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "src/main/cc/any_sketch/hash_function.h"
+#include "src/main/cc/any_sketch/fingerprinters.h"
 
 namespace wfa::any_sketch {
 
@@ -59,11 +59,11 @@ class Distribution {
 std::unique_ptr<Distribution> GetOracleDistribution(
     absl::string_view feature_name, int64_t min_value, int64_t max_value);
 std::unique_ptr<Distribution> GetUniformDistribution(
-    const HashFunction* fingerprinter, int64_t min_value, int64_t max_value);
+    const Fingerprinter* fingerprinter, int64_t min_value, int64_t max_value);
 std::unique_ptr<Distribution> GetExponentialDistribution(
-    const HashFunction* fingerprinter, double rate, int64_t size);
+    const Fingerprinter* fingerprinter, double rate, int64_t size);
 std::unique_ptr<Distribution> GetGeometricDistribution(
-    const HashFunction* fingerprinter, int64_t min_value, int64_t max_value);
+    const Fingerprinter* fingerprinter, int64_t min_value, int64_t max_value);
 
 }  // namespace wfa::any_sketch
 

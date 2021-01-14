@@ -29,7 +29,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "src/main/cc/any_sketch/distributions.h"
-#include "src/main/cc/any_sketch/hash_function.h"
+#include "src/main/cc/any_sketch/fingerprinters.h"
 #include "src/main/cc/any_sketch/value_function.h"
 
 namespace wfa::any_sketch {
