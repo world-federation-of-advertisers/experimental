@@ -71,9 +71,9 @@ grpc_extra_deps()
 
 git_repository(
     name = "com_google_private_join_and_compute",
-    commit = "99fbcf79c5aded3694973086651f535d08a645c5",
+    commit = "842f43b08cecba36f8e6c2d94d7467c3b7338397",
     remote = "https://github.com/google/private-join-and-compute.git",
-    shallow_since = "1605559721 -0400",
+    shallow_since = "1610640414 +0000",
 )
 
 http_archive(
