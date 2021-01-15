@@ -75,9 +75,9 @@ grpc_extra_deps()
 # @com_google_private_join_and_compute
 git_repository(
     name = "com_google_private_join_and_compute",
-    commit = "99fbcf79c5aded3694973086651f535d08a645c5",
+    commit = "842f43b08cecba36f8e6c2d94d7467c3b7338397",
     remote = "https://github.com/google/private-join-and-compute.git",
-    shallow_since = "1605559721 -0400",
+    shallow_since = "1610640414 +0000",
 )
 
 http_archive(
@@ -139,7 +139,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any_sketch",
-    commit = "450bf2edae40f53a87f7c765a417302d3eaad2cb",
+    commit = "2cca62e6e378d901c028f4c9fe2520f043be6b33",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
-    shallow_since = "1607130905 -0500"
+    shallow_since = "1610747353 -0500"
 )

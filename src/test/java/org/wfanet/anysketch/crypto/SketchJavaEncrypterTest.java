@@ -67,7 +67,7 @@ public class SketchJavaEncrypterTest {
           Register.newBuilder()
               .setIndex(random.nextInt())
               .addValues(random.nextInt(10000) + 1) // +1 so it is not destroyed
-              .addValues(random.nextInt()));
+              .addValues(random.nextInt(100) + 1)); // 1~100
     }
 
     return plaintextSketch.build();
