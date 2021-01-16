@@ -30,6 +30,7 @@
 #include "src/main/cc/any_sketch/distributions.h"
 #include "src/main/cc/any_sketch/util/macros.h"
 #include "src/main/cc/any_sketch/value_function.h"
+#include "util/status_macros.h"
 
 namespace wfa::any_sketch {
 

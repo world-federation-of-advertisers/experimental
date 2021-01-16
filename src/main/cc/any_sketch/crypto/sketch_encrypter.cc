@@ -20,6 +20,7 @@
 #include "crypto/context.h"
 #include "crypto/ec_group.h"
 #include "src/main/cc/any_sketch/util/macros.h"
+#include "util/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
 namespace wfa::any_sketch::crypto {
@@ -215,7 +216,7 @@ absl::Status SketchEncrypterImpl::EncryptDestroyedRegister(
     std::string& encrypted_sketch) {
   ASSIGN_OR_RETURN(std::string index_ec, MapToCurve(reg.index()));
   switch (destroyed_register_strategy) {
-    case EncryptSketchRequest::CONFLICTING_KEYS:
+    case EncryptSketchRequest::CONFLICTING_KEYS: {
       // Add two registers with the same index for a destroyed register but
       // different values.
       RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
@@ -223,12 +224,14 @@ absl::Status SketchEncrypterImpl::EncryptDestroyedRegister(
       RETURN_IF_ERROR(AppendEncryptedRegisterWithSameValue(
           index_ec, reg.values_size(), 2, encrypted_sketch));
       break;
-    case EncryptSketchRequest::FLAGGED_KEY:
+    }
+    case EncryptSketchRequest::FLAGGED_KEY: {
       // ADD one register with all values being the encryption of the
       // KDestroyedRegisterKey constant.
       RETURN_IF_ERROR(AppendFlaggedDestroyedRegister(
           index_ec, reg.values_size(), encrypted_sketch));
       break;
+    }
     default:
       return absl::InvalidArgumentError("Invalid DestroyedRegisterStrategy.");
   }

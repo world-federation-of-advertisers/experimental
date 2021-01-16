@@ -17,37 +17,13 @@
 #ifndef SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 #define SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 
-#define RETURN_IF_ERROR(status)                                              \
-  RETURN_IF_ERROR_IMPL(                                                      \
-      SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_, __COUNTER__), \
-      status)
-
-#define RETURN_IF_ERROR_IMPL(var, status) \
-  do {                                    \
-    auto var = (status);                  \
-    if (!var.ok()) return var;            \
-  } while (0)
-
-#ifndef ASSIGN_OR_RETURN
-#define ASSIGN_OR_RETURN(lhs, rhs)                                     \
-  SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_IMPL_(                  \
-      SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_or_value, \
-                                                      __LINE__),       \
-      lhs, rhs)
-#endif
-
-// Internal helper.
-#define SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_IMPL_(statusor, lhs, \
-                                                           rexpr)         \
-  auto statusor = (rexpr);                                                \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) return statusor.status();       \
-  lhs = std::move(statusor).value()
-
+#ifndef ASSIGN_OR_RETURN_ERROR
 #define ASSIGN_OR_RETURN_ERROR(lhs, rexpr, message)                    \
   SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_ERROR_IMPL_(            \
       SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_IMPL_CONCAT_(status_or_value, \
                                                       __COUNTER__),    \
       lhs, rexpr, message)
+#endif
 
 // Internal helper.
 #define SRC_MAIN_CC_ANY_SKETCH_UTIL_ASSIGN_OR_RETURN_ERROR_IMPL_( \

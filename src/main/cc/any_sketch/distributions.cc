@@ -28,6 +28,7 @@
 #include "absl/strings/string_view.h"
 #include "src/main/cc/any_sketch/fingerprinters.h"
 #include "src/main/cc/any_sketch/util/macros.h"
+#include "util/status_macros.h"
 
 namespace wfa::any_sketch {
 namespace {
