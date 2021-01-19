@@ -6,8 +6,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 # Abseil C++ libraries
 git_repository(
     name = "com_google_absl",
-    remote = "https://github.com/abseil/abseil-cpp.git",
     commit = "0f3bb466b868b523cf1dc9b2aaaed65c77b28862",
+    remote = "https://github.com/abseil/abseil-cpp.git",
     shallow_since = "1603283562 -0400",
 )
 
@@ -17,7 +17,6 @@ http_archive(
     strip_prefix = "googletest-release-1.10.0",
     urls = ["https://github.com/google/googletest/archive/release-1.10.0.zip"],
 )
-
 
 new_git_repository(
     name = "farmhash",
@@ -125,7 +124,7 @@ git_repository(
     name = "wfa_rules_swig",
     commit = "ad4f1bcf5747cb26b480b45c582069fb1488f8c1",
     remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
-    shallow_since = "1603231045 -0700"
+    shallow_since = "1603231045 -0700",
 )
 
 # Measurement APIs.
@@ -139,7 +138,7 @@ git_repository(
 # Core AnySketch.
 git_repository(
     name = "any_sketch",
-    commit = "2cca62e6e378d901c028f4c9fe2520f043be6b33",
+    commit = "852b063e2b579ceb647271e9e86f0a79ade5757e",
     remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
-    shallow_since = "1610747353 -0500"
+    shallow_since = "1610762283 -0500",
 )
