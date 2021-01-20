@@ -64,6 +64,7 @@ proto_library(
     name = "measurement_consumer_proto",
     srcs = ["measurement_consumer.proto"],
     strip_import_prefix = IMPORT_PREFIX,
+    deps = [":account_proto"],
 )
 
 proto_library(
@@ -71,6 +72,7 @@ proto_library(
     srcs = ["data_provider.proto"],
     strip_import_prefix = IMPORT_PREFIX,
     deps = [
+        ":account_proto",
         ":crypto_proto",
         ":measurement_consumer_proto",
     ],
