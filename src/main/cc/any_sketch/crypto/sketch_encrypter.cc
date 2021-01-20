@@ -56,7 +56,11 @@ bool ValidateSketch(const Sketch& sketch) {
   return true;
 }
 
-// Check if a register is destroyed, i.e., if any UNIQUE value is equal to -1
+// Check if a register is destroyed, i.e., if any UNIQUE value is equal to 0.
+// Note that we use -1 as the key of destroyed registers. However, we shift the
+// value by 1 when encoding the anysketch object to proto message. In other
+// words, destroyed registers in the proto message would have key value 0.
+// Here We check <= 0 for flexibility.
 bool IsRegisterDestroyed(const Sketch::Register& reg,
                          const SketchConfig& sketch_config) {
   for (int i = 0; i < reg.values_size(); i++) {
