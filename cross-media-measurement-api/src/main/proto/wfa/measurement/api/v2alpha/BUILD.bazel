@@ -79,6 +79,12 @@ proto_library(
 )
 
 proto_library(
+    name = "accounts_service_proto",
+    srcs = ["accounts_service.proto"],
+    deps = [":account_proto"],
+)
+
+proto_library(
     name = "requisitions_service_proto",
     srcs = ["requisitions_service.proto"],
     strip_import_prefix = IMPORT_PREFIX,
