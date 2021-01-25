@@ -1,0 +1,117 @@
+// Copyright 2020 The Measurement Proto Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package wfa.measurement.api.v2alpha;
+
+import "wfa/measurement/api/v2alpha/crypto.proto";
+import "wfa/measurement/api/v2alpha/measurement.proto";
+import "wfa/measurement/api/v2alpha/measurement_consumer.proto";
+
+option java_package = "org.wfanet.measurement.api.v2alpha";
+option java_multiple_files = true;
+option java_outer_classname = "RequisitionProto";
+
+// A requisition for a single metric across a set of `EventGroup`s from a single
+// `DataProvider`. Output-only.
+message MetricRequisition {
+  message Key {
+    string data_provider_id = 1;
+    string metric_requisition_id = 2;
+  }
+  // Resource key.
+  Key key = 1;
+
+  // Resource key of `Measurement` that this `MetricRequisition` is associated
+  // with. Required. Immutable.
+  Measurement.Key measurement = 2;
+
+  // Denormalized dereferenced `measurement_consumer_certificate` field from
+  // `measurement`. Required. Immutable.
+  MeasurementConsumerCertificate measurement_consumer_certificate = 3;
+
+  // Denormalized `metric_definition` field from `measurement`. Required.
+  // Immutable.
+  SignedData metric_definition = 4;
+
+  // Denormalized `data_provider_public_key` field from the corresponding
+  // `DataProviderEntry` in `measurement`.  Required. Immutable.
+  SignedData data_provider_public_key = 5;
+
+  // Denormalized `encrypted_requisition_spec` field from the corresponding
+  // `DataProviderEntry` in `measurement`.  Required. Immutable.
+  bytes encrypted_requisition_spec = 6;
+
+  // State of a metrics requisition.
+  enum State {
+    // Default value if state is omitted. Should never be used.
+    STATE_UNSPECIFIED = 0;
+    // No metric value has been sent to fulfill this requisition.
+    UNFULFILLED = 1;
+    // A metric value has been sent to fulfill this requisition. Terminal state.
+    FULFILLED = 2;
+    // The requisition cannot be fulfilled. Terminal state. Any Measurements
+    // using this requisition will be put into the FAILED state.
+    UNFULFILLABLE = 3;
+  }
+  // The state of this requisition.
+  State state = 7;
+
+  message Refusal {
+    enum Justification {
+      JUSTIFICATION_UNSPECIFIED = 0;
+
+      // The `EventGroup` is not known to the `DataProvider`. This should only
+      // happen if the corresponding event group in the `DataProvider`'s system
+      // previously existed but has been deleted.
+      UNKNOWN_EVENT_GROUP = 1;
+
+      // The `MetricDefinition` specifies a configuration that the
+      // `DataProvider` does not and will never support for this `EventGroup`.
+      METRIC_DEFINITION_UNSUPPORTED = 2;
+
+      // The collection interval covers a range that is sufficiently long ago
+      // that the DataProvider no longer retains the underlying data.
+      COLLECTION_INTERVAL_TOO_DISTANT = 3;
+
+      // Validation of the `MetricRequisition.Spec` signature failed.
+      SIGNATURE_INVALID = 4;
+
+      // There is insufficient remaining privacy budget to fulfill this
+      // `MetricRequisition`.
+      INSUFFICIENT_PRIVACY_BUDGET = 5;
+
+      // The `DataProvider` has declined to fulfill this `MetricRequisition`.
+      // The data required to fulfill this request may or may not be available.
+      DECLINED = 6;
+
+      // The data required to fulfill this MetricRequisition is inaccessible or
+      // lost. This should only be used when there is no other Justification
+      // that is more specific.
+      DATA_UNAVAILABLE = 7;
+    }
+    Justification justification = 1;
+
+    // Human-readable string adding more context to the provided Justification.
+    // This should NOT include sensitive information.
+    //
+    // Example: "Data Provider X does not support Virtual ID model line Y".
+    string message = 2;
+  }
+  // Details on why the requisition is in the `UNFULFILLABLE` state.
+  oneof unfulfillable_details {
+    Refusal refusal = 8;
+  }
+}

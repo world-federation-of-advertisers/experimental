@@ -1,0 +1,86 @@
+@startuml
+
+!unquoted procedure resource($type)
+  class $type << (R, SandyBrown) >>
+!endprocedure
+!unquoted procedure collection($name, $type)
+  $name "1" *-- "many" $type
+  object $name
+!endprocedure
+
+skinparam default {
+  fontName "Roboto Mono"
+  fontSize 12
+}
+
+resource(DataProvider) {
+  Get()
+}
+resource(MeasurementConsumer) {
+  Get()
+}
+resource(SketchConfig) {
+}
+resource(CombinedPublicKey) {
+  encryption_key
+  Get()
+}
+resource(Measurement) {
+  metric_definition
+  data_provider_entries
+  state
+  result
+}
+
+together {
+  collection(measurementConsumers, MeasurementConsumer) {
+    Create(measurementConsumer)
+  }
+  collection(dataProviders, DataProvider) {
+    Create(data_provider)
+  }
+  collection(sketchConfigs, SketchConfig) {
+    List()
+  }
+  collection(combinedPublicKeys, CombinedPublicKey) {
+    List()
+  }
+}
+
+collection(metricRequisitions, MetricRequisition) {
+  List([states])
+}
+collection(eventGroups, EventGroup) {
+  Create(event_group)
+  List([measurement_consumers])
+}
+collection(measurements, Measurement) {
+  Create(measurement)
+  List([states])
+}
+
+resource(MetricRequisition) {
+  measurement
+  requisition_spec
+  state
+  Get()
+  Refuse(refusal)
+  Fulfill(metric_value)
+}
+resource(EventGroup) {
+  measurement_consumer
+  Get()
+}
+
+DataProvider *-- eventGroups
+DataProvider *-- metricRequisitions
+EventGroup "many" ..> "1" MeasurementConsumer
+
+MetricRequisition "many" .> "many" EventGroup
+MetricRequisition "many" .> "1" Measurement
+
+MeasurementConsumer *-- measurements
+Measurement "many" .> "1" CombinedPublicKey
+Measurement "many" .> "0..1" SketchConfig
+
+@enduml
