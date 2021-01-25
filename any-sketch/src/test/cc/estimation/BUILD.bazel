@@ -1,0 +1,15 @@
+cc_test(
+    name = "estimators_test",
+    size = "small",
+    srcs = [
+        "estimators_test.cc",
+    ],
+    deps = [
+        "//src/main/cc/any_sketch:distributions",
+        "//src/main/cc/any_sketch:fingerprinters",
+        "//src/main/cc/estimation:estimators",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
+        "@googletest//:gtest_main",
+    ],
+)

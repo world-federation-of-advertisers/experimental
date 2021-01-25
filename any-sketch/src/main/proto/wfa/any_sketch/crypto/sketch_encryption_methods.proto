@@ -1,0 +1,80 @@
+// Copyright 2020 The Any Sketch Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package wfa.any_sketch.crypto;
+
+import "wfa/measurement/api/v1alpha/sketch.proto";
+
+option java_package = "org.wfanet.anysketch.crypto";
+option java_multiple_files = true;
+
+// Public keys of the ElGamal cipher.
+message ElGamalPublicKeys {
+  // Public key g (generator) of the ElGamal cipher.
+  bytes el_gamal_g = 1;
+  // Public key y (g^sk) of the ElGamal cipher.
+  bytes el_gamal_y = 2;
+}
+
+// The request to encrypt a sketch.
+message EncryptSketchRequest {
+  // The input sketch
+  wfa.measurement.api.v1alpha.Sketch sketch = 1;
+  // Public keys of the ElGamal cipher used to encrypt the sketch
+  ElGamalPublicKeys el_gamal_keys = 2;
+  // The elliptical curve to work on.
+  int64 curve_id = 3;
+  // Maximum value to encrypt. Every value greater than the maximum_value
+  // is mapping to the encryption of the maximum_value.
+  int32 maximum_value = 4;
+
+  // Strategies of encrypting destroyed register.
+  enum DestroyedRegisterStrategy {
+    // The destroy strategy is unspecified. Should never be used.
+    UNSPECIFIED = 0;
+    // Maps a destroyed register to two normal registers with the same
+    // register_id but different keys, such that these two registers would be
+    // destroyed in the Same Key Aggregation later.
+    CONFLICTING_KEYS = 1;
+    // Sets the keys in all destroyed registers to a pre-defined constant. The
+    // MPC workers would be able to figure out that the registers are destroyed
+    // using such information.
+    FLAGGED_KEY = 2;
+  }
+
+  // Strategies of encrypting destroyed register.
+  DestroyedRegisterStrategy destroyed_register_strategy = 5;
+}
+
+// Response of the EncryptSketch method.
+message EncryptSketchResponse {
+  // The encrypted sketch
+  bytes encrypted_sketch = 1;
+}
+
+// The request to combine a list of Elgamal public keys
+message CombineElGamalPublicKeysRequest {
+  // The elliptical curve to work on.
+  int64 curve_id = 1;
+  // Public keys to combine. All keys should contain the same generator.
+  repeated ElGamalPublicKeys el_gamal_keys = 2;
+}
+
+// The response of combining a list of Elgamal public keys
+message CombineElGamalPublicKeysResponse {
+  // The combined public keys.
+  ElGamalPublicKeys el_gamal_keys = 1;
+}

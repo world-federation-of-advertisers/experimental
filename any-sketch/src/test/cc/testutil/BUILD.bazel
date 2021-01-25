@@ -1,0 +1,32 @@
+package(
+    default_visibility = [
+        "//src/test/cc:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "matchers",
+    testonly = True,
+    hdrs = ["matchers.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "random",
+    testonly = True,
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    deps = [
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+    ],
+)
+
+cc_library(
+    name = "status_macros",
+    hdrs = ["status_macros.h"],
+)

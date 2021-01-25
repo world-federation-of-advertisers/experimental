@@ -1,0 +1,70 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "any_sketch",
+    srcs = ["any_sketch.cc"],
+    hdrs = ["any_sketch.h"],
+    deps = [
+        ":aggregators",
+        ":distributions",
+        ":value_function",
+        "//src/main/cc/any_sketch/util:macros",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "aggregators",
+    srcs = ["aggregators.cc"],
+    hdrs = ["aggregators.h"],
+    deps = [
+        "@com_github_glog_glog//:glog",
+    ],
+)
+
+cc_library(
+    name = "distributions",
+    srcs = ["distributions.cc"],
+    hdrs = ["distributions.h"],
+    deps = [
+        ":fingerprinters",
+        "//src/main/cc/any_sketch/util:macros",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "fingerprinters",
+    srcs = ["fingerprinters.cc"],
+    hdrs = ["fingerprinters.h"],
+    deps = [
+        "@boringssl//:crypto",
+        "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@farmhash",
+    ],
+)
+
+cc_library(
+    name = "value_function",
+    hdrs = ["value_function.h"],
+    deps = [
+        ":aggregators",
+        ":distributions",
+        "@com_google_absl//absl/strings",
+    ],
+)

@@ -1,0 +1,15 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "estimators",
+    srcs = [
+        "estimators.cc",
+    ],
+    hdrs = [
+        "estimators.h",
+    ],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:bind_front",
+    ],
+)
