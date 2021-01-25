@@ -1,0 +1,8 @@
+filegroup(
+    name = "testdata",
+    srcs = glob(["*"]),
+    visibility = [
+        "//src/test/java/org/wfanet/anysketch:__pkg__",
+        "//src/test/java/org/wfanet/estimation:__pkg__",
+    ],
+)

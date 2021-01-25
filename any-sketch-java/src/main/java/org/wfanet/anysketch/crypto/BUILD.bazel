@@ -1,0 +1,14 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("@wfa_rules_swig//java:defs.bzl", "java_wrap_cc")
+
+package(default_visibility = ["//visibility:public"])
+
+java_wrap_cc(
+    name = "sketch_encrypter_adapter",
+    src = "sketch_encrypter.swig",
+    module = "SketchEncrypterAdapter",
+    package = "org.wfanet.anysketch.crypto",
+    deps = [
+        "@any_sketch//src/main/cc/any_sketch/crypto:sketch_encrypter_adapter",
+    ],
+)

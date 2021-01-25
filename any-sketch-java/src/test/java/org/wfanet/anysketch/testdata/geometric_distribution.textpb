@@ -1,0 +1,18 @@
+indexes {
+  name: "AnIndex"
+  distribution {
+    geometric {
+      success_probability: 0.12345
+      num_values: 64
+    }
+  }
+}
+values {
+  name: "Frequency"
+  aggregator: SUM
+  distribution {
+    oracle {
+      key: "frequency"
+    }
+  }
+}

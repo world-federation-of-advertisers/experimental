@@ -1,0 +1,16 @@
+load("@rules_java//java:defs.bzl", "java_test")
+
+java_test(
+    name = "tests",
+    srcs = [
+        "SketchJavaEncrypterTest.java",
+    ],
+    test_class = "org.wfanet.anysketch.crypto.SketchJavaEncrypterTest",
+    deps = [
+        "//src/main/java/org/wfanet/anysketch/crypto:sketch_encrypter_adapter",
+        "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_java_proto",
+        "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
+        "@com_google_protobuf//:protobuf_java",
+        "@maven//:com_google_truth_truth",
+    ],
+)
