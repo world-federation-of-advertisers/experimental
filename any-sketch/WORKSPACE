@@ -87,9 +87,7 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
 
 # Measurement APIs.
-git_repository(
+local_repository(
     name = "wfa_measurement_proto",
-    commit = "c55656ca7d8c86f139fa3bb3b0d22a1cf5b74f77",
-    remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
-    shallow_since = "1590709328 +0000",
+    path = "../cross-media-measurement-api",
 )
