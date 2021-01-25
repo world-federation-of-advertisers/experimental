@@ -120,25 +120,19 @@ load("@maven//:compat.bzl", "compat_repositories")
 compat_repositories()
 
 # Swig rules.
-git_repository(
+local_repository(
     name = "wfa_rules_swig",
-    commit = "ad4f1bcf5747cb26b480b45c582069fb1488f8c1",
-    remote = "sso://team/ads-xmedia-open-measurement-team/rules_swig",
-    shallow_since = "1603231045 -0700",
+    path = "../rules-swig",
 )
 
 # Measurement APIs.
-git_repository(
+local_repository(
     name = "wfa_measurement_proto",
-    commit = "c55656ca7d8c86f139fa3bb3b0d22a1cf5b74f77",
-    remote = "sso://team/ads-xmedia-open-measurement-team/wfa-measurement-proto",
-    shallow_since = "1590709328 +0000",
+    path = "../cross-media-measurement-api",
 )
 
 # Core AnySketch.
-git_repository(
+local_repository(
     name = "any_sketch",
-    commit = "852b063e2b579ceb647271e9e86f0a79ade5757e",
-    remote = "sso://team/ads-xmedia-open-measurement-team/any-sketch",
-    shallow_since = "1610762283 -0500",
+    path = "../any-sketch",
 )
