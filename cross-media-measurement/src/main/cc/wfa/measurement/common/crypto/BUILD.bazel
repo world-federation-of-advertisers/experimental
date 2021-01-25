@@ -1,0 +1,172 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//build:defs.bzl", "test_target")
+
+package(default_visibility = [
+    ":__pkg__",
+    test_target(":__pkg__"),
+    "//src/main/swig/common/crypto:__subpackages__",
+])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "constants",
+    hdrs = [
+        "constants.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "encryption_utility_helper",
+    srcs = [
+        "encryption_utility_helper.cc",
+    ],
+    hdrs = [
+        "encryption_utility_helper.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":constants",
+        ":ec_point_util",
+        ":protocol_cryptor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "ec_point_util",
+    srcs = [
+        "ec_point_util.cc",
+    ],
+    hdrs = [
+        "ec_point_util.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_private_join_and_compute//crypto:ec_util",
+    ],
+)
+
+cc_library(
+    name = "started_thread_cpu_timer",
+    hdrs = [
+        "started_thread_cpu_timer.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "protocol_cryptor",
+    srcs = [
+        "protocol_cryptor.cc",
+    ],
+    hdrs = [
+        "protocol_cryptor.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":constants",
+        ":ec_point_util",
+        "//src/main/cc/wfa/measurement/common:macros",
+        "//src/main/cc/wfa/measurement/common:string_block_sorter",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_private_join_and_compute//crypto:commutative_elgamal",
+        "@com_google_private_join_and_compute//crypto:ec_commutative_cipher",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "liquid_legions_v1_encryption_utility",
+    srcs = [
+        "liquid_legions_v1_encryption_utility.cc",
+    ],
+    hdrs = [
+        "liquid_legions_v1_encryption_utility.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":constants",
+        ":encryption_utility_helper",
+        ":protocol_cryptor",
+        ":started_thread_cpu_timer",
+        "//src/main/cc/wfa/measurement/common:macros",
+        "//src/main/cc/wfa/measurement/common:string_block_sorter",
+        "//src/main/proto/wfa/measurement/common/crypto:liquid_legions_v1_encryption_methods_cc_proto",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_private_join_and_compute//crypto:commutative_elgamal",
+        "@com_google_private_join_and_compute//crypto:ec_commutative_cipher",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "liquid_legions_v2_encryption_utility",
+    srcs = [
+        "liquid_legions_v2_encryption_utility.cc",
+    ],
+    hdrs = [
+        "liquid_legions_v2_encryption_utility.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":constants",
+        ":encryption_utility_helper",
+        ":protocol_cryptor",
+        ":started_thread_cpu_timer",
+        "//src/main/cc/wfa/measurement/common:macros",
+        "//src/main/cc/wfa/measurement/common/math:distributions",
+        "//src/main/proto/wfa/measurement/common/crypto:liquid_legions_v2_encryption_methods_cc_proto",
+        "@any_sketch//src/main/cc/estimation:estimators",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "liquid_legions_v1_encryption_utility_wrapper",
+    srcs = [
+        "liquid_legions_v1_encryption_utility_wrapper.cc",
+    ],
+    hdrs = [
+        "liquid_legions_v1_encryption_utility_wrapper.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":encryption_utility_helper",
+        ":liquid_legions_v1_encryption_utility",
+        "//src/main/cc/wfa/measurement/common:macros",
+        "//src/main/proto/wfa/measurement/common/crypto:liquid_legions_v1_encryption_methods_cc_proto",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "liquid_legions_v2_encryption_utility_wrapper",
+    srcs = [
+        "liquid_legions_v2_encryption_utility_wrapper.cc",
+    ],
+    hdrs = [
+        "liquid_legions_v2_encryption_utility_wrapper.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":encryption_utility_helper",
+        ":liquid_legions_v2_encryption_utility",
+        "//src/main/cc/wfa/measurement/common:macros",
+        "//src/main/proto/wfa/measurement/common/crypto:liquid_legions_v2_encryption_methods_cc_proto",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)

@@ -1,0 +1,163 @@
+// Copyright 2020 The Measurement System Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package wfa.measurement.protocol;
+
+import "src/main/proto/wfa/measurement/protocol/requisition.proto";
+
+option java_package = "org.wfanet.measurement.protocol";
+option java_multiple_files = true;
+
+// LiquidLegionsSketchAggregationV2 (3-round MPC) protocol.
+message LiquidLegionsSketchAggregationV2 {
+  enum Stage {
+    // The computation stage is unknown. This is never set intentionally.
+    STAGE_UNKNOWN = 0;
+
+    // The computation is known and the worker should confirm all required local
+    // requisitions are available. After confirmation, the computation enters
+    // WAIT_TO_START at non-aggregator workers or WAIT_SETUP_PHASE_INPUTS at the
+    // aggregator worker.
+    CONFIRM_REQUISITIONS_PHASE = 1;
+
+    // The computation is confirmed locally, and the non-aggregator worker is
+    // waiting for the signal from the kingdom to start the MPC protocol.
+    WAIT_TO_START = 2;
+
+    // The aggregator worker is waiting for other MPC workers' local combined
+    // register vector (CRV) to start working on the setup phase.
+    WAIT_SETUP_PHASE_INPUTS = 3;
+
+    // The worker is in the setup phase.
+    // More specifically, a non-aggregator worker will add noise to its local
+    // CRV, and send the noised CRV to the aggregator. The aggregator worker
+    // will add noise to its local CRV, and then combine it together with CRVs
+    // received from all other non-aggregator workers and create a global CRV.
+    SETUP_PHASE = 4;
+
+    // The worker is waiting to receive a copy of global CRV from the previous
+    // worker in the ring of workers to start working on the execution phase
+    // one.
+    WAIT_EXECUTION_PHASE_ONE_INPUTS = 5;
+
+    // The worker is in the execution phase one.
+    // More specifically, a non-aggregator worker will re-encrypt its positional
+    // values and re-randomized all other field and shuffle the CRV and then
+    // pass the CRV to the next worker. The aggregator worker will re-encrypt
+    // the position values of the sketch and joins them based on their
+    // re-encrypted positional values. Combining is via the same key aggregation
+    // method to create the encrypted flag and count tuples. Then, the
+    // aggregator adds noise to the flag count tuples.
+    EXECUTION_PHASE_ONE = 6;
+
+    // The worker is waiting to receive a copy of the flag and count tuples from
+    // the previous worker in the ring of workers to start working on the
+    // execution phase two.
+    WAIT_EXECUTION_PHASE_TWO_INPUTS = 7;
+
+    // The worker is in the execution phase two.
+    // More specifically, a non-aggregator worker decrypts the flag and add
+    // additional encrypted noisy (flag, count) pairs. The aggregator worker
+    // decrypts the flags and filters out non-DP noises and then estimates the
+    // reach, then discards the destroyed registers and creates a 2-D
+    // SameKeyAggregator (SKA) matrix for the un-destroyed counters.
+    EXECUTION_PHASE_TWO = 8;
+
+    // The worker is waiting to receive a copy of the SKA matrix from the
+    // previous worker in the ring of workers to start working on the execution
+    // phase three.
+    WAIT_EXECUTION_PHASE_THREE_INPUTS = 9;
+
+    // The worker is in the execution phase three.
+    // More specifically, a non-aggregator worker decrypts the SKA matrix, and
+    // the aggregator worker decrypts the SKA matrix and computes the final
+    // frequency histogram.
+    EXECUTION_PHASE_THREE = 10;
+
+    // The computation is done the worker can remove BLOBs that are no longer
+    // needed.
+    COMPLETE = 11;
+  }
+
+  // Computation details specific to the LiquidLegions V2 protocol.
+  message ComputationDetails {
+    enum RoleInComputation {
+      // Never set intentionally
+      UNKNOWN = 0;
+      // The aggregator duchy for the computation.
+      AGGREGATOR = 1;
+      // A non-aggregator duchy for the computation. This duchy has to do many
+      // crypto operations, but is not responsible for joining sketch positions
+      // together, nor computing the final results.
+      NON_AGGREGATOR = 2;
+    }
+    // The duchy's role in the computation.
+    RoleInComputation role = 1;
+    // The domain name of the duchy from which this one receives data for the
+    // computation.
+    string incoming_node_id = 2;
+    // The domain name of the duchy where outputs are sent for the computation.
+    string outgoing_node_id = 3;
+    // The domain name of the aggregator duchy of this computation.
+    string aggregator_node_id = 4;
+
+    message ReachEstimate {
+      int64 reach = 1;
+    }
+    // The cached reach estimation result.
+    // The reach value is calculated as part of the reach estimation phase by
+    // the aggregator. It is only set at the aggregator and is not shared with
+    // non-aggregator nodes. The value will be included in the result for the
+    // computation.
+    ReachEstimate reach_estimate = 5;
+
+    // Total number of MetricRequisitions across all duchies used in this
+    // computation.
+    int32 total_requisition_count = 6;
+  }
+
+  // Details about a particular attempt of running a stage of the LiquidLegionV2
+  // Protocol.
+  message StageDetails {
+    oneof detail {
+      // Details specific to the WAIT_SETUP_PHASE_INPUTS stage.
+      WaitSetupPhaseInputsDetails wait_setup_phase_inputs_details = 1;
+      // Details specific to the TO_CONFIRM_REQUISITIONS stage.
+      ToConfirmRequisitionsStageDetails to_confirm_requisitions_stage_details =
+          2;
+    }
+  }
+
+  // The WAIT_SETUP_PHASE_INPUTS stage has a bootstrapping step where it
+  // requires input from all other duchies before it can move forward. The
+  // bookkeeping of which duchy has provided is stored in this message.
+  message WaitSetupPhaseInputsDetails {
+    // A mapping of the name of a duchy to the BlobId corresponding to the
+    // ComputationBlobDependency.OUTPUT BLOB where it will be written.
+    //
+    // Upon receiving a sketch from a duchy the OUTPUT reference with the id
+    // found in this map is updated with the local copy of the blob. When all
+    // the output references have a path the worker can move onto the next
+    // stage.
+    map<string, int64> external_duchy_local_blob_id = 1;
+  }
+
+  // The details used to run a TO_CONFIRM_REQUISITIONS stage.
+  message ToConfirmRequisitionsStageDetails {
+    // list of local requisitions that are required for this computation.
+    repeated RequisitionKey keys = 1;
+  }
+}

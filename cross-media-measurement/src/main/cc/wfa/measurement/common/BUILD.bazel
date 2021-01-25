@@ -1,0 +1,28 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//build:defs.bzl", "test_target")
+
+package(default_visibility = [
+    ":__subpackages__",
+    test_target(":__subpackages__"),
+])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "macros",
+    hdrs = [
+        "macros.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+)
+
+cc_library(
+    name = "string_block_sorter",
+    hdrs = [
+        "string_block_sorter.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)

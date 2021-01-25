@@ -1,0 +1,14 @@
+# Use clang as C++ compiler.
+build --repo_env='CC=clang'
+
+# Use C++17 language features.
+build --cxxopt='-std=c++17'
+
+# Use JDK 11. See https://github.com/bazelbuild/bazel/issues/6245.
+build --javabase=@bazel_tools//tools/jdk:remote_jdk11
+
+# Target Java 8.
+build --java_toolchain=@bazel_tools//tools/jdk:toolchain_java8
+
+import %workspace%/remote.bazelrc
+import %workspace%/results.bazelrc

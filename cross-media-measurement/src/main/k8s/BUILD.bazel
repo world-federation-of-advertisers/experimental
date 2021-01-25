@@ -1,0 +1,89 @@
+load("//build/k8s:defs.bzl", "k8s_apply", "k8s_import")
+load("//build/cue:defs.bzl", "cue_string_field")
+load(":macros.bzl", "cue_dump")
+load("//src/main/docker:images.bzl", "ALL_LOCAL_IMAGES")
+
+exports_files(["duchy_public_key_config.textproto"])
+
+cue_string_field(
+    name = "duchy_public_key_config",
+    src = "duchy_public_key_config.textproto",
+    identifier = "#DuchyPublicKeysConfig",
+    package = "k8s",
+)
+
+CUE_LIBRARIES = [
+    ":duchy_public_key_config.cue",
+    "base.cue",
+    "correctness_test_job.cue",
+    "duchy.cue",
+    "kingdom.cue",
+]
+
+cue_dump(
+    name = "kingdom_and_three_duchies_from_cue_local",
+    srcs = CUE_LIBRARIES + ["kingdom_and_three_duchies_local.cue"],
+)
+
+cue_dump(
+    name = "kingdom_and_three_duchies_from_cue_gke",
+    srcs = CUE_LIBRARIES + ["kingdom_and_three_duchies_gke.cue"],
+)
+
+ALL_LOCAL_IMAGE_ARCHIVES = [
+    image_spec.image + ".tar"
+    for image_spec in ALL_LOCAL_IMAGES
+]
+
+filegroup(
+    name = "all_archives",
+    srcs = ALL_LOCAL_IMAGE_ARCHIVES,
+)
+
+filegroup(
+    name = "k8s_deployment_config",
+    srcs = [
+        ":kingdom_and_three_duchies_from_cue_gke.yaml",
+        ":kingdom_and_three_duchies_from_cue_local.yaml",
+    ],
+    data = [
+        ":all_archives",
+    ],
+    visibility = [":k8s_deployer"],
+)
+
+package_group(
+    name = "k8s_deployer",
+    packages = [
+        "//src/main/kotlin/org/wfanet/measurement/tools/...",
+        "//src/test/kotlin/org/wfanet/measurement/e2e/...",
+    ],
+)
+
+SELECTOR = "app.kubernetes.io/name=measurement-system"
+
+[k8s_import(
+    name = "import_" + image.name + "_kind",
+    image_archive = image.image + ".tar",
+    k8s_environment = "kind",
+) for image in ALL_LOCAL_IMAGES]
+
+[k8s_import(
+    name = "import_" + image.name + "_u7s",
+    image_archive = image.image + ".tar",
+    k8s_environment = "usernetes-containerd",
+) for image in ALL_LOCAL_IMAGES]
+
+k8s_apply(
+    name = "kingdom_and_three_duchies_kind",
+    src = ":kingdom_and_three_duchies_from_cue_local.yaml",
+    delete_selector = SELECTOR,
+    imports = [":import_" + image.name + "_kind" for image in ALL_LOCAL_IMAGES],
+)
+
+k8s_apply(
+    name = "kingdom_and_three_duchies_u7s",
+    src = ":kingdom_and_three_duchies_from_cue_local.yaml",
+    delete_selector = SELECTOR,
+    imports = [":import_" + image.name + "_u7s" for image in ALL_LOCAL_IMAGES],
+)

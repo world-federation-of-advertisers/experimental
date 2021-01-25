@@ -1,0 +1,7 @@
+package_group(
+    name = "docker_image_deployment",
+    packages = [
+        "//src/main/docker/...",
+        "//src/main/k8s/...",
+    ],
+)
