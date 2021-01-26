@@ -10,3 +10,11 @@ kt_jvm_library(
         "//src/main/kotlin/org/wfanet/measurement/common",
     ],
 )
+
+kt_jvm_library(
+    name = "signing_certs",
+    srcs = ["SigningCerts.kt"],
+    deps = [
+        ":security_provider",
+    ],
+)
