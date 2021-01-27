@@ -50,7 +50,7 @@ message RegisterNoiseGenerationParameters {
   ElGamalPublicKey composite_el_gamal_public_key = 1;
   // The elliptical curve to work on.
   int64 curve_id = 2;
-  // Number of contributors to the noise.
+  // The number of honest parties contributing their noise.
   int32 contributors_count = 3;
   // The total number of sketches across all workers for this computation.
   int32 total_sketches_count = 4;
@@ -61,7 +61,7 @@ message RegisterNoiseGenerationParameters {
 message FlagCountTupleNoiseGenerationParameters {
   // Maximum frequency to measure.
   int32 maximum_frequency = 1;
-  // Number of contributors to the noise.
+  // The number of honest parties contributing their noise.
   int32 contributors_count = 2;
   // Differential privacy parameters for noise tuples.
   // Same value is used for both (0, R, R) and (R, R, R) tuples.
@@ -69,14 +69,14 @@ message FlagCountTupleNoiseGenerationParameters {
 }
 
 message GlobalReachDpNoiseBaseline {
-  // Number of contributors to the noise.
+  // The number of honest parties contributing their noise.
   int32 contributors_count = 1;
   // DP parameters used when adding the global reach DP noise registers.
   DifferentialPrivacyParams global_reach_dp_noise = 2;
 }
 
 message PerBucketFrequencyDpNoiseBaseline {
-  // Number of contributors to the noise.
+  // The number of honest parties contributing their noise.
   int32 contributors_count = 1;
   // DP parameters used when adding noise.
   DifferentialPrivacyParams dp_params = 2;

@@ -925,7 +925,7 @@ CompleteExecutionPhaseThreeAtAggregator(
     }
   }
 
-  int valid_tuple_count = column_size;
+  int actual_total = column_size;
   // Adjusts the histogram according the noise baseline.
   if (request.has_global_frequency_dp_noise_per_bucket()) {
     auto options = GetFrequencyNoiseOptions(
@@ -933,16 +933,16 @@ CompleteExecutionPhaseThreeAtAggregator(
         request.maximum_frequency(),
         request.global_frequency_dp_noise_per_bucket().contributors_count());
     int noise_baseline_per_bucket = options.shift_offset * options.num;
-    int actual_total = 0;
+    actual_total = 0;
     for (int i = 0; i < maximum_frequency; ++i) {
       histogram[i] = std::max(0, histogram[i] - noise_baseline_per_bucket);
       actual_total += histogram[i];
     }
-    if (actual_total == 0) {
-      return absl::InvalidArgumentError(
-          "There is neither actual data nor effective noise in the request.");
-    }
-    valid_tuple_count = actual_total;
+  }
+
+  if (actual_total == 0) {
+    return absl::InvalidArgumentError(
+        "There is neither actual data nor effective noise in the request.");
   }
 
   CompleteExecutionPhaseThreeAtAggregatorResponse response;
@@ -950,8 +950,7 @@ CompleteExecutionPhaseThreeAtAggregator(
       *response.mutable_frequency_distribution();
   for (int i = 0; i < maximum_frequency; ++i) {
     if (histogram[i] != 0) {
-      distribution[i + 1] =
-          static_cast<double>(histogram[i]) / valid_tuple_count;
+      distribution[i + 1] = static_cast<double>(histogram[i]) / actual_total;
     }
   }
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
