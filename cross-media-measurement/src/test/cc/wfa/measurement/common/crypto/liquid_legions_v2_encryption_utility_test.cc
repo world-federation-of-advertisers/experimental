@@ -90,13 +90,11 @@ Sketch CreateEmptyLiquidLegionsSketch() {
   return plain_sketch;
 }
 
-DistributedGeometricDistributionParams DistributedGeoParams(int64_t num,
-                                                            double p,
-                                                            int64_t offset) {
-  DistributedGeometricDistributionParams params;
-  params.set_num(num);
-  params.set_p(p);
-  params.set_shift_offset(offset);
+DifferentialPrivacyParams NewDifferentialPrivacyParams(double epsilon,
+                                                       double delta) {
+  DifferentialPrivacyParams params;
+  params.set_epsilon(epsilon);
+  params.set_delta(delta);
   return params;
 }
 
@@ -479,10 +477,12 @@ class TestData {
         ->set_size(kLiquidLegionsSize);
     if (reach_noise_parameters != nullptr) {
       complete_execution_phase_two_at_aggregator_request
-          .set_global_reach_dp_noise_baseline(
-              reach_noise_parameters->global_reach_dp_noise_parameters()
-                  .shift_offset() *
-              3);
+          .mutable_noise_baseline()
+          ->set_contributors_count(3);
+      *complete_execution_phase_two_at_aggregator_request
+           .mutable_noise_baseline()
+           ->mutable_global_reach_dp_noise() =
+          reach_noise_parameters->dp_params().global_reach_dp_noise();
     }
     complete_execution_phase_two_at_aggregator_request.set_flag_count_tuples(
         complete_execution_phase_two_response_2.flag_count_tuples());
@@ -532,11 +532,12 @@ class TestData {
             complete_execution_phase_three_response_2
                 .same_key_aggregator_matrix());
     if (frequency_noise_paraters != nullptr) {
-      DistributedGeometricDistributionParams non_destroyed =
-          frequency_noise_paraters->non_destroyed_noise_parameters();
+      *complete_execution_phase_three_at_aggregator_request
+           .mutable_global_frequency_dp_noise_per_bucket()
+           ->mutable_dp_params() = frequency_noise_paraters->dp_params();
       complete_execution_phase_three_at_aggregator_request
-          .set_global_frequency_dp_noise_baseline_per_bucket(
-              non_destroyed.shift_offset() * non_destroyed.num());
+          .mutable_global_frequency_dp_noise_per_bucket()
+          ->set_contributors_count(3);
     }
 
     ASSIGN_OR_RETURN(CompleteExecutionPhaseThreeAtAggregatorResponse
@@ -565,42 +566,51 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int64_t num = 3;
-  // Set p to ~0, such that the shifted truncated diff would be equal to the
-  // shift_offset in the test.
-  double p = 0.000001;
-  int64_t blinded_histogram_noise_offset = 5;
-  int64_t publisher_noise_offset = 6;
-  int64_t reach_dp_noise_offset = 7;
-  int64_t total_sketch_count = 5;
-  int64_t total_register_count = 200;
+  int publisher_count = 3;
+  int num = 3;
+  // resulted p ~= 0 , offset = 7
+  auto blind_histogram_noise_param =
+      NewDifferentialPrivacyParams(40, std::exp(-80));
+  // resulted p ~= 0 , offset = 4
+  auto noise_for_publisher_noise_param =
+      NewDifferentialPrivacyParams(40, std::exp(-40));
+  // resulted p ~= 0 , offset = 3
+  auto reach_dp_noise_param = NewDifferentialPrivacyParams(40, std::exp(-80));
+
+  int64_t computed_blinded_histogram_noise_offset = 7;
+  int64_t computed_publisher_noise_offset = 4;
+  int64_t computed_reach_dp_noise_offset = 3;
+  int64_t expected_total_register_count =
+      computed_publisher_noise_offset * 2 + computed_reach_dp_noise_offset * 2 +
+      computed_blinded_histogram_noise_offset * publisher_count *
+          (publisher_count + 1);
 
   CompleteSetupPhaseRequest request;
   auto noise_parameters = request.mutable_noise_parameters();
   noise_parameters->set_curve_id(kTestCurveId);
-  noise_parameters->set_total_sketches_count(total_sketch_count);
-  noise_parameters->set_total_noise_registers_count(total_register_count);
-  *noise_parameters->mutable_blind_histogram_noise_parameters() =
-      DistributedGeoParams(num, p, blinded_histogram_noise_offset);
-  *noise_parameters->mutable_publisher_noise_parameters() =
-      DistributedGeoParams(num, p, publisher_noise_offset);
-  *noise_parameters->mutable_global_reach_dp_noise_parameters() =
-      DistributedGeoParams(num, p, reach_dp_noise_offset);
+  noise_parameters->set_total_sketches_count(publisher_count);
+  noise_parameters->set_contributors_count(num);
   *noise_parameters->mutable_composite_el_gamal_public_key() = public_key;
+  *noise_parameters->mutable_dp_params()->mutable_blind_histogram() =
+      blind_histogram_noise_param;
+  *noise_parameters->mutable_dp_params()->mutable_noise_for_publisher_noise() =
+      noise_for_publisher_noise_param;
+  *noise_parameters->mutable_dp_params()->mutable_global_reach_dp_noise() =
+      reach_dp_noise_param;
 
   ASSERT_OK_AND_ASSIGN(auto response, CompleteSetupPhase(request));
   // There was no data in the request, so all registers in the response are
   // noise.
   std::string noises = response.combined_register_vector();
-  ASSERT_THAT(noises,
-              SizeIs(total_register_count * kBytesPerEncryptedRegister));
+  ASSERT_THAT(noises, SizeIs(expected_total_register_count *
+                             kBytesPerEncryptedRegister));
 
   int64_t blinded_histogram_noise_count = 0;
   int64_t publisher_noise_count = 0;
   int64_t reach_dp_noise_count = 0;
   int64_t padding_noise_count = 0;
 
-  for (int i = 0; i < total_register_count; ++i) {
+  for (int i = 0; i < expected_total_register_count; ++i) {
     ASSERT_OK_AND_ASSIGN(
         bool is_blinded_histogram_noise,
         IsBlindedHistogramNoise(*el_gamal_cipher, ec_group,
@@ -631,14 +641,14 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
               1);
   }
 
-  EXPECT_EQ(publisher_noise_count, publisher_noise_offset);
-  EXPECT_EQ(blinded_histogram_noise_count, blinded_histogram_noise_offset *
-                                               total_sketch_count *
-                                               (total_sketch_count + 1) / 2);
-  EXPECT_EQ(reach_dp_noise_count, reach_dp_noise_offset);
-  EXPECT_EQ(padding_noise_count, total_register_count - publisher_noise_count -
-                                     blinded_histogram_noise_count -
-                                     reach_dp_noise_count);
+  EXPECT_EQ(publisher_noise_count, computed_publisher_noise_offset);
+  EXPECT_EQ(blinded_histogram_noise_count,
+            computed_blinded_histogram_noise_offset * publisher_count *
+                (publisher_count + 1) / 2);
+  EXPECT_EQ(reach_dp_noise_count, computed_reach_dp_noise_offset);
+  EXPECT_EQ(padding_noise_count,
+            expected_total_register_count - publisher_noise_count -
+                blinded_histogram_noise_count - reach_dp_noise_count);
 }
 
 TEST(CompleteSetupPhase, WrongInputSketchSizeShouldThrow) {
@@ -714,9 +724,9 @@ TEST(CompleteExecutionPhaseThreeAtAggregator, WrongInputSketchSizeShouldThrow) {
 TEST(EndToEnd, SumOfCountsShouldBeCorrect) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 1);
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 3);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/1);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/3);
 
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
@@ -733,9 +743,9 @@ TEST(EndToEnd, SumOfCountsShouldBeCorrect) {
 TEST(EndToEnd, LocallyDistroyedRegisterShouldBeIgnored) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ -1,
-              /* count = */ 2);  // locally destroyed.
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/-1,
+              /*count=*/2);  // locally destroyed.
 
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
@@ -752,9 +762,9 @@ TEST(EndToEnd, LocallyDistroyedRegisterShouldBeIgnored) {
 TEST(EndToEnd, CrossPublisherDistroyedRegistersShouldBeIgnored) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 201, /* count = */ 4);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 202, /* count = */ 1);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/201, /*count=*/4);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/202, /*count=*/1);
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
@@ -770,10 +780,9 @@ TEST(EndToEnd, CrossPublisherDistroyedRegistersShouldBeIgnored) {
 TEST(EndToEnd, SumOfCountsShouldBeCappedbyMaxFrequency) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 222, /* count = */ 5);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 222,
-              /* count = */ 7);  // 5+7>10
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/222, /*count=*/5);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/222, /*count=*/7);  // 5+7>10
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
@@ -799,19 +808,19 @@ TEST(EndToEnd, ComnbinedCases) {
   // register 7: locally destroyed (key=-1) + normal register, ignored
   //
   // final result should be { 3->1/4, 6->2/4, 11->1/4 }
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 6);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 222, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 3, /* key = */ 333, /* count = */ 1);
-  AddRegister(&plain_sketch, /* index = */ 3, /* key = */ 333, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 3, /* key = */ 333, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 4, /* key = */ 444, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 4, /* key = */ 444, /* count = */ 4);
-  AddRegister(&plain_sketch, /* index = */ 4, /* key = */ 444, /* count = */ 5);
-  AddRegister(&plain_sketch, /* index = */ 5, /* key = */ -1, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 6, /* key = */ 601, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 6, /* key = */ 602, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 7, /* key = */ -1, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 7, /* key = */ 777, /* count = */ 2);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/6);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/222, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/3, /*key=*/333, /*count=*/1);
+  AddRegister(&plain_sketch, /*index=*/3, /*key=*/333, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/3, /*key=*/333, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/4, /*key=*/444, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/4, /*key=*/444, /*count=*/4);
+  AddRegister(&plain_sketch, /*index=*/4, /*key=*/444, /*count=*/5);
+  AddRegister(&plain_sketch, /*index=*/5, /*key=*/-1, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/6, /*key=*/601, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/6, /*key=*/602, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/7, /*key=*/-1, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/7, /*key=*/777, /*count=*/2);
 
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
@@ -839,28 +848,28 @@ TEST(ReachEstimation, NonDpNoiseShouldNotImpactTheResult) {
     AddRegister(&plain_sketch, /*index =*/i, /*key=*/i, /*count=*/1);
   }
 
-  int64_t num = 3;
-  // Set p to ~0, such that the number of reach DP noise is almost a constant,
-  // and thus the result is deterministic.
-  double reach_dp_noise_p = 0.000001;
-  // P for all other noises.
-  double other_p = 0.6;
-  int64_t blinded_histogram_noise_offset = 5;
-  int64_t publisher_noise_offset = 6;
-  int64_t reach_dp_noise_offset = 7;
-  int64_t total_sketch_count = 5;
-  int64_t total_register_count = 200;
+  int publisher_count = 3;
+  int num = 3;
+  // resulted p = 0.716531, offset = 15.
+  // Random blind histogram noise.
+  auto blind_histogram_noise_param = NewDifferentialPrivacyParams(1, 1);
+  // resulted p = 0.716531, offset = 10.
+  // Random noise for publisher noise.
+  auto noise_for_publisher_noise_param = NewDifferentialPrivacyParams(1, 1);
+  // resulted p ~= 0 , offset = 3.
+  // Deterministic reach dp noise.
+  auto reach_dp_noise_param = NewDifferentialPrivacyParams(40, std::exp(-80));
 
   RegisterNoiseGenerationParameters reach_noise_parameters;
   reach_noise_parameters.set_curve_id(kTestCurveId);
-  reach_noise_parameters.set_total_sketches_count(total_sketch_count);
-  reach_noise_parameters.set_total_noise_registers_count(total_register_count);
-  *reach_noise_parameters.mutable_blind_histogram_noise_parameters() =
-      DistributedGeoParams(num, other_p, blinded_histogram_noise_offset);
-  *reach_noise_parameters.mutable_publisher_noise_parameters() =
-      DistributedGeoParams(num, other_p, publisher_noise_offset);
-  *reach_noise_parameters.mutable_global_reach_dp_noise_parameters() =
-      DistributedGeoParams(num, reach_dp_noise_p, reach_dp_noise_offset);
+  reach_noise_parameters.set_total_sketches_count(publisher_count);
+  reach_noise_parameters.set_contributors_count(num);
+  *reach_noise_parameters.mutable_dp_params()->mutable_blind_histogram() =
+      blind_histogram_noise_param;
+  *reach_noise_parameters.mutable_dp_params()
+       ->mutable_noise_for_publisher_noise() = noise_for_publisher_noise_param;
+  *reach_noise_parameters.mutable_dp_params()->mutable_global_reach_dp_noise() =
+      reach_dp_noise_param;
   *reach_noise_parameters.mutable_composite_el_gamal_public_key() =
       test_data.client_el_gamal_public_key_;
 
@@ -889,19 +898,18 @@ TEST(FrequencyNoise, TotalNoiseBytesShouldBeCorrect) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int64_t num = 3;
-  double p = 0.6;
-  int64_t non_destroyed_noise_offset = 4;
-  int64_t destroyed_noise_offset = 4;
-  int64_t total_noise_tuple_count = 100;  // should be > 10*4*2+4*2
+  int num = 3;
+  // resulted p = 0.606531, offset = 4
+  auto noise_dp_param = NewDifferentialPrivacyParams(1, 50);
+  int computed_offset = 4;
+
+  int64_t expected_total_noise_tuple_count =
+      (kMaxFrequency + 1) * computed_offset * 2;
 
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_total_noise_tuples_count(total_noise_tuple_count);
-  *frequency_noise_params.mutable_non_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, non_destroyed_noise_offset);
-  *frequency_noise_params.mutable_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, destroyed_noise_offset);
+  frequency_noise_params.set_contributors_count(num);
+  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
 
   CompleteExecutionPhaseTwoRequest request;
   request.set_curve_id(kTestCurveId);
@@ -914,14 +922,15 @@ TEST(FrequencyNoise, TotalNoiseBytesShouldBeCorrect) {
 
   ASSERT_OK_AND_ASSIGN(CompleteExecutionPhaseTwoResponse Response,
                        CompleteExecutionPhaseTwo(request));
-  ASSERT_THAT(Response.flag_count_tuples(),
-              SizeIs(total_noise_tuple_count * kBytesPerFlagsCountTuple));
+  ASSERT_THAT(
+      Response.flag_count_tuples(),
+      SizeIs(expected_total_noise_tuple_count * kBytesPerFlagsCountTuple));
 
   int frequency_dp_noise_tuples_count = 0;
   int idestroyed_frequency_noise_tuples_count = 0;
   int padding_frequency_noise_tuples_count = 0;
 
-  for (int i = 0; i < total_noise_tuple_count; ++i) {
+  for (int i = 0; i < expected_total_noise_tuple_count; ++i) {
     ASSERT_OK_AND_ASSIGN(
         bool is_frequency_dp_noise_tuples,
         IsFrequencyDpNoiseTuples(
@@ -951,7 +960,7 @@ TEST(FrequencyNoise, TotalNoiseBytesShouldBeCorrect) {
                   is_padding_frequency_noise_tuples,
               1);
   }
-  EXPECT_EQ(total_noise_tuple_count,
+  EXPECT_EQ(expected_total_noise_tuple_count,
             frequency_dp_noise_tuples_count +
                 idestroyed_frequency_noise_tuples_count +
                 padding_frequency_noise_tuples_count);
@@ -970,19 +979,18 @@ TEST(FrequencyNoise, AllFrequencyBucketsShouldHaveNoise) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int64_t num = 3;
-  double p = 0.7;
-  int64_t non_destroyed_noise_offset = 10;
-  int64_t destroyed_noise_offset = 5;
-  int64_t total_noise_tuple_count = 220;  // should be > 10*10*2+5*2
+  int num = 3;
+  // resulted p = 0.606531, offset = 12
+  auto noise_dp_param = NewDifferentialPrivacyParams(1, 1);
+  int computed_offset = 12;
+
+  int64_t expected_total_noise_tuple_count =
+      (kMaxFrequency + 1) * computed_offset * 2;
 
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_total_noise_tuples_count(total_noise_tuple_count);
-  *frequency_noise_params.mutable_non_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, non_destroyed_noise_offset);
-  *frequency_noise_params.mutable_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, destroyed_noise_offset);
+  frequency_noise_params.set_contributors_count(num);
+  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
 
   CompleteExecutionPhaseTwoRequest request;
   request.set_curve_id(kTestCurveId);
@@ -995,14 +1003,15 @@ TEST(FrequencyNoise, AllFrequencyBucketsShouldHaveNoise) {
 
   ASSERT_OK_AND_ASSIGN(CompleteExecutionPhaseTwoResponse Response,
                        CompleteExecutionPhaseTwo(request));
-  ASSERT_THAT(Response.flag_count_tuples(),
-              SizeIs(total_noise_tuple_count * kBytesPerFlagsCountTuple));
+  ASSERT_THAT(
+      Response.flag_count_tuples(),
+      SizeIs(expected_total_noise_tuple_count * kBytesPerFlagsCountTuple));
 
   ASSERT_OK_AND_ASSIGN(std::vector<std::string> count_values_plaintext,
                        GetCountValuesPlaintext(kMaxFrequency, kTestCurveId));
 
   std::array<int, kMaxFrequency> noise_count_per_bucket = {};
-  for (int i = 0; i < total_noise_tuple_count; ++i) {
+  for (int i = 0; i < expected_total_noise_tuple_count; ++i) {
     absl::string_view current_tuples =
         absl::string_view(Response.flag_count_tuples())
             .substr(i * kBytesPerFlagsCountTuple, kBytesPerFlagsCountTuple);
@@ -1035,31 +1044,22 @@ TEST(FrequencyNoise, AllFrequencyBucketsShouldHaveNoise) {
 TEST(FrequencyNoise, DeterministicNoiseShouldHaveNoImpact) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 222, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 3, /* key = */ 333, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 4, /* key = */ 444, /* count = */ 3);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/222, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/3, /*key=*/333, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/4, /*key=*/444, /*count=*/3);
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
-  int64_t num = 3;
-  // Set p to ~0, such that the number of frequency DP noise is almost a
-  // constant, and thus the result is deterministic.
-  double frequency_dp_noise_p = 0.000001;
-  // P for all other noises.
-  double other_p = 0.6;
-  int64_t non_destroyed_noise_offset = 5;
-  int64_t destroyed_noise_offset = 6;
-  int64_t total_noise_tuple_count = 200;  // should be > 10*5*2+6*2*2
+  int num = 3;
+  // resulted p ~= 0, offset = 5, such that the number of frequency DP noise is
+  // almost a constant, and thus the result is deterministic.
+  auto noise_dp_param = NewDifferentialPrivacyParams(40, std::exp(-80));
 
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_total_noise_tuples_count(total_noise_tuple_count);
-  *frequency_noise_params.mutable_non_destroyed_noise_parameters() =
-      DistributedGeoParams(num, frequency_dp_noise_p,
-                           non_destroyed_noise_offset);
-  *frequency_noise_params.mutable_destroyed_noise_parameters() =
-      DistributedGeoParams(num, other_p, destroyed_noise_offset);
+  frequency_noise_params.set_contributors_count(num);
+  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
@@ -1075,26 +1075,21 @@ TEST(FrequencyNoise, DeterministicNoiseShouldHaveNoImpact) {
 TEST(FrequencyNoise, NonDeterministicNoiseShouldRandomizeTheResult) {
   TestData test_data;
   Sketch plain_sketch = CreateEmptyLiquidLegionsSketch();
-  AddRegister(&plain_sketch, /* index = */ 1, /* key = */ 111, /* count = */ 2);
-  AddRegister(&plain_sketch, /* index = */ 2, /* key = */ 222, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 3, /* key = */ 333, /* count = */ 3);
-  AddRegister(&plain_sketch, /* index = */ 4, /* key = */ 444, /* count = */ 3);
+  AddRegister(&plain_sketch, /*index=*/1, /*key=*/111, /*count=*/2);
+  AddRegister(&plain_sketch, /*index=*/2, /*key=*/222, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/3, /*key=*/333, /*count=*/3);
+  AddRegister(&plain_sketch, /*index=*/4, /*key=*/444, /*count=*/3);
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
-  int64_t num = 3;
-  double p = 0.6;
-  int64_t non_destroyed_noise_offset = 5;
-  int64_t destroyed_noise_offset = 6;
-  int64_t total_noise_tuple_count = 200;  // should be > 10*5*2+6*2*2
+  int num = 3;
+  // resulted p = 0.606531, offset = 12
+  auto noise_dp_param = NewDifferentialPrivacyParams(1, 1);
 
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_total_noise_tuples_count(total_noise_tuple_count);
-  *frequency_noise_params.mutable_non_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, non_destroyed_noise_offset);
-  *frequency_noise_params.mutable_destroyed_noise_parameters() =
-      DistributedGeoParams(num, p, destroyed_noise_offset);
+  frequency_noise_params.set_contributors_count(num);
+  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
