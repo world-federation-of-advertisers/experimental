@@ -42,7 +42,7 @@ private const val PRIMARY_WORKER = "PRIMARY_WORKER"
 /**
  * In-memory [ComputationsDatabase]
  */
-class FakeComputationsDatabaeTransactor private constructor(
+class FakeComputationsDatabase private constructor(
   /** Map of local computation ID to [ComputationToken]. */
   private val tokens: MutableMap<Long, ComputationToken>
 ) : Map<Long, ComputationToken> by tokens,
