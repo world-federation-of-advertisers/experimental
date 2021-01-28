@@ -46,6 +46,7 @@ using ::testing::SizeIs;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 
+constexpr int kNumOfWorkers = 3;
 constexpr int kMaxFrequency = 10;
 constexpr int kTestCurveId = NID_X9_62_prime256v1;
 constexpr int kBytesPerEcPoint = 33;
@@ -567,15 +568,6 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
   public_key.set_element(public_key_pair.second);
 
   int publisher_count = 3;
-  int num = 3;
-  // resulted p ~= 0 , offset = 7
-  auto blind_histogram_noise_param =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
-  // resulted p ~= 0 , offset = 4
-  auto noise_for_publisher_noise_param =
-      NewDifferentialPrivacyParams(40, std::exp(-40));
-  // resulted p ~= 0 , offset = 3
-  auto reach_dp_noise_param = NewDifferentialPrivacyParams(40, std::exp(-80));
 
   int64_t computed_blinded_histogram_noise_offset = 7;
   int64_t computed_publisher_noise_offset = 4;
@@ -586,19 +578,24 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
           (publisher_count + 1);
 
   CompleteSetupPhaseRequest request;
-  auto noise_parameters = request.mutable_noise_parameters();
+  RegisterNoiseGenerationParameters* noise_parameters =
+      request.mutable_noise_parameters();
   noise_parameters->set_curve_id(kTestCurveId);
   noise_parameters->set_total_sketches_count(publisher_count);
-  noise_parameters->set_contributors_count(num);
+  noise_parameters->set_contributors_count(kNumOfWorkers);
   *noise_parameters->mutable_composite_el_gamal_public_key() = public_key;
+  // resulted p ~= 0 , offset = 7
   *noise_parameters->mutable_dp_params()->mutable_blind_histogram() =
-      blind_histogram_noise_param;
+      NewDifferentialPrivacyParams(40, std::exp(-80));
+  // resulted p ~= 0 , offset = 4
   *noise_parameters->mutable_dp_params()->mutable_noise_for_publisher_noise() =
-      noise_for_publisher_noise_param;
+      NewDifferentialPrivacyParams(40, std::exp(-40));
+  // resulted p ~= 0 , offset = 3
   *noise_parameters->mutable_dp_params()->mutable_global_reach_dp_noise() =
-      reach_dp_noise_param;
+      NewDifferentialPrivacyParams(40, std::exp(-80));
 
-  ASSERT_OK_AND_ASSIGN(auto response, CompleteSetupPhase(request));
+  ASSERT_OK_AND_ASSIGN(CompleteSetupPhaseResponse response,
+                       CompleteSetupPhase(request));
   // There was no data in the request, so all registers in the response are
   // noise.
   std::string noises = response.combined_register_vector();
@@ -849,27 +846,24 @@ TEST(ReachEstimation, NonDpNoiseShouldNotImpactTheResult) {
   }
 
   int publisher_count = 3;
-  int num = 3;
-  // resulted p = 0.716531, offset = 15.
-  // Random blind histogram noise.
-  auto blind_histogram_noise_param = NewDifferentialPrivacyParams(1, 1);
-  // resulted p = 0.716531, offset = 10.
-  // Random noise for publisher noise.
-  auto noise_for_publisher_noise_param = NewDifferentialPrivacyParams(1, 1);
-  // resulted p ~= 0 , offset = 3.
-  // Deterministic reach dp noise.
-  auto reach_dp_noise_param = NewDifferentialPrivacyParams(40, std::exp(-80));
 
   RegisterNoiseGenerationParameters reach_noise_parameters;
   reach_noise_parameters.set_curve_id(kTestCurveId);
   reach_noise_parameters.set_total_sketches_count(publisher_count);
-  reach_noise_parameters.set_contributors_count(num);
+  reach_noise_parameters.set_contributors_count(kNumOfWorkers);
+  // resulted p = 0.716531, offset = 15.
+  // Random blind histogram noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_blind_histogram() =
-      blind_histogram_noise_param;
+      NewDifferentialPrivacyParams(1, 1);
+  // resulted p = 0.716531, offset = 10.
+  // Random noise for publisher noise.
   *reach_noise_parameters.mutable_dp_params()
-       ->mutable_noise_for_publisher_noise() = noise_for_publisher_noise_param;
+       ->mutable_noise_for_publisher_noise() =
+      NewDifferentialPrivacyParams(1, 1);
+  // resulted p ~= 0 , offset = 3.
+  // Deterministic reach dp noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_global_reach_dp_noise() =
-      reach_dp_noise_param;
+      NewDifferentialPrivacyParams(40, std::exp(-80));
   *reach_noise_parameters.mutable_composite_el_gamal_public_key() =
       test_data.client_el_gamal_public_key_;
 
@@ -898,18 +892,16 @@ TEST(FrequencyNoise, TotalNoiseBytesShouldBeCorrect) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int num = 3;
-  // resulted p = 0.606531, offset = 4
-  auto noise_dp_param = NewDifferentialPrivacyParams(1, 50);
-  int computed_offset = 4;
-
-  int64_t expected_total_noise_tuple_count =
-      (kMaxFrequency + 1) * computed_offset * 2;
-
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_contributors_count(num);
-  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
+  frequency_noise_params.set_contributors_count(kNumOfWorkers);
+  // resulted p = 0.606531, offset = 4
+  *frequency_noise_params.mutable_dp_params() =
+      NewDifferentialPrivacyParams(1, 50);
+
+  int computed_offset = 4;
+  int64_t expected_total_noise_tuple_count =
+      (kMaxFrequency + 1) * computed_offset * 2;
 
   CompleteExecutionPhaseTwoRequest request;
   request.set_curve_id(kTestCurveId);
@@ -979,18 +971,16 @@ TEST(FrequencyNoise, AllFrequencyBucketsShouldHaveNoise) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int num = 3;
-  // resulted p = 0.606531, offset = 12
-  auto noise_dp_param = NewDifferentialPrivacyParams(1, 1);
-  int computed_offset = 12;
-
-  int64_t expected_total_noise_tuple_count =
-      (kMaxFrequency + 1) * computed_offset * 2;
-
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_contributors_count(num);
-  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
+  frequency_noise_params.set_contributors_count(kNumOfWorkers);
+  // resulted p = 0.606531, offset = 12
+  *frequency_noise_params.mutable_dp_params() =
+      NewDifferentialPrivacyParams(1, 1);
+
+  int computed_offset = 12;
+  int64_t expected_total_noise_tuple_count =
+      (kMaxFrequency + 1) * computed_offset * 2;
 
   CompleteExecutionPhaseTwoRequest request;
   request.set_curve_id(kTestCurveId);
@@ -1051,15 +1041,13 @@ TEST(FrequencyNoise, DeterministicNoiseShouldHaveNoImpact) {
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
-  int num = 3;
-  // resulted p ~= 0, offset = 5, such that the number of frequency DP noise is
-  // almost a constant, and thus the result is deterministic.
-  auto noise_dp_param = NewDifferentialPrivacyParams(40, std::exp(-80));
-
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_contributors_count(num);
-  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
+  frequency_noise_params.set_contributors_count(kNumOfWorkers);
+  // resulted p ~= 0, offset = 5, such that the number of frequency DP noise is
+  // almost a constant, and thus the result is deterministic.
+  *frequency_noise_params.mutable_dp_params() =
+      NewDifferentialPrivacyParams(40, std::exp(-80));
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
@@ -1082,14 +1070,12 @@ TEST(FrequencyNoise, NonDeterministicNoiseShouldRandomizeTheResult) {
   std::string encrypted_sketch =
       test_data.EncryptWithFlaggedKey(plain_sketch).value();
 
-  int num = 3;
-  // resulted p = 0.606531, offset = 12
-  auto noise_dp_param = NewDifferentialPrivacyParams(1, 1);
-
   FlagCountTupleNoiseGenerationParameters frequency_noise_params;
   frequency_noise_params.set_maximum_frequency(kMaxFrequency);
-  frequency_noise_params.set_contributors_count(num);
-  *frequency_noise_params.mutable_dp_params() = noise_dp_param;
+  frequency_noise_params.set_contributors_count(kNumOfWorkers);
+  // resulted p = 0.606531, offset = 12
+  *frequency_noise_params.mutable_dp_params() =
+      NewDifferentialPrivacyParams(1, 1);
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
