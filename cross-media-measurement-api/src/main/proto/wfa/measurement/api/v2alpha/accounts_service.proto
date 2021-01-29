@@ -29,6 +29,13 @@ service Accounts {
 
   // Updates an existing `Account`.
   rpc UpdateAccount(UpdateAccountRequest) returns (Account) {}
+
+  // Logs the user in.
+  rpc LogIn(LogInRequest) returns (LogInResponse) {}
+
+  // Exchanges a login token for a bearer token.
+  rpc ExchangeLoginToken(ExchangeLoginTokenRequest)
+      returns (ExchangeLoginTokenResponse) {}
 }
 
 // Request message for `CreateAccount` method.
@@ -45,4 +52,25 @@ message UpdateAccountRequest {
 
   // Encoded JSON Web Token (JWT) matching the updated identity. Required.
   string identity_bearer_token = 2;
+}
+
+message LogInRequest {}
+
+message LogInResponse {
+  // Single-use token that can be exchanged for a bearer JWT.
+  string login_token = 1;
+
+  // URI to navigate to in user agent for completing login process.
+  string authorization_uri = 2;
+}
+
+message ExchangeLoginTokenRequest {
+  // Single-use token that can be exchanged for a bearer JWT.
+  bytes login_token = 1;
+}
+
+message ExchangeLoginTokenResponse {
+  // Encoded JSON Web Token that can be used as a bearer token for call
+  // authentication.
+  string bearer_token = 1;
 }
