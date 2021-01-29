@@ -42,9 +42,9 @@ message MetricRequisition {
   // `measurement`. Required. Immutable.
   MeasurementConsumerCertificate measurement_consumer_certificate = 3;
 
-  // Denormalized `metric_definition` field from `measurement`. Required.
+  // Denormalized `measurement_spec` field from `measurement`. Required.
   // Immutable.
-  SignedData metric_definition = 4;
+  SignedData measurement_spec = 4;
 
   // Denormalized `data_provider_public_key` field from the corresponding
   // `DataProviderEntry` in `measurement`.  Required. Immutable.
@@ -78,15 +78,16 @@ message MetricRequisition {
       // previously existed but has been deleted.
       UNKNOWN_EVENT_GROUP = 1;
 
-      // The `MetricDefinition` specifies a configuration that the
+      // The `MeasurementSpec` specifies a configuration that the
       // `DataProvider` does not and will never support for this `EventGroup`.
-      METRIC_DEFINITION_UNSUPPORTED = 2;
+      MEASUREMENT_SPEC_UNSUPPORTED = 2;
 
       // The collection interval covers a range that is sufficiently long ago
       // that the DataProvider no longer retains the underlying data.
       COLLECTION_INTERVAL_TOO_DISTANT = 3;
 
-      // Validation of the `MetricRequisition.Spec` signature failed.
+      // Validation of the `measurement_spec` or `encrypted_requisition_spec`
+      // signature failed.
       SIGNATURE_INVALID = 4;
 
       // There is insufficient remaining privacy budget to fulfill this
@@ -97,9 +98,9 @@ message MetricRequisition {
       // The data required to fulfill this request may or may not be available.
       DECLINED = 6;
 
-      // The data required to fulfill this MetricRequisition is inaccessible or
-      // lost. This should only be used when there is no other Justification
-      // that is more specific.
+      // The data required to fulfill this `MetricRequisition` is inaccessible
+      // or lost. This should only be used when there is no other
+      // `Justification` that is more specific.
       DATA_UNAVAILABLE = 7;
     }
     Justification justification = 1;

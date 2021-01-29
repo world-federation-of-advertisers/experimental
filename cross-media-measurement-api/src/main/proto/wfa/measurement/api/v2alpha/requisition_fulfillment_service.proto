@@ -43,7 +43,7 @@ message FulfillMetricRequisitionRequest {
     // 1. The SHA256 hash of `encrypted_requisition_spec` from the
     //    `MetricRequisition`.
     // 2. `data_provider_list_hash` from the `MetricRequisition`.
-    // 3. The `data` in `metric_definition` from the `MetricRequisition`.
+    // 3. The `data` in `measurement_spec` from the `MetricRequisition`.
     bytes data_provider_participation_signature = 2;
   }
 
@@ -52,7 +52,7 @@ message FulfillMetricRequisitionRequest {
     // The portion of the data for this `BodyChunk`, encrypted using the
     // `CombinedPublicKey` specified in the `MetricRequisition`. Required.
     //
-    // If the corresponding `MetricDefinition` is a sketch, this is the register
+    // If the corresponding `MeasurementSpec` is a sketch, this is the register
     // data as documented in the `Sketch` message (sketch.proto). The only
     // alignment requirement is by bytes: a chunk might begin or end in the
     // middle of a single register.
