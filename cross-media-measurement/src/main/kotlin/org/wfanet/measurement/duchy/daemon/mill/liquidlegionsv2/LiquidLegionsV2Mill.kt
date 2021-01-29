@@ -145,6 +145,9 @@ class LiquidLegionsV2Mill(
       to ::completeExecutionPhaseThreeAtNonAggregator
   )
 
+  // The key is the concatenation of the sorted duchy ids.
+  private var partiallyCombinedPublicKeyMap = HashMap<String, ElGamalPublicKey>()
+
   override suspend fun processComputationImpl(token: ComputationToken) {
     require(token.computationDetails.hasLiquidLegionsV2()) {
       "Only Liquid Legions V2 computation is supported in this mill."
@@ -529,35 +532,40 @@ class LiquidLegionsV2Mill(
   fun getPartiallyCombinedPublicKey(globalId: String, nextDuchy: String): ElGamalPublicKey {
     val order = duchyOrder.computationOrder(globalId)
     require(order.contains(nextDuchy)) { "$nextDuchy doesn't exist in the duchy ring." }
-    if (nextDuchy == order[0]) {
+    val aggregatorId = order[0]
+    if (nextDuchy == aggregatorId) {
       // Return the aggregator's key if next duchy is the aggregator.
       return cryptoKeySet.otherDuchyPublicKeys[nextDuchy] ?: error(
         "$nextDuchy is not in the key set."
       )
     }
 
-    val partialList = order.subList(order.indexOf(nextDuchy), order.size) + order[0]
-    val request = CombineElGamalPublicKeysRequest.newBuilder().apply {
-      curveId = cryptoKeySet.curveId.toLong()
-      addAllElGamalKeys(
-        partialList.map {
-          val key = cryptoKeySet.otherDuchyPublicKeys[it] ?: error(
-            "$it is not in the key set."
-          )
-          ElGamalPublicKeys.newBuilder().apply {
-            elGamalG = key.generator
-            elGamalY = key.element
-          }.build()
-        }
+    val partialList = order.subList(order.indexOf(nextDuchy), order.size) + aggregatorId
+    val lookupKey = partialList.sorted().joinToString()
+
+    return partiallyCombinedPublicKeyMap.computeIfAbsent(lookupKey) {
+      val request = CombineElGamalPublicKeysRequest.newBuilder().apply {
+        curveId = cryptoKeySet.curveId.toLong()
+        addAllElGamalKeys(
+          partialList.map {
+            val key = cryptoKeySet.otherDuchyPublicKeys[it] ?: error(
+              "$it is not in the key set."
+            )
+            ElGamalPublicKeys.newBuilder().apply {
+              elGamalG = key.generator
+              elGamalY = key.element
+            }.build()
+          }
+        )
+      }.build()
+      val response = CombineElGamalPublicKeysResponse.parseFrom(
+        SketchEncrypterAdapter.CombineElGamalPublicKeys(request.toByteArray())
       )
-    }.build()
-    val response = CombineElGamalPublicKeysResponse.parseFrom(
-      SketchEncrypterAdapter.CombineElGamalPublicKeys(request.toByteArray())
-    )
-    return ElGamalPublicKey.newBuilder().apply {
-      generator = response.elGamalKeys.elGamalG
-      element = response.elGamalKeys.elGamalY
-    }.build()
+      ElGamalPublicKey.newBuilder().apply {
+        generator = response.elGamalKeys.elGamalG
+        element = response.elGamalKeys.elGamalY
+      }.build()
+    }
   }
 
   companion object {
