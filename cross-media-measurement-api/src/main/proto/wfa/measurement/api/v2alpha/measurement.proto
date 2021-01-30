@@ -85,7 +85,7 @@ message Measurement {
 
     // Cryptographic digital signature of the "requisition fingerprint" which
     // can be verified using the `DataProvider`'s certificate. Output-only. Only
-    // set if the corresponding `MetricRequisition` has been fulfilled.
+    // set if the corresponding `Requisition` has been fulfilled.
     //
     // The requisition fingerprint is defined as the concatenation of:
     // 1. The SHA256 hash of `encrypted_requisition_spec`.

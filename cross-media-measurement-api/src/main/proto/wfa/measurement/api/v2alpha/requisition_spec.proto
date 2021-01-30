@@ -23,8 +23,7 @@ option java_package = "org.wfanet.measurement.api.v2alpha";
 option java_multiple_files = true;
 option java_outer_classname = "RequisitionSpecProto";
 
-// Specification for a `MetricRequisition` which can be cryptographically
-// signed.
+// Specification for a `Requisition` which can be cryptographically signed.
 message RequisitionSpec {
   // Filter to apply to metric events.
   message EventFilter {
@@ -72,7 +71,7 @@ message RequisitionSpec {
   // Immutable.
   //
   // All of the `EventGroup`s must belong to the same parent `DataProvider`
-  // as this `MetricRequisition`.
+  // as this `Requisition`.
   repeated EventGroupEntry event_group_entries = 1;
 
   // Encryption public key for the `Measurement` that this `RequisitionSpec` is
