@@ -101,7 +101,7 @@ message Measurement {
 
   enum State {
     STATE_UNSPECIFIED = 0;
-    // Waiting for all linked metric requisitions to be fulfilled.
+    // Waiting for all linked `Requisition`s to be fulfilled.
     AWAITING_REQUISITION_FULFILLMENT = 1;
     // Computation is running.
     COMPUTING = 2;
@@ -159,8 +159,8 @@ message MeasurementSpec {
     // Resource key of the sketch configuration. Required.
     SketchConfig.Key sketch_config = 1;
 
-    // The resource key of the CombinedPublicKey that is used to encrypt the
-    // metric value. Required.
+    // The resource key of the `CombinedPublicKey` that is used to encrypt the
+    // sketch. Required.
     CombinedPublicKey.Key combined_public_key = 2;
   }
 

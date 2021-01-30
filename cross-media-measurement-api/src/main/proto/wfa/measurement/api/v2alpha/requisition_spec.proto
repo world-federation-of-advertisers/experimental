@@ -25,7 +25,7 @@ option java_outer_classname = "RequisitionSpecProto";
 
 // Specification for a `Requisition` which can be cryptographically signed.
 message RequisitionSpec {
-  // Filter to apply to metric events.
+  // Filter to apply to events.
   message EventFilter {
     // Age, gender identity, viewable duration, etc.
     // TODO: Design and add filter predicates.
@@ -60,10 +60,10 @@ message RequisitionSpec {
     // Resource key of the `EventGroup` that this entry is for. Required.
     EventGroup.Key event_group = 1;
 
-    // Time interval over which the metric should be collected. Required.
+    // Time interval over which the event data should be collected. Required.
     TimeInterval collection_interval = 2;
 
-    // Optional filter to apply to metric events.
+    // Optional filter to apply to events.
     EventFilter filter = 3;
   }
   // The requisition entry for each `EventGroup`. This can be logically
