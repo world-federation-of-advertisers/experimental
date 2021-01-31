@@ -342,7 +342,7 @@ absl::StatusOr<int64_t> AddFrequencyDpNoise(
       RETURN_IF_ERROR(AppendEcPointPairToString(zero, data));
       // Adds flag_2 and flag_3, which are random numbers encrypted by the
       // partial_protocol_cryptor.
-      for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 2; ++j) {
         ASSIGN_OR_RETURN(std::string random_values,
                          partial_protocol_cryptor.MapToCurve(
                              partial_protocol_cryptor.NextRandomBigNum()));
@@ -802,10 +802,10 @@ CompleteExecutionPhaseTwoAtAggregator(
 
   // Estimates reach.
   int64_t active_register_count = tuple_counts - blinded_histogram_noise_count;
-  if (request.has_noise_baseline()) {
+  if (request.has_reach_dp_noise_baseline()) {
     auto options = GetGlobalReachDpNoiseOptions(
-        request.noise_baseline().global_reach_dp_noise(),
-        request.noise_baseline().contributors_count());
+        request.reach_dp_noise_baseline().global_reach_dp_noise(),
+        request.reach_dp_noise_baseline().contributors_count());
     int global_reach_dp_noise_baseline = options.shift_offset * options.num;
     active_register_count -= global_reach_dp_noise_baseline;
     // Publisher noise and padding noise each contribute 1 additional destroyed
@@ -813,6 +813,18 @@ CompleteExecutionPhaseTwoAtAggregator(
     // Subtracts 2 from the active_register_count if noises exist.
     active_register_count -= 2;
   }
+  if (request.has_frequency_noise_parameters()) {
+    FlagCountTupleNoiseGenerationParameters noise_parameters =
+        request.frequency_noise_parameters();
+    auto options = GetFrequencyNoiseOptions(
+        noise_parameters.dp_params(), noise_parameters.maximum_frequency(),
+        noise_parameters.contributors_count());
+    int total_noise_tuples_count = options.num * options.shift_offset * 2 *
+                                   (noise_parameters.maximum_frequency() + 1);
+    // Subtract all frequency noises before estimating reach.
+    active_register_count -= total_noise_tuples_count;
+  }
+
   // Ensures that active_register_count is at least 0.
   // active_register_count could be negative if there is too few registers in
   // the sketch and the number of noise registers is smaller than the baseline.
