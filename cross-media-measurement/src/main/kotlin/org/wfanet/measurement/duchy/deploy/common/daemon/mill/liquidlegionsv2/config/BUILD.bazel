@@ -1,0 +1,9 @@
+filegroup(
+    name = "config",
+    srcs = [
+        "liquid_legions_v2_noise_config.textproto",
+    ],
+    visibility = [
+        "//src/main/kotlin/org/wfanet/measurement/duchy/deploy/common/daemon/mill/liquidlegionsv2:__subpackages__",
+    ],
+)

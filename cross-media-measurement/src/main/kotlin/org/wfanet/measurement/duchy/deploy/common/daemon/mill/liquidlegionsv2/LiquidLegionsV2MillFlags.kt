@@ -14,6 +14,7 @@
 
 package org.wfanet.measurement.duchy.deploy.common.daemon.mill.liquidlegionsv2
 
+import java.io.File
 import java.time.Duration
 import kotlin.properties.Delegates
 import org.wfanet.measurement.duchy.DuchyPublicKeys
@@ -129,4 +130,13 @@ class LiquidLegionsV2MillFlags {
   )
   var sketchMaxFrequency by Delegates.notNull<Int>()
     private set
+
+  @CommandLine.Option(
+    names = ["--noise-config-file"],
+    description = ["File path for LiquidLegionsV2NoiseConfig proto message in text format."],
+    defaultValue = "config/liquid_legions_v2_noise_config.textproto"
+  )
+  lateinit var noiseConfigFile: File
+    private set
+
 }
