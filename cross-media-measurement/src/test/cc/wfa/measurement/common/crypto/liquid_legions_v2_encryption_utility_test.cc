@@ -43,6 +43,9 @@ using ::private_join_and_compute::ECCommutativeCipher;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::testing::SizeIs;
+using ::testing::UnorderedElementsAre;
+using ::testing::Pair;
+using ::testing::DoubleNear;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 
@@ -91,7 +94,7 @@ Sketch CreateEmptyLiquidLegionsSketch() {
   return plain_sketch;
 }
 
-DifferentialPrivacyParams NewDifferentialPrivacyParams(double epsilon,
+DifferentialPrivacyParams MakeDifferentialPrivacyParams(double epsilon,
                                                        double delta) {
   DifferentialPrivacyParams params;
   params.set_epsilon(epsilon);
@@ -590,13 +593,13 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
   *noise_parameters->mutable_composite_el_gamal_public_key() = public_key;
   // resulted p ~= 0 , offset = 7
   *noise_parameters->mutable_dp_params()->mutable_blind_histogram() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
   // resulted p ~= 0 , offset = 4
   *noise_parameters->mutable_dp_params()->mutable_noise_for_publisher_noise() =
-      NewDifferentialPrivacyParams(40, std::exp(-40));
+      MakeDifferentialPrivacyParams(40, std::exp(-40));
   // resulted p ~= 0 , offset = 3
   *noise_parameters->mutable_dp_params()->mutable_global_reach_dp_noise() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
 
   ASSERT_OK_AND_ASSIGN(CompleteSetupPhaseResponse response,
                        CompleteSetupPhase(request));
@@ -814,16 +817,16 @@ TEST(ReachEstimation, NonDpNoiseShouldNotImpactTheResult) {
   // resulted p = 0.716531, offset = 15.
   // Random blind histogram noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_blind_histogram() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
   // resulted p = 0.716531, offset = 10.
   // Random noise for publisher noise.
   *reach_noise_parameters.mutable_dp_params()
        ->mutable_noise_for_publisher_noise() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
   // resulted p ~= 0 , offset = 3.
   // Deterministic reach dp noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_global_reach_dp_noise() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
   *reach_noise_parameters.mutable_composite_el_gamal_public_key() =
       test_data.client_el_gamal_public_key_;
 
@@ -857,7 +860,7 @@ TEST(FrequencyNoise, TotalNoiseBytesShouldBeCorrect) {
   frequency_noise_params.set_contributors_count(kNumOfWorkers);
   // resulted p = 0.606531, offset = 4
   *frequency_noise_params.mutable_dp_params() =
-      NewDifferentialPrivacyParams(1, 50);
+      MakeDifferentialPrivacyParams(1, 50);
 
   int computed_offset = 4;
   int64_t expected_total_noise_tuple_count =
@@ -936,7 +939,7 @@ TEST(FrequencyNoise, AllFrequencyBucketsShouldHaveNoise) {
   frequency_noise_params.set_contributors_count(kNumOfWorkers);
   // resulted p = 0.606531, offset = 12
   *frequency_noise_params.mutable_dp_params() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
 
   int computed_offset = 12;
   int64_t expected_total_noise_tuple_count =
@@ -1007,7 +1010,7 @@ TEST(FrequencyNoise, DeterministicNoiseShouldHaveNoImpact) {
   // resulted p ~= 0, offset = 5, such that the number of frequency DP noise is
   // almost a constant, and thus the result is deterministic.
   *frequency_noise_params.mutable_dp_params() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
@@ -1035,7 +1038,7 @@ TEST(FrequencyNoise, NonDeterministicNoiseShouldRandomizeTheResult) {
   frequency_noise_params.set_contributors_count(kNumOfWorkers);
   // resulted p = 0.606531, offset = 12
   *frequency_noise_params.mutable_dp_params() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
@@ -1090,16 +1093,16 @@ TEST(EndToEnd, CombinedCasesWithDeterministicReachAndFrequencyDpNoises) {
   // resulted p = 0.716531, offset = 15.
   // Random blind histogram noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_blind_histogram() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
   // resulted p = 0.716531, offset = 10.
   // Random noise for publisher noise.
   *reach_noise_parameters.mutable_dp_params()
        ->mutable_noise_for_publisher_noise() =
-      NewDifferentialPrivacyParams(1, 1);
+      MakeDifferentialPrivacyParams(1, 1);
   // resulted p ~= 0 , offset = 3.
   // Deterministic reach dp noise.
   *reach_noise_parameters.mutable_dp_params()->mutable_global_reach_dp_noise() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
   *reach_noise_parameters.mutable_composite_el_gamal_public_key() =
       test_data.client_el_gamal_public_key_;
 
@@ -1109,7 +1112,7 @@ TEST(EndToEnd, CombinedCasesWithDeterministicReachAndFrequencyDpNoises) {
   // resulted p ~= 0, offset = 5, such that the number of frequency DP noise is
   // almost a constant, and thus the result is deterministic.
   *frequency_noise_params.mutable_dp_params() =
-      NewDifferentialPrivacyParams(40, std::exp(-80));
+      MakeDifferentialPrivacyParams(40, std::exp(-80));
 
   ASSERT_OK_AND_ASSIGN(
       MpcResult result,
@@ -1120,6 +1123,13 @@ TEST(EndToEnd, CombinedCasesWithDeterministicReachAndFrequencyDpNoises) {
       kDecayRate, kLiquidLegionsSize, 7);
 
   EXPECT_EQ(result.reach, expected_reach);
+
+EXPECT_THAT(
+  result.frequency_distribution,
+  UnorderedElementsAre(
+    Pair(3, DoubleNear(0.25, 0.001)),
+    Pair(6, DoubleNear(0.5, 0.001)),
+    Pair(kMaxFrequency,DoubleNear(0.25, 0.001))));
 
   ASSERT_THAT(result.frequency_distribution, SizeIs(3));
   EXPECT_NEAR(result.frequency_distribution[3], 0.25, 0.001);
