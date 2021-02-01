@@ -42,10 +42,10 @@ using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECCommutativeCipher;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
+using ::testing::DoubleNear;
+using ::testing::Pair;
 using ::testing::SizeIs;
 using ::testing::UnorderedElementsAre;
-using ::testing::Pair;
-using ::testing::DoubleNear;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 
@@ -95,7 +95,7 @@ Sketch CreateEmptyLiquidLegionsSketch() {
 }
 
 DifferentialPrivacyParams MakeDifferentialPrivacyParams(double epsilon,
-                                                       double delta) {
+                                                        double delta) {
   DifferentialPrivacyParams params;
   params.set_epsilon(epsilon);
   params.set_delta(delta);
@@ -1124,17 +1124,11 @@ TEST(EndToEnd, CombinedCasesWithDeterministicReachAndFrequencyDpNoises) {
 
   EXPECT_EQ(result.reach, expected_reach);
 
-EXPECT_THAT(
-  result.frequency_distribution,
-  UnorderedElementsAre(
-    Pair(3, DoubleNear(0.25, 0.001)),
-    Pair(6, DoubleNear(0.5, 0.001)),
-    Pair(kMaxFrequency,DoubleNear(0.25, 0.001))));
-
-  ASSERT_THAT(result.frequency_distribution, SizeIs(3));
-  EXPECT_NEAR(result.frequency_distribution[3], 0.25, 0.001);
-  EXPECT_NEAR(result.frequency_distribution[6], 0.5, 0.001);
-  EXPECT_NEAR(result.frequency_distribution[kMaxFrequency], 0.25, 0.001);
+  EXPECT_THAT(
+      result.frequency_distribution,
+      UnorderedElementsAre(Pair(3, DoubleNear(0.25, 0.001)),
+                           Pair(6, DoubleNear(0.5, 0.001)),
+                           Pair(kMaxFrequency, DoubleNear(0.25, 0.001))));
 }
 
 }  // namespace
