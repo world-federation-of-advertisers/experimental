@@ -32,7 +32,7 @@ service Measurements {
   rpc CreateMeasurement(CreateMeasurementRequest)
       returns (Measurement) {}
 
-  // Lists `Measurement`s fiting provided filters.
+  // Lists `Measurement`s fiting provided tags.
   rpc ListMeasurements(ListMeasurementsRequest)
       returns (ListMeasurementsResponse) {}
 }
@@ -52,11 +52,19 @@ message CreateMeasurementRequest {
 
 // Request message for `ListMeasurements` method.
 message ListMeasurementsRequest {
-    //TODO(uakyol): fill this proto
+  // ID of the parent `MeasurementConsumer`.
+  string measurement_consumer_id = 1;
+  // List of key value pair tags to retrieve `Measurement`s by.
+  // `Measurement`s with tags that have all of the tags specified here
+  // are retrieved.
+  // TODO(uakyol): extend this to cover all predicate logic.
+  map<string, string> tags = 2;
 }
 
 message ListMeasurementsResponse {
-  //TODO(uakyol): fill this proto
+  // List of `Measurement`s that has all of the tags in the
+  // ListMeasurementsRequest
+  repeated Measurement measurement = 1;
 }
 
 

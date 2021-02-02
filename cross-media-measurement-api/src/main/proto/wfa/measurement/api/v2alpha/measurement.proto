@@ -147,6 +147,9 @@ message Measurement {
   // between `measurement_public_key` in `measurement_spec` and
   // `result_public_key`.
   bytes encrypted_result = 11;
+
+  // List of key value pair tags for this `Measurement`.
+  map<string, string> tags = 12;
 }
 
 // Specification for a `Measurement`. Immutable.
