@@ -1,0 +1,39 @@
+# This workflow will build a Bazel project using Bazelisk.
+
+name: Run cross-media-measurement tests with Bazel
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: cross-media-measurement
+
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Set up build cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/bazel
+        key: bazel
+
+    - name: bazel test
+      run: bazelisk test --keep_going //...
+
+    - name: Copy test logs
+      run: cp -Lr "$(bazelisk info bazel-testlogs)" "$HOME/bazel-testlogs"
+
+    - name: Upload test logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: bazel-testlogs
+        path: ~/bazel-testlogs/
