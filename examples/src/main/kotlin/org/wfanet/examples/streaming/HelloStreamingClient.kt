@@ -21,7 +21,6 @@ import io.grpc.ManagedChannelBuilder
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
 import org.wfanet.examples.streaming.HelloStreamingServiceGrpcKt.HelloStreamingServiceCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
@@ -33,10 +32,10 @@ class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
       println("Sending: ${request.name}")
       request
     }.asFlow()
-    stub.helloStreaming(requests).collect { response ->
-      println("Received: ${response.message}")
+    val response = stub.helloStreaming(requests)
+    response.messageList.forEach { message ->
+      println("Received: $message")
     }
-    println("Done")
   }
 
   override fun close() {
@@ -48,10 +47,9 @@ class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
  * Greet each argument.
  */
 suspend fun main(args: Array<String>) {
-  require(!args.isEmpty()) { "Requires at least one argument." }
   val port = 50051
   val channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build()
   HelloStreamingClient(channel).use { client ->
-    client.helloStreaming(args)
+    client.helloStreaming(arrayOf("Alice", "Bob", "Carol"))
   }
 }

@@ -20,7 +20,6 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import org.wfanet.examples.streaming.HelloStreamingServiceGrpcKt.HelloStreamingServiceCoroutineImplBase
 
 class HelloStreamingServer(private val port: Int) {
@@ -51,17 +50,20 @@ class HelloStreamingServer(private val port: Int) {
 
   private class HelloStreamingService :
     HelloStreamingServiceCoroutineImplBase() {
-    override fun helloStreaming(requests: Flow<HelloStreamingRequest>):
-      Flow<HelloStreamingResponse> = flow {
+    override suspend fun helloStreaming(requests: Flow<HelloStreamingRequest>):
+      HelloStreamingResponse {
+        val responseBuilder = HelloStreamingResponse
+          .newBuilder()
         requests.collect { request ->
           println("Received: ${request.name}")
-          val response = HelloStreamingResponse
-            .newBuilder()
-            .setMessage("Hello ${request.name}")
-            .build()
-          println("Sending: ${response.message}")
-          emit(response)
+          responseBuilder
+            .addMessage("Hello ${request.name}")
         }
+        val response = responseBuilder.build()
+        response.messageList.forEach { message ->
+          println("Sending: $message")
+        }
+        return response
       }
   }
 }

@@ -20,7 +20,7 @@ option java_package = "org.wfanet.examples.streaming";
 option java_multiple_files = true;
 
 service HelloStreamingService {
-  rpc HelloStreaming(stream HelloStreamingRequest) returns (stream HelloStreamingResponse) {}
+  rpc HelloStreaming(stream HelloStreamingRequest) returns (HelloStreamingResponse) {}
 }
 
 message HelloStreamingRequest {
@@ -28,5 +28,5 @@ message HelloStreamingRequest {
 }
 
 message HelloStreamingResponse {
-  string message = 1;
+  repeated string message = 1;
 }
