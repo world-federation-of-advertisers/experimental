@@ -145,19 +145,19 @@ absl::Status JoinRegistersByIndexAndMergeCounts(
 
 absl::StatusOr<int64_t> EstimateReach(double liquid_legions_decay_rate,
                                       int64_t liquid_legions_size,
-                                      size_t active_register_count) {
+                                      size_t non_empty_register_count) {
   if (liquid_legions_decay_rate <= 1.0) {
     return absl::InvalidArgumentError(absl::StrCat(
         "The decay rate should be > 1, but is ", liquid_legions_decay_rate));
   }
-  if (liquid_legions_size <= active_register_count) {
+  if (liquid_legions_size <= non_empty_register_count) {
     return absl::InvalidArgumentError(absl::StrCat(
         "liquid legions size (", liquid_legions_size,
-        ") should be greater then the number of active registers (",
-        active_register_count, ")."));
+        ") should be greater then the number of non empty registers (",
+        non_empty_register_count, ")."));
   }
   return wfa::estimation::EstimateCardinalityLiquidLegions(
-      liquid_legions_decay_rate, liquid_legions_size, active_register_count);
+      liquid_legions_decay_rate, liquid_legions_size, non_empty_register_count);
 }
 
 absl::StatusOr<std::vector<ElGamalEcPointPair>> GetSameKeyAggregatorMatrixBase(
@@ -797,17 +797,18 @@ CompleteExecutionPhaseTwoAtAggregator(
   }
 
   // Estimates reach.
-  int64_t active_register_count = tuple_counts - blinded_histogram_noise_count;
+  int64_t non_empty_register_count =
+      tuple_counts - blinded_histogram_noise_count;
   if (request.has_reach_dp_noise_baseline()) {
     auto options = GetGlobalReachDpNoiseOptions(
         request.reach_dp_noise_baseline().global_reach_dp_noise(),
         request.reach_dp_noise_baseline().contributors_count());
     int64_t global_reach_dp_noise_baseline = options.shift_offset * options.num;
-    active_register_count -= global_reach_dp_noise_baseline;
+    non_empty_register_count -= global_reach_dp_noise_baseline;
     // Publisher noise and padding noise each contribute 1 additional destroyed
     // register, which shouldn't be included when estimating reach.
-    // Subtracts 2 from the active_register_count if noises exist.
-    active_register_count -= 2;
+    // Subtracts 2 from the non_empty_register_count if noises exist.
+    non_empty_register_count -= 2;
   }
   if (request.has_frequency_noise_parameters()) {
     const FlagCountTupleNoiseGenerationParameters& noise_parameters =
@@ -819,18 +820,18 @@ CompleteExecutionPhaseTwoAtAggregator(
         options.num * options.shift_offset * 2 *
         (noise_parameters.maximum_frequency() + 1);
     // Subtract all frequency noises before estimating reach.
-    active_register_count -= total_noise_tuples_count;
+    non_empty_register_count -= total_noise_tuples_count;
   }
 
-  // Ensures that active_register_count is at least 0.
-  // active_register_count could be negative if there is too few registers in
+  // Ensures that non_empty_register_count is at least 0.
+  // non_empty_register_count could be negative if there is too few registers in
   // the sketch and the number of noise registers is smaller than the baseline.
-  active_register_count = std::max(active_register_count, 0L);
+  non_empty_register_count = std::max(non_empty_register_count, 0L);
   ASSIGN_OR_RETURN(
       int64_t reach,
       EstimateReach(request.liquid_legions_parameters().decay_rate(),
                     request.liquid_legions_parameters().size(),
-                    active_register_count));
+                    non_empty_register_count));
   response.set_reach(reach);
 
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
