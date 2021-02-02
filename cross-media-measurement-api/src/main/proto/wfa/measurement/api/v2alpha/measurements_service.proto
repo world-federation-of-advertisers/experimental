@@ -31,6 +31,10 @@ service Measurements {
   // Creates (registers) a `Measurement`.
   rpc CreateMeasurement(CreateMeasurementRequest)
       returns (Measurement) {}
+
+  // Lists `Measurement`s fiting provided filters.
+  rpc ListMeasurements(ListMeasurementsRequest)
+      returns (ListMeasurementsResponse) {}
 }
 
 // Request message for `GetMeasurement` method.
@@ -45,4 +49,14 @@ message CreateMeasurementRequest {
   // ignored, and the system will assign an ID.
   Measurement measurement = 1;
 }
+
+// Request message for `ListMeasurements` method.
+message ListMeasurementsRequest {
+    //TODO(uakyol): fill this proto
+}
+
+message ListMeasurementsResponse {
+  //TODO(uakyol): fill this proto
+}
+
 
