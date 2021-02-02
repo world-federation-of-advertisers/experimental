@@ -1,0 +1,22 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_grpc_grpc_java//:java_grpc_library.bzl", "java_grpc_library")
+load("@com_github_grpc_grpc_kotlin//:kt_jvm_grpc.bzl", "kt_jvm_grpc_library")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+proto_library(
+    name = "hello_streaming_service_proto",
+    srcs = ["hello_streaming_service.proto"],
+    strip_import_prefix = "/src/main/proto",
+)
+
+java_proto_library(
+    name = "hello_streaming_service_java_proto",
+    deps = [":hello_streaming_service_proto"],
+)
+
+kt_jvm_grpc_library(
+    name = "hello_streaming_service_kt_jvm_grpc",
+    srcs = [":hello_streaming_service_proto"],
+    deps = [":hello_streaming_service_java_proto"],
+)
