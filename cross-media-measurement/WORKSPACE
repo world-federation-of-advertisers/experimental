@@ -190,7 +190,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
 # docker.io/debian:bullseye-slim
 container_pull(
     name = "debian_bullseye",
-    digest = "sha256:d92a89b71e6adc50535710f53c78bb5bc84f80549e48342856bb2cc6c87e4f2a",
+    digest = "sha256:8ab4e348f60ebd18b891593a531ded31cbbc3878f6e476116f3b49b15c199110",
     registry = "docker.io",
     repository = "debian",
 )
