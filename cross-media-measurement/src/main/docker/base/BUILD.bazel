@@ -56,7 +56,7 @@ container_push(
     name = "push_java_base",
     format = "Docker",
     image = ":java_base",
-    registry = "gcr.io",
-    repository = "ads-open-measurement/java-base",
+    registry = "docker.io",
+    repository = "wfameasurement/java-base",
     tags = ["manual"],
 )
