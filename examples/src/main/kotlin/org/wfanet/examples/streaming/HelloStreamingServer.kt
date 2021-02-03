@@ -50,21 +50,21 @@ class HelloStreamingServer(private val port: Int) {
 
   private class HelloStreamingService :
     HelloStreamingServiceCoroutineImplBase() {
-    override suspend fun helloStreaming(requests: Flow<HelloStreamingRequest>):
-      HelloStreamingResponse {
-        val responseBuilder = HelloStreamingResponse
-          .newBuilder()
-        requests.collect { request ->
-          println("Received: ${request.name}")
-          responseBuilder
-            .addMessage("Hello ${request.name}")
-        }
-        val response = responseBuilder.build()
-        response.messageList.forEach { message ->
-          println("Sending: $message")
-        }
-        return response
+    override suspend fun helloStreaming(
+      requests: Flow<HelloStreamingRequest>
+    ): HelloStreamingResponse {
+      val responseBuilder = HelloStreamingResponse.newBuilder()
+      requests.collect { request ->
+        println("Received: ${request.name}")
+        responseBuilder
+          .addMessage("Hello ${request.name}")
       }
+      val response = responseBuilder.build()
+      response.messageList.forEach { message ->
+        println("Sending: $message")
+      }
+      return response
+    }
   }
 }
 

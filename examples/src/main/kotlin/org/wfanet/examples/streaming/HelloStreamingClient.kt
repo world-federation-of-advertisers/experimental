@@ -21,17 +21,16 @@ import io.grpc.ManagedChannelBuilder
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.onEach
 import org.wfanet.examples.streaming.HelloStreamingServiceGrpcKt.HelloStreamingServiceCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   private val stub = HelloStreamingServiceCoroutineStub(channel)
 
   suspend fun helloStreaming(names: Array<String>) {
-    val requests = names.map { name ->
-      val request = HelloStreamingRequest.newBuilder().setName(name).build()
-      println("Sending: ${request.name}")
-      request
-    }.asFlow()
+    val requests = names.map { name -> HelloStreamingRequest.newBuilder().setName(name).build() }
+      .asFlow()
+      .onEach { request -> println("Sending: ${request.name}") }
     val response = stub.helloStreaming(requests)
     response.messageList.forEach { message ->
       println("Received: $message")
