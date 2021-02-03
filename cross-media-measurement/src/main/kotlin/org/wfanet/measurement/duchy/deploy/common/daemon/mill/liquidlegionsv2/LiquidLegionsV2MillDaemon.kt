@@ -98,7 +98,7 @@ abstract class LiquidLegionsV2MillDaemon : Runnable {
         flags.liquidLegionsDecayRate,
         flags.liquidLegionsSize
       ),
-      noiseConfig = flags.noiseConfigFile.reader().use {
+      noiseConfig = flags.noiseConfig.reader().use {
         parseTextProto(it, LiquidLegionsV2NoiseConfig.getDefaultInstance())
       }
     )
