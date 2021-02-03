@@ -62,8 +62,8 @@ absl::StatusOr<int64_t> GetTruncatedPolyaRandomVariable(
 
 absl::StatusOr<int64_t> GetDistributedGeometricRandomComponent(
     DistributedGeometricRandomComponentOptions options) {
-  if (options.num <= 1) {
-    return absl::InvalidArgumentError("The num should be greater than 1.");
+  if (options.num < 1) {
+    return absl::InvalidArgumentError("The num should be positive.");
   }
 
   // TODO: switch to an OpenSSL-based random number generator
@@ -75,6 +75,15 @@ absl::StatusOr<int64_t> GetDistributedGeometricRandomComponent(
                                         options.truncate_threshold,
                                         1.0 / options.num, options.p, rnd));
   return options.shift_offset + polya_a - polya_b;
+}
+
+absl::StatusOr<int64_t> GetTruncatedDiscreteLaplaceDistributedRandomNumber(
+    TruncatedDiscreteLaplaceDistributedOptions options) {
+  return GetDistributedGeometricRandomComponent(
+      {.num = 1,
+       .p = std::exp(-options.s),
+       .truncate_threshold = options.mu,
+       .shift_offset = options.mu});
 }
 
 }  // namespace wfa::measurement::common::math
