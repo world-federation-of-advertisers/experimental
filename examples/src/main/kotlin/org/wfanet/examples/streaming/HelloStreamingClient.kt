@@ -22,14 +22,15 @@ import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   private val stub = HelloStreamingCoroutineStub(channel)
 
   suspend fun sayHelloStreaming(vararg names: String): List<String> {
-    val requests = names.map { name -> SayHelloStreamingRequest.newBuilder().setName(name).build() }
-      .asFlow()
+    val requests = names.asFlow()
+      .map { name -> SayHelloStreamingRequest.newBuilder().setName(name).build() }
       .onEach { request -> println("Sending: ${request.name}") }
     val response = stub.sayHelloStreaming(requests)
     return response.messageList
