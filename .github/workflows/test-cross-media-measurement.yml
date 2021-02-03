@@ -24,7 +24,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/bazel
-        key: bazel
+        key: bazel-xmms-${{ hashFiles('cross-media-measurement/WORKSPACE') }}
+        restore-keys: |
+          bazel-xmms-
+          bazel-
 
     - name: Build
       run: bazelisk build --keep_going //...
