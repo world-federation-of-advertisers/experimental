@@ -41,9 +41,6 @@ class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   }
 }
 
-/**
- * Greet each argument.
- */
 suspend fun main(args: Array<String>) {
   val port = 50051
   val channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build()
