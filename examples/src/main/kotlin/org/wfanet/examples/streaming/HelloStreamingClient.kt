@@ -21,8 +21,8 @@ import io.grpc.ManagedChannelBuilder
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
