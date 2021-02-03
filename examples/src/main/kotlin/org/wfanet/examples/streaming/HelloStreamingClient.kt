@@ -22,19 +22,18 @@ import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   private val stub = HelloStreamingCoroutineStub(channel)
 
-  suspend fun sayHelloStreaming(vararg names: String) {
-    val requests = names.map { name -> SayHelloStreamingRequest.newBuilder().setName(name).build() }
-      .asFlow()
+  suspend fun sayHelloStreaming(vararg names: String): List<String> {
+    val requests = names.asFlow()
+      .map { name -> SayHelloStreamingRequest.newBuilder().setName(name).build() }
       .onEach { request -> println("Sending: ${request.name}") }
     val response = stub.sayHelloStreaming(requests)
-    response.messageList.forEach { message ->
-      println("Received: $message")
-    }
+    return response.messageList
   }
 
   override fun close() {
@@ -42,13 +41,13 @@ class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   }
 }
 
-/**
- * Greet each argument.
- */
 suspend fun main(args: Array<String>) {
   val port = 50051
   val channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build()
   HelloStreamingClient(channel).use { client ->
-    client.sayHelloStreaming("Alice", "Bob", "Carol")
+    val messages = client.sayHelloStreaming("Alice", "Bob", "Carol")
+    messages.forEach { message ->
+      println("Received: $message")
+    }
   }
 }
