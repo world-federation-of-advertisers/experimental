@@ -48,7 +48,7 @@ class HelloStreamingServer(private val port: Int) {
     server.awaitTermination()
   }
 
-  private class HelloStreamingService : HelloStreamingCoroutineImplBase() {
+  class HelloStreamingService : HelloStreamingCoroutineImplBase() {
     override suspend fun sayHelloStreaming(
       requests: Flow<SayHelloStreamingRequest>
     ): SayHelloStreamingResponse {

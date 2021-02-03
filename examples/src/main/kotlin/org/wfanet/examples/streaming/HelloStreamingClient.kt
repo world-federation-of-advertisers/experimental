@@ -27,14 +27,12 @@ import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutin
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
   private val stub = HelloStreamingCoroutineStub(channel)
 
-  suspend fun sayHelloStreaming(vararg names: String) {
+  suspend fun sayHelloStreaming(vararg names: String): List<String> {
     val requests = names.map { name -> SayHelloStreamingRequest.newBuilder().setName(name).build() }
       .asFlow()
       .onEach { request -> println("Sending: ${request.name}") }
     val response = stub.sayHelloStreaming(requests)
-    response.messageList.forEach { message ->
-      println("Received: $message")
-    }
+    return response.messageList
   }
 
   override fun close() {
@@ -49,6 +47,9 @@ suspend fun main(args: Array<String>) {
   val port = 50051
   val channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build()
   HelloStreamingClient(channel).use { client ->
-    client.sayHelloStreaming("Alice", "Bob", "Carol")
+    val messages = client.sayHelloStreaming("Alice", "Bob", "Carol")
+    messages.forEach { message ->
+      println("Received: $message")
+    }
   }
 }
