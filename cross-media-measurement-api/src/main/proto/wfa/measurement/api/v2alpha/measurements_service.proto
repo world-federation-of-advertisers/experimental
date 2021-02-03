@@ -53,7 +53,7 @@ message CreateMeasurementRequest {
 
 // Request message for `ListMeasurements` method.
 message ListMeasurementsRequest {
-  // ID of the parent `MeasurementConsumer`.
+  // Resource key of the parent `MeasurementConsumer`.
   MeasurementConsumer.Key parent = 1;
 
   // The maximum number of `Measurement`s to return.
@@ -70,10 +70,9 @@ message ListMeasurementsRequest {
   string page_token = 3;
 
   message Filter {
-    // List of key value pair tags to retrieve `Measurement`s by.
+    // Map of key value pair tags to retrieve `Measurement`s by.
     // `Measurement`s with tags that have all of the tags specified here
     // are retrieved.
-    // TODO(uakyol): extend this to cover all predicate logic.
     map<string, string> tags = 1;
   }
 
