@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package wfa.examples.streaming;
+package wfa_examples.streaming;
 
 option java_package = "org.wfanet.examples.streaming";
 option java_multiple_files = true;
