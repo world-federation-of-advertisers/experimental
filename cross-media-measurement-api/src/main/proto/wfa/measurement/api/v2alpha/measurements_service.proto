@@ -68,11 +68,16 @@ message ListMeasurementsRequest {
   // When paginating, all other parameters provided to `ListMeasurementsRequest`
   // must match the call that provided the page token.
   string page_token = 3;
-  // List of key value pair tags to retrieve `Measurement`s by.
-  // `Measurement`s with tags that have all of the tags specified here
-  // are retrieved.
-  // TODO(uakyol): extend this to cover all predicate logic.
-  map<string, string> tags = 4;
+
+  message Filter {
+    // List of key value pair tags to retrieve `Measurement`s by.
+    // `Measurement`s with tags that have all of the tags specified here
+    // are retrieved.
+    // TODO(uakyol): extend this to cover all predicate logic.
+    map<string, string> tags = 1;
+  }
+  
+  Filter filter = 4;
 }
 
 message ListMeasurementsResponse {
