@@ -22,10 +22,10 @@ import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.onEach
-import org.wfanet.examples.streaming.HelloStreamingServiceGrpcKt.HelloStreamingServiceCoroutineStub
+import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutineStub
 
 class HelloStreamingClient(private val channel: ManagedChannel) : Closeable {
-  private val stub = HelloStreamingServiceCoroutineStub(channel)
+  private val stub = HelloStreamingCoroutineStub(channel)
 
   suspend fun helloStreaming(names: Array<String>) {
     val requests = names.map { name -> HelloStreamingRequest.newBuilder().setName(name).build() }

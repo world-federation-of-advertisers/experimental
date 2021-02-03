@@ -20,7 +20,7 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import org.wfanet.examples.streaming.HelloStreamingServiceGrpcKt.HelloStreamingServiceCoroutineImplBase
+import org.wfanet.examples.streaming.HelloStreamingGrpcKt.HelloStreamingCoroutineImplBase
 
 class HelloStreamingServer(private val port: Int) {
   val server: Server = ServerBuilder
@@ -48,8 +48,7 @@ class HelloStreamingServer(private val port: Int) {
     server.awaitTermination()
   }
 
-  private class HelloStreamingService :
-    HelloStreamingServiceCoroutineImplBase() {
+  private class HelloStreamingService : HelloStreamingCoroutineImplBase() {
     override suspend fun helloStreaming(
       requests: Flow<HelloStreamingRequest>
     ): HelloStreamingResponse {

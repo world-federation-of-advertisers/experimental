@@ -19,8 +19,9 @@ package wfa.examples.streaming;
 option java_package = "org.wfanet.examples.streaming";
 option java_multiple_files = true;
 
-service HelloStreamingService {
-  rpc HelloStreaming(stream HelloStreamingRequest) returns (HelloStreamingResponse) {}
+service HelloStreaming {
+  rpc HelloStreaming(stream HelloStreamingRequest)
+      returns (HelloStreamingResponse) {}
 }
 
 message HelloStreamingRequest {
