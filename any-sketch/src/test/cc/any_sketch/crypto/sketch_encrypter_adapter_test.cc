@@ -100,5 +100,40 @@ TEST(SketchEncrypterJavaAdapterTest, basicBehavior) {
               SizeIs(register_size * (index_cnt + unique_cnt + sum_cnt) * 66));
 }
 
+TEST(SketchEncrypterJavaAdapterTest, noiseShouldBeAddedIfNoiseParameterIsSet) {
+  // Generate a key for testing.
+  ASSERT_OK_AND_ASSIGN(auto commutativeElGamal,
+                       CommutativeElGamal::CreateWithNewKeyPair(kTestCurveId));
+  ASSERT_OK_AND_ASSIGN(auto public_key_pair,
+                       commutativeElGamal->GetPublicKeyBytes());
+
+  const int index_cnt = 1;
+  const int unique_cnt = 2;
+  const int sum_cnt = 3;
+  const int register_size = 1000;
+  const int bytes_per_register = (index_cnt + unique_cnt + sum_cnt) * 66;
+
+  // Build the request
+  wfa::any_sketch::crypto::EncryptSketchRequest request;
+  request.mutable_noise_parameter()->set_epsilon(1);
+  request.mutable_noise_parameter()->set_delta(0.01);
+  request.mutable_noise_parameter()->set_publisher_count(3);
+  request.mutable_el_gamal_keys()->set_el_gamal_g(public_key_pair.first);
+  request.mutable_el_gamal_keys()->set_el_gamal_y(public_key_pair.second);
+  request.set_curve_id(kTestCurveId);
+  request.set_maximum_value(kMaxCounterValue);
+  *request.mutable_sketch()->mutable_config() =
+      CreateSketchConfig(index_cnt, unique_cnt, sum_cnt);
+  AddRandomRegisters(register_size, *request.mutable_sketch());
+
+  ASSERT_OK_AND_ASSIGN(std::string encrypted_sketch,
+                       EncryptSketch(request.SerializeAsString()));
+  wfa::any_sketch::crypto::EncryptSketchResponse response;
+  response.ParseFromString(encrypted_sketch);
+
+  EXPECT_GT(response.encrypted_sketch().size() / bytes_per_register,
+            register_size);
+}
+
 }  // namespace
 }  // namespace wfa::any_sketch::crypto
