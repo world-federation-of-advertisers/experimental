@@ -30,9 +30,11 @@ jobs:
       run: bazelisk test --keep_going //...
 
     - name: Copy test logs
+      if: failure()
       run: cp -Lr "$(bazelisk info bazel-testlogs)" "$HOME/bazel-testlogs"
 
     - name: Upload test logs
+      if: failure()
       uses: actions/upload-artifact@v2
       with:
         name: bazel-testlogs
