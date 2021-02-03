@@ -49,10 +49,10 @@ class HelloStreamingServer(private val port: Int) {
   }
 
   private class HelloStreamingService : HelloStreamingCoroutineImplBase() {
-    override suspend fun helloStreaming(
-      requests: Flow<HelloStreamingRequest>
-    ): HelloStreamingResponse {
-      val responseBuilder = HelloStreamingResponse.newBuilder()
+    override suspend fun sayHelloStreaming(
+      requests: Flow<SayHelloStreamingRequest>
+    ): SayHelloStreamingResponse {
+      val responseBuilder = SayHelloStreamingResponse.newBuilder()
       requests.collect { request ->
         println("Received: ${request.name}")
         responseBuilder
