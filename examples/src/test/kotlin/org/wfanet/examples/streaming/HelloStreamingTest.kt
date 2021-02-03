@@ -20,7 +20,7 @@ class HelloStreamingTest {
   lateinit var client: HelloStreamingClient
 
   @Before
-  fun setup() {
+  fun initClient() {
     val serverName = InProcessServerBuilder.generateName()
     grpcCleanup.register(
       InProcessServerBuilder.forName(serverName)
@@ -29,14 +29,12 @@ class HelloStreamingTest {
         .build()
         .start()
     )
-    val channel = InProcessChannelBuilder.forName(
-      serverName
-    ).directExecutor().build()
+    val channel = InProcessChannelBuilder.forName(serverName).directExecutor().build()
     client = HelloStreamingClient(grpcCleanup.register(channel))
   }
 
   @Test
-  fun testStuff() = runBlocking {
+  fun `helloStreaming receives list of greetings from server`() = runBlocking {
     val response = client.sayHelloStreaming("Alice", "Bob", "Carol")
     assertThat(response)
       .containsExactlyElementsIn(listOf("Hello Alice", "Hello Bob", "Hello Carol"))
