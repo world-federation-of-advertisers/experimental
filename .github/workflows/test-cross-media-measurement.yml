@@ -1,6 +1,6 @@
 # This workflow will build a Bazel project using Bazelisk.
 
-name: Run cross-media-measurement tests with Bazel
+name: Build and run all targets in cross-media-measurement
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,7 +26,10 @@ jobs:
         path: ~/.cache/bazel
         key: bazel
 
-    - name: bazel test
+    - name: Build
+      run: bazelisk build --keep_going //...
+
+    - name: Test
       run: bazelisk test --keep_going //...
 
     - name: Copy test logs
