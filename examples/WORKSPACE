@@ -3,6 +3,23 @@ workspace(name = "wfa_examples")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
+# gRPC C++
+
+http_archive(
+    name = "com_github_grpc_grpc",
+    sha256 = "27dd2fc5c9809ddcde8eb6fa1fa278a3486566dfc28335fca13eb8df8bd3b958",
+    strip_prefix = "grpc-1.35.0",
+    urls = ["https://github.com/grpc/grpc/archive/v1.35.0.tar.gz"],
+)
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
+grpc_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+
+grpc_extra_deps()
+
 # Support Maven sources
 
 http_archive(
@@ -67,10 +84,6 @@ compat_repositories()
 # Run grpc_java_repositories after compat_repositories to ensure the
 # maven_install-selected dependencies are used.
 grpc_java_repositories()
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
 
 # gRPC Kotlin
 
