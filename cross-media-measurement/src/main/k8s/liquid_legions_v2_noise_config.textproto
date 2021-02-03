@@ -10,11 +10,11 @@ reach_noise_config {
     delta: 1.0
   }
   global_reach_dp_noise {
-    epsilon: 1.0
+    epsilon: 40.0
     delta: 1.0
   }
 }
 frequency_noise_config {
-  epsilon: 1.0
+  epsilon: 40.0
   delta: 1.0
 }

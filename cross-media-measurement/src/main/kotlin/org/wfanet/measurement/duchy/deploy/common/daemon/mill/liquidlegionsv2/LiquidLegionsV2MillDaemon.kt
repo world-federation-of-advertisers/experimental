@@ -17,7 +17,6 @@ package org.wfanet.measurement.duchy.deploy.common.daemon.mill.liquidlegionsv2
 import io.grpc.ManagedChannel
 import java.time.Clock
 import kotlinx.coroutines.runBlocking
-import org.wfanet.measurement.api.v1alpha.SketchConfig
 import org.wfanet.measurement.common.crypto.ElGamalKeyPair
 import org.wfanet.measurement.common.crypto.LiquidLegionsV2NoiseConfig
 import org.wfanet.measurement.common.crypto.liquidlegionsv2.JniLiquidLegionsV2Encryption
@@ -99,7 +98,9 @@ abstract class LiquidLegionsV2MillDaemon : Runnable {
         flags.liquidLegionsDecayRate,
         flags.liquidLegionsSize
       ),
-      noiseConfig = parseTextProto(flags.noiseConfigFile, LiquidLegionsV2NoiseConfig.getDefaultInstance())
+      noiseConfig = flags.noiseConfigFile.reader().use {
+        parseTextProto(it, LiquidLegionsV2NoiseConfig.getDefaultInstance())
+      }
     )
 
     runBlocking { mill.continuallyProcessComputationQueue() }
