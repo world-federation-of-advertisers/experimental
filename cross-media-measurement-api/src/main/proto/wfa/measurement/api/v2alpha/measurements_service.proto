@@ -33,7 +33,7 @@ service Measurements {
   rpc CreateMeasurement(CreateMeasurementRequest)
       returns (Measurement) {}
 
-  // Lists `Measurement`s fiting provided tags.
+  // Lists `Measurement`s for the parent `MeasurementConsumer`.
   rpc ListMeasurements(ListMeasurementsRequest)
       returns (ListMeasurementsResponse) {}
 }
@@ -76,7 +76,7 @@ message ListMeasurementsRequest {
     // TODO(uakyol): extend this to cover all predicate logic.
     map<string, string> tags = 1;
   }
-  
+
   Filter filter = 4;
 }
 
