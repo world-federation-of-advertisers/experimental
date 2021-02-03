@@ -1,0 +1,14 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "hello_streaming_service",
+    srcs = ["hello_streaming_service.cc"],
+    hdrs = ["hello_streaming_service.h"],
+    strip_include_prefix = "/src/main/cc",
+    deps = [
+        "//src/main/proto/wfa/examples/streaming:hello_streaming_service_cc_grpc",
+        "//src/main/proto/wfa/examples/streaming:hello_streaming_service_cc_proto",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/strings",
+    ],
+)
