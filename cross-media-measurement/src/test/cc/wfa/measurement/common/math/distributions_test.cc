@@ -99,8 +99,8 @@ TEST(GlobalSummation, ProbabilityMassFunctionShouldBeCorrect) {
 
 TEST(GetTruncatedDiscreteLaplaceDistributedRandomNumber,
      ProbabilityMassFunctionShouldBeCorrect) {
-  int64_t mu = 10;
-  double s = 0.6;
+  const int64_t mu = 10;
+  const double s = 0.6;
 
   size_t num_trials = 1000000;
   std::unordered_map<int64_t, size_t> frequency_distribution;
@@ -115,11 +115,21 @@ TEST(GetTruncatedDiscreteLaplaceDistributedRandomNumber,
     ++frequency_distribution[temp];
   }
 
-  for (int64_t x = 0; x <= mu * 2; ++x) {
+  std::array<double, 2 * mu> expected_probabilities = {};
+  double total_p = 0;
+  for (int64_t i = 0; i <= mu * 2; ++i) {
+    expected_probabilities[i] = 1.0 / 2 * s * std::exp(-std::abs(i - mu) * s);
+    total_p += expected_probabilities[i];
+  }
+  // normalize the probabilities.
+  for (int64_t i = 0; i <= mu * 2; ++i) {
+    expected_probabilities[i] /= total_p;
+  }
+
+  for (int64_t i = 0; i <= mu * 2; ++i) {
     double probability =
-        static_cast<double>(frequency_distribution[x]) / num_trials;
-    double expected_probability = 1.0 / 2 * s * std::exp(-std::abs(x - mu) * s);
-    EXPECT_NEAR(probability, expected_probability, 0.01);
+        static_cast<double>(frequency_distribution[i]) / num_trials;
+    EXPECT_NEAR(probability, expected_probabilities[i], 0.001);
   }
 }
 
