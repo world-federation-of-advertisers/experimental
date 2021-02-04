@@ -14,6 +14,9 @@
 
 import com.google.protobuf.gradle.*
 
+val protocRuntime by configurations.creating
+val runtimeDir by extra("$buildDir/resources/protoc")
+
 group = "org.wfanet"
 version = "1.0-SNAPSHOT"
 
@@ -22,6 +25,15 @@ repositories {
   google()
   jcenter()
   mavenCentral()
+  ivy {
+    url = uri("https://packages.grpc.io/")
+    patternLayout {
+      artifact("/archive/2021/02/[organization]/[module]/grpc-protoc_linux_x64-[revision]-dev(.[ext])")
+    }
+    metadataSources {
+      artifact()
+    }
+  }
 }
 
 buildscript {
@@ -59,20 +71,26 @@ dependencies {
   testImplementation("junit:junit:4.13")
   testImplementation("com.google.truth:truth:1.1.2")
   testImplementation("io.grpc:grpc-testing:1.28.1")
+  protocRuntime("4dc84aea46396cde21d13813efcf8ca3b2fda692-0cfa9cb0-c8c8-45f0-b055-48770e1c386c:protoc:1.36.0@tar.gz")
 }
 
 protobuf {
   protoc { artifact = "com.google.protobuf:protoc:3.6.1" }
   plugins {
+    id("cpp")
+    id("grpc_cpp") { path = "$runtimeDir/grpc_cpp_plugin" }
     id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.15.1" }
     id("grpckt") { artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.1" }
   }
   generateProtoTasks {
     ofSourceSet("main").forEach {
       it.plugins {
+        id("cpp")
+        id("grpc_cpp")
         id("grpc")
         id("grpckt")
       }
+      it.dependsOn("unpackFiles")
     }
   }
 }
@@ -94,4 +112,11 @@ task("run-hello-streaming-server-kt", JavaExec::class) {
 task("run-hello-streaming-client-kt", JavaExec::class) {
   main = "org.wfanet.examples.streaming.HelloStreamingClientKt"
   classpath = sourceSets["main"].runtimeClasspath
+}
+
+tasks.register<Copy>("unpackFiles") {
+  protocRuntime.asFileTree.forEach {
+    from(tarTree(resources.gzip(it)))
+    into(runtimeDir)
+  }
 }
