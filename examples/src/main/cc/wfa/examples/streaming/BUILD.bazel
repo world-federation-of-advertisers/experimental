@@ -20,3 +20,21 @@ cc_binary(
         "@com_google_absl//absl/strings",
     ],
 )
+
+cc_library(
+    name = "hello_streaming_client_lib",
+    srcs = ["hello_streaming_client.cc"],
+    hdrs = [":hello_streaming_client.h"],
+    deps = [
+        "//src/main/proto/wfa/examples/streaming:hello_streaming_service_cc_grpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_binary(
+    name = "hello_streaming_client",
+    deps = [":hello_streaming_client_lib"],
+)
