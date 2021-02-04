@@ -230,6 +230,12 @@ absl::Status SketchEncrypterImpl::AppendNoiseRegisters(
     return absl::OkStatus();
   }
 
+  if (noise_count < 1) {
+    // noise_count would be at least 0.
+    // If it is 0, no need to add noise, just return.
+    return absl::OkStatus();
+  }
+
   ASSIGN_OR_RETURN(std::string publisher_noise_register_id_ec,
                    MapToCurve(kPublisherNoiseRegisterId));
 

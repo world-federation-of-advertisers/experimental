@@ -428,9 +428,9 @@ TEST_F(SketchEncrypterTest, NoisesShouldHaveTheSameIndex) {
   int noise_register_count = cipher_words.size() / ciphertexts_per_register;
 
   ASSERT_GT(noise_register_count, 0);
-  for (int i = 0; i <= cipher_words.size()-ciphertexts_per_register; i+=ciphertexts_per_register) {
-    CiphertextString index = {cipher_words[i],
-                              cipher_words[i + 1]};
+  for (int i = 0; i <= cipher_words.size() - ciphertexts_per_register;
+       i += ciphertexts_per_register) {
+    CiphertextString index = {cipher_words[i], cipher_words[i + 1]};
     EXPECT_THAT(index, IsEncryptionOf(original_cipher_.get(),
                                       "publisher_noise_register_id"));
   }
