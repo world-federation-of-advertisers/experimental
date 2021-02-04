@@ -6,7 +6,6 @@ cc_library(
     hdrs = ["hello_streaming_service.h"],
     deps = [
         "//src/main/proto/wfa/examples/streaming:hello_streaming_service_cc_grpc",
-        "//src/main/proto/wfa/examples/streaming:hello_streaming_service_cc_proto",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/strings",
     ],

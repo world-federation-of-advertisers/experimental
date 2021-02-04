@@ -17,11 +17,7 @@
 #ifndef SRC_MAIN_CC_WFA_EXAMPLES_STREAMING_HELLO_STREAMING_SERVICE_H_
 #define SRC_MAIN_CC_WFA_EXAMPLES_STREAMING_HELLO_STREAMING_SERVICE_H_
 
-#include "include/grpcpp/server_context.h"
-#include "include/grpcpp/support/status.h"
-#include "include/grpcpp/support/sync_stream.h"
 #include "src/main/proto/wfa/examples/streaming/hello_streaming_service.grpc.pb.h"
-#include "src/main/proto/wfa/examples/streaming/hello_streaming_service.pb.h"
 
 namespace wfa_examples {
 namespace streaming {
