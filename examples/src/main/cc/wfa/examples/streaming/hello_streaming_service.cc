@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/examples/streaming/hello_streaming_service.h"
+#include "src/main/cc/wfa/examples/streaming/hello_streaming_service.h"
 
 #include <iostream>
 

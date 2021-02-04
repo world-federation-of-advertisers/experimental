@@ -16,7 +16,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "include/grpcpp/server_builder.h"
-#include "wfa/examples/streaming/hello_streaming_service.h"
+#include "src/main/cc/wfa/examples/streaming/hello_streaming_service.h"
 
 namespace wfa_examples {
 namespace streaming {
