@@ -39,6 +39,13 @@ absl::StatusOr<std::string> EncryptSketch(
       *response.mutable_encrypted_sketch(),
       sketch_encrypter->Encrypt(request_proto.sketch(),
                                 request_proto.destroyed_register_strategy()));
+
+  if (request_proto.has_noise_parameter()) {
+    RETURN_IF_ERROR(sketch_encrypter->AppendNoiseRegisters(
+        request_proto.noise_parameter(),
+        request_proto.sketch().config().values_size(),
+        *response.mutable_encrypted_sketch()));
+  }
   return response.SerializeAsString();
 }
 

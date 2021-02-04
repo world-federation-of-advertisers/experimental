@@ -49,6 +49,11 @@ class SketchEncrypter {
       EncryptSketchRequest::DestroyedRegisterStrategy
           destroyed_register_strategy) = 0;
 
+  virtual absl::Status AppendNoiseRegisters(
+      const EncryptSketchRequest::PublisherNoiseParameter&
+          publisher_noise_parameter,
+      int value_count, std::string& encrypted_sketch) = 0;
+
  protected:
   SketchEncrypter() = default;
 };
