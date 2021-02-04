@@ -64,7 +64,7 @@ message EncryptSketchRequest {
     // The delta of the differential privacy parameters.
     double delta = 2;
     // The total number of publishers of the computation in which this sketch
-    // would be used in.
+    // would be used.
     int32 publisher_count = 3;
   }
   // Parameters for adding publisher noise registers.
