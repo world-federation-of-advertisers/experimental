@@ -211,6 +211,10 @@ absl::Status SketchEncrypterImpl::AppendNoiseRegisters(
   // Lock the mutex since most of the crypto computations here are NOT
   // thread-safe.
   absl::WriterMutexLock l(&mutex_);
+
+  if (value_count < 1) {
+    return absl::InvalidArgumentError("value_count should be positive.");
+  }
   DifferentialPrivacyParams params;
   params.set_epsilon(publisher_noise_parameter.epsilon());
   params.set_delta(publisher_noise_parameter.delta());
@@ -220,12 +224,18 @@ absl::Status SketchEncrypterImpl::AppendNoiseRegisters(
           GetPublisherNoiseOptions(
               params, publisher_noise_parameter.publisher_count())));
 
+  if (noise_count <1) {
+    // noise_count would be at least 0.
+    // If it is 0, no need to add noise, just return.
+    return absl::OkStatus();
+  }
+
   ASSIGN_OR_RETURN(std::string publisher_noise_register_id_ec,
                    MapToCurve(kPublisherNoiseRegisterId));
 
-  int64_t noise_register_btyes =
+  int64_t noise_register_bytes =
       noise_count * (value_count + 1) * kBytesPerCipherText;
-  encrypted_sketch.reserve(encrypted_sketch.size() + noise_register_btyes);
+  encrypted_sketch.reserve(encrypted_sketch.size() + noise_register_bytes);
 
   for (int64_t i = 0; i < noise_count; ++i) {
     // Add register id, a predefined constant.

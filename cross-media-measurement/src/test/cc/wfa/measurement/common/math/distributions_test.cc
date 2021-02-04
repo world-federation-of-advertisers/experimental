@@ -118,7 +118,7 @@ TEST(GetTruncatedDiscreteLaplaceDistributedRandomNumber,
   std::array<double, 2 * mu> expected_probabilities = {};
   double total_p = 0;
   for (int64_t i = 0; i <= mu * 2; ++i) {
-    expected_probabilities[i] = 1.0 / 2 * s * std::exp(-std::abs(i - mu) * s);
+    expected_probabilities[i] = 0.5 * s * std::exp(-std::abs(i - mu) * s);
     total_p += expected_probabilities[i];
   }
   // normalize the probabilities.

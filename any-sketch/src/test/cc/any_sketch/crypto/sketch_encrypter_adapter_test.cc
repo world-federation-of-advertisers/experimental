@@ -131,8 +131,8 @@ TEST(SketchEncrypterJavaAdapterTest, noiseShouldBeAddedIfNoiseParameterIsSet) {
   wfa::any_sketch::crypto::EncryptSketchResponse response;
   response.ParseFromString(encrypted_sketch);
 
-  EXPECT_GT(response.encrypted_sketch().size() / bytes_per_register,
-            register_size);
+  EXPECT_GT(response.encrypted_sketch().size(),
+            register_size * bytes_per_register);
 }
 
 }  // namespace
