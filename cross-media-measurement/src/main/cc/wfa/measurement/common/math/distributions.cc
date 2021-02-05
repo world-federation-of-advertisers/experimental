@@ -19,6 +19,7 @@
 
 #include "absl/random/poisson_distribution.h"
 #include "absl/random/random.h"
+#include "absl/random/bit_gen_ref.h"
 #include "util/status_macros.h"
 
 namespace wfa::measurement::common::math {
@@ -33,7 +34,7 @@ constexpr int kMaximumAttempts = 20;
 // Secure Computing, vol. 14, no. 5, pp. 463-477, 1 Sept.-Oct. 2017,
 // doi: 10.1109/TDSC.2015.2484326.
 absl::StatusOr<int64_t> GetPolyaRandomVariable(double r, double p,
-                                               absl::BitGen& rnd) {
+                                               absl::BitGenRef rnd) {
   if (p <= 0 || p >= 1) {
     return absl::InvalidArgumentError("Probability p should be in (0,1).");
   }
@@ -43,7 +44,7 @@ absl::StatusOr<int64_t> GetPolyaRandomVariable(double r, double p,
 }
 
 absl::StatusOr<int64_t> GetTruncatedPolyaRandomVariable(
-    int64_t truncate_threshold, double r, double p, absl::BitGen& rnd) {
+    int64_t truncate_threshold, double r, double p, absl::BitGenRef rnd) {
   if (truncate_threshold < 0) {
     // Negative truncate_threshold means no truncation.
     return GetPolyaRandomVariable(r, p, rnd);
@@ -58,7 +59,7 @@ absl::StatusOr<int64_t> GetTruncatedPolyaRandomVariable(
       "Failed to create the polya random variable within the attempt limit.");
 }
 
-absl::StatusOr<int64_t> GetDlapVariable(double s, absl::BitGen& rnd) {
+absl::StatusOr<int64_t> GetDlapVariable(double s, absl::BitGenRef rnd) {
   double p = std::exp(-s);
   ASSIGN_OR_RETURN(int64_t a, GetPolyaRandomVariable(1, p, rnd));
   ASSIGN_OR_RETURN(int64_t b, GetPolyaRandomVariable(1, p, rnd));

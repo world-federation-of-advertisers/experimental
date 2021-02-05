@@ -224,12 +224,6 @@ absl::Status SketchEncrypterImpl::AppendNoiseRegisters(
           GetPublisherNoiseOptions(
               params, publisher_noise_parameter.publisher_count())));
 
-  if (noise_count <1) {
-    // noise_count would be at least 0.
-    // If it is 0, no need to add noise, just return.
-    return absl::OkStatus();
-  }
-
   if (noise_count < 1) {
     // noise_count would be at least 0.
     // If it is 0, no need to add noise, just return.
