@@ -57,6 +57,19 @@ message EncryptSketchRequest {
 
   // Strategies of encrypting destroyed register.
   DestroyedRegisterStrategy destroyed_register_strategy = 5;
+
+  message PublisherNoiseParameter {
+    // The epsilon of the differential privacy parameters.
+    double epsilon = 1;
+    // The delta of the differential privacy parameters.
+    double delta = 2;
+    // The total number of publishers of the computation in which this sketch
+    // would be used.
+    int32 publisher_count = 3;
+  }
+  // Parameters for adding publisher noise registers.
+  // If not set, no noise would be added.
+  PublisherNoiseParameter noise_parameter = 6;
 }
 
 // Response of the EncryptSketch method.

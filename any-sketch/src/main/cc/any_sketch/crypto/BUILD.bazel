@@ -14,6 +14,9 @@ cc_library(
         "@com_google_private_join_and_compute//crypto:commutative_elgamal",
         "@com_google_private_join_and_compute//util:status_includes",
         "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
+        "@wfa_measurement_system//src/main/cc/wfa/measurement/common:string_block_sorter",
+        "@wfa_measurement_system//src/main/cc/wfa/measurement/common/crypto:noise_parameters_computation",
+        "@wfa_measurement_system//src/main/cc/wfa/measurement/common/math:distributions",
     ],
 )
 

@@ -404,5 +404,37 @@ TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysInvalidInputShouldThrow) {
               StatusIs(absl::StatusCode::kInvalidArgument, "Invalid ECPoint"));
 }
 
+TEST_F(SketchEncrypterTest, NoisesShouldHaveTheSameIndex) {
+  Context ctx;
+  ASSERT_OK_AND_ASSIGN(ECGroup ec_group, ECGroup::Create(kTestCurveId, &ctx));
+
+  std::string encrypted_sketch;
+  int values_per_register = 5;
+  int ciphertexts_per_register = (values_per_register + 1) * 2;
+
+  EncryptSketchRequest::PublisherNoiseParameter noise_parameter;
+  noise_parameter.set_epsilon(1);
+  noise_parameter.set_delta(0.1);
+  noise_parameter.set_publisher_count(3);
+
+  ASSERT_TRUE(sketch_encrypter_
+                  ->AppendNoiseRegisters(noise_parameter, values_per_register,
+                                         encrypted_sketch)
+                  .ok());
+
+  std::vector<std::string> cipher_words = GetCipherStrings(encrypted_sketch);
+
+  ASSERT_EQ(cipher_words.size() % ciphertexts_per_register, 0);
+  int noise_register_count = cipher_words.size() / ciphertexts_per_register;
+
+  ASSERT_GT(noise_register_count, 0);
+  for (int i = 0; i <= cipher_words.size() - ciphertexts_per_register;
+       i += ciphertexts_per_register) {
+    CiphertextString index = {cipher_words[i], cipher_words[i + 1]};
+    EXPECT_THAT(index, IsEncryptionOf(original_cipher_.get(),
+                                      "publisher_noise_register_id"));
+  }
+}
+
 }  // namespace
 }  // namespace wfa::any_sketch::crypto

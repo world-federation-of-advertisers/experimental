@@ -22,6 +22,10 @@
 #include "src/main/cc/any_sketch/util/macros.h"
 #include "util/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
+#include "wfa/measurement/common/crypto/noise_parameters_computation.h"
+#include "wfa/measurement/common/crypto/parameters.pb.h"
+#include "wfa/measurement/common/math/distributions.h"
+#include "wfa/measurement/common/string_block_sorter.h"
 
 namespace wfa::any_sketch::crypto {
 
@@ -33,6 +37,11 @@ using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
+using ::wfa::measurement::common::SortStringByBlock;
+using ::wfa::measurement::common::crypto::DifferentialPrivacyParams;
+using ::wfa::measurement::common::crypto::GetPublisherNoiseOptions;
+using ::wfa::measurement::common::math::
+    GetTruncatedDiscreteLaplaceDistributedRandomNumber;
 using DestroyedRegisterStrategy =
     ::wfa::any_sketch::crypto::EncryptSketchRequest::DestroyedRegisterStrategy;
 using BlindersCiphertext = std::pair<std::string, std::string>;
@@ -41,6 +50,9 @@ using BlindersCiphertext = std::pair<std::string, std::string>;
 constexpr int kBytesPerCipherText = 66;
 constexpr absl::string_view KUnitECPointSeed = "unit_ec_point";
 constexpr absl::string_view KDestroyedRegisterKey = "destroyed_register_key";
+// The seed for the EcPoint denoting the publisher noise register id.
+constexpr absl::string_view kPublisherNoiseRegisterId =
+    "publisher_noise_register_id";
 
 // Check if the sketch is valid or not.
 // A Sketch is valid if and only if all its registers contain the same number
@@ -89,6 +101,11 @@ class SketchEncrypterImpl : public SketchEncrypter {
   absl::StatusOr<std::string> Encrypt(
       const Sketch& sketch,
       DestroyedRegisterStrategy destroyed_register_strategy) override;
+
+  absl::Status AppendNoiseRegisters(
+      const EncryptSketchRequest::PublisherNoiseParameter&
+          publisher_noise_parameter,
+      int value_count, std::string& encrypted_sketch) override;
 
  private:
   // ElGamal cipher used to do the encryption
@@ -185,6 +202,56 @@ absl::StatusOr<std::string> SketchEncrypterImpl::Encrypt(
         reg, sketch.config(), destroyed_register_strategy, encrypted_sketch));
   }
   return encrypted_sketch;
+}
+
+absl::Status SketchEncrypterImpl::AppendNoiseRegisters(
+    const EncryptSketchRequest::PublisherNoiseParameter&
+        publisher_noise_parameter,
+    int value_count, std::string& encrypted_sketch) {
+  // Lock the mutex since most of the crypto computations here are NOT
+  // thread-safe.
+  absl::WriterMutexLock l(&mutex_);
+
+  if (value_count < 1) {
+    return absl::InvalidArgumentError("value_count should be positive.");
+  }
+  DifferentialPrivacyParams params;
+  params.set_epsilon(publisher_noise_parameter.epsilon());
+  params.set_delta(publisher_noise_parameter.delta());
+  ASSIGN_OR_RETURN(
+      int64_t noise_count,
+      GetTruncatedDiscreteLaplaceDistributedRandomNumber(
+          GetPublisherNoiseOptions(
+              params, publisher_noise_parameter.publisher_count())));
+
+  if (noise_count < 1) {
+    // noise_count would be at least 0.
+    // If it is 0, no need to add noise, just return.
+    return absl::OkStatus();
+  }
+
+  ASSIGN_OR_RETURN(std::string publisher_noise_register_id_ec,
+                   MapToCurve(kPublisherNoiseRegisterId));
+
+  int64_t noise_register_bytes =
+      noise_count * (value_count + 1) * kBytesPerCipherText;
+  encrypted_sketch.reserve(encrypted_sketch.size() + noise_register_bytes);
+
+  for (int64_t i = 0; i < noise_count; ++i) {
+    // Add register id, a predefined constant.
+    RETURN_IF_ERROR(EncryptAdditionalECPoint(publisher_noise_register_id_ec,
+                                             encrypted_sketch));
+    ASSIGN_OR_RETURN(
+        std::string random_value_ec,
+        MapToCurve(ec_group_->GeneratePrivateKey().ToDecimalString()));
+    // Add a same random value 'value_count' times.
+    for (int j = 0; j < value_count; ++j) {
+      RETURN_IF_ERROR(
+          EncryptAdditionalECPoint(random_value_ec, encrypted_sketch));
+    }
+  }
+
+  return absl::OkStatus();
 }
 
 absl::Status SketchEncrypterImpl::AppendEncryptedRegisterWithSameValue(
