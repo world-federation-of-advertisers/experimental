@@ -50,6 +50,7 @@ using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 
 constexpr int kNumOfWorkers = 3;
+constexpr int kNumOfPublishers = 3;
 constexpr int kMaxFrequency = 10;
 constexpr int kTestCurveId = NID_X9_62_prime256v1;
 constexpr int kBytesPerEcPoint = 33;
@@ -400,6 +401,8 @@ class TestData {
     complete_execution_phase_one_at_aggregator_request
         .set_combined_register_vector(
             complete_execution_phase_one_response_2.combined_register_vector());
+    complete_execution_phase_one_at_aggregator_request.set_total_sketches_count(
+        kNumOfPublishers);
     if (frequency_noise_parameters != nullptr) {
       *complete_execution_phase_one_at_aggregator_request
            .mutable_noise_parameters() = *frequency_noise_parameters;
@@ -574,21 +577,19 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
   public_key.set_generator(public_key_pair.first);
   public_key.set_element(public_key_pair.second);
 
-  int publisher_count = 3;
-
   int64_t computed_blinded_histogram_noise_offset = 5;
   int64_t computed_publisher_noise_offset = 4;
   int64_t computed_reach_dp_noise_offset = 3;
   int64_t expected_total_register_count =
       computed_publisher_noise_offset * 2 + computed_reach_dp_noise_offset * 2 +
-      computed_blinded_histogram_noise_offset * publisher_count *
-          (publisher_count + 1);
+      computed_blinded_histogram_noise_offset * kNumOfPublishers *
+          (kNumOfPublishers + 1);
 
   CompleteSetupPhaseRequest request;
   RegisterNoiseGenerationParameters* noise_parameters =
       request.mutable_noise_parameters();
   noise_parameters->set_curve_id(kTestCurveId);
-  noise_parameters->set_total_sketches_count(publisher_count);
+  noise_parameters->set_total_sketches_count(kNumOfPublishers);
   noise_parameters->set_contributors_count(kNumOfWorkers);
   *noise_parameters->mutable_composite_el_gamal_public_key() = public_key;
   // resulted p ~= 0 , offset = 5
@@ -647,8 +648,8 @@ TEST(CompleteSetupPhase, NoiseSumAndMeanShouldBeCorrect) {
 
   EXPECT_EQ(publisher_noise_count, computed_publisher_noise_offset);
   EXPECT_EQ(blinded_histogram_noise_count,
-            computed_blinded_histogram_noise_offset * publisher_count *
-                (publisher_count + 1) / 2);
+            computed_blinded_histogram_noise_offset * kNumOfPublishers *
+                (kNumOfPublishers + 1) / 2);
   EXPECT_EQ(reach_dp_noise_count, computed_reach_dp_noise_offset);
   EXPECT_EQ(padding_noise_count,
             expected_total_register_count - publisher_noise_count -
@@ -808,11 +809,9 @@ TEST(ReachEstimation, NonDpNoiseShouldNotImpactTheResult) {
     AddRegister(&plain_sketch, /*index =*/i, /*key=*/i, /*count=*/1);
   }
 
-  int publisher_count = 3;
-
   RegisterNoiseGenerationParameters reach_noise_parameters;
   reach_noise_parameters.set_curve_id(kTestCurveId);
-  reach_noise_parameters.set_total_sketches_count(publisher_count);
+  reach_noise_parameters.set_total_sketches_count(kNumOfPublishers);
   reach_noise_parameters.set_contributors_count(kNumOfWorkers);
   // resulted p = 0.716531, offset = 15.
   // Random blind histogram noise.
