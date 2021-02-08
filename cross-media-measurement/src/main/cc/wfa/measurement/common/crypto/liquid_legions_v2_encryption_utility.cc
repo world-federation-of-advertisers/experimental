@@ -36,7 +36,10 @@ namespace {
 // Merge all the counts in each group using the SameKeyAggregation algorithm.
 // The calculated (flag_1, flag_2, flag_3, count) tuple is appended to the
 // response. 'sub_permutation' contains the locations of the registers belonging
-// to this group, i.e., having the same blinded register index.
+// to this group, i.e., having the same blinded register index. If there are
+// more than total_sketches_count registers in this sub_permutation, these
+// registers would be either publisher noise or padding reach noise, and this
+// sub_permutation would be ignored during SameKeyAggregation.
 absl::Status MergeCountsUsingSameKeyAggregation(
     absl::Span<const size_t> sub_permutation, absl::string_view registers,
     ProtocolCryptor& protocol_cryptor, int total_sketches_count,
