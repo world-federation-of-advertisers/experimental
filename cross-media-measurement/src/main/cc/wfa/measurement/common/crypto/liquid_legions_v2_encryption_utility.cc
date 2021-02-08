@@ -45,7 +45,7 @@ absl::Status MergeCountsUsingSameKeyAggregation(
     return absl::InternalError("Empty sub permutation.");
   }
   if (sub_permutation.size() > total_sketches_count) {
-    // These are publisher noises or padding noises, skip all or them.
+    // These are publisher noises or padding noises, skip all of them.
     return absl::OkStatus();
   }
   ASSIGN_OR_RETURN(ElGamalEcPointPair destroyed_key_constant_ec_pair,
