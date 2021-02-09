@@ -20,13 +20,12 @@ jobs:
     - name: Check out revision
       uses: actions/checkout@v2
 
-    - name: Set workspace path hash
+    - name: Set execroot hash
       run: |
-        workspace_path="$(bazelisk info workspace)"
-        workspace_path_hash="$(
-          echo -n "${workspace_path}" | md5sum | cut -d ' ' -f 1
+        execroot_hash="$(
+          bazelisk info execution_root | tr -d '\n' | git hash-object --stdin
         )"
-        echo "workspace_path_hash=${workspace_path_hash}" >> $GITHUB_ENV
+        echo "execroot_hash=${execroot_hash}" >> $GITHUB_ENV
 
     - name: Set output base path
       run: echo "output_base_path=$(bazelisk info output_base)" >> $GITHUB_ENV
@@ -38,9 +37,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ env.output_base_path }}
-        key: bazel-${{ env.workspace_path_hash }}-${{ env.tree_hash }}
+        key: bazel-${{ env.execroot_hash }}-${{ env.tree_hash }}
         restore-keys: |
-          bazel-${{ env.workspace_path_hash }}-
+          bazel-${{ env.execroot_hash }}-
 
     - name: Build
       run: bazelisk build --keep_going //...
