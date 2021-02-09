@@ -99,7 +99,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: cross-media-measurement
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
@@ -108,4 +107,11 @@ jobs:
     - name: Install cpplint
       run: pip install cpplint
     - name: Lint
-      run: PATH="$HOME/lint:$PATH" ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+      env:
+        SUBTREES: any-sketch any-sketch-java cross-media-measurement cross-media-measurement-api examples rules-swig
+      run: |
+        for subtree in $SUBTREES; do (
+          cd "${subtree}"
+          echo "Running linters in ${subtree}"
+          PATH="$HOME/lint:$PATH" ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+        ); done
