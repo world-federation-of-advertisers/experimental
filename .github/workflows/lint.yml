@@ -7,105 +7,58 @@ on:
     branches: [ main ]
 
 jobs:
-  install-buildifier:
+  lint:
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
-    env:
-      BUILDIFIER_VERSION: 4.0.0
     steps:
-    - name: Cache buildifier
-      id: cache-buildifier
-      uses: actions/cache@v2
-      with:
-        path: ~/lint/buildifier
-        key: buildifier-${{ env.BUILDIFIER_VERSION }}
+    - name: Make linter directory
+      run: mkdir -p ~/lint
+
     - name: Install buildifier
-      if: steps.cache-buildifier.outputs.cache-hit != 'true'
+      env:
+        BUILDIFIER_VERSION: 4.0.0
       run: |
-        mkdir -p ~/lint
         wget -O ~/lint/buildifier "https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-darwin-amd64"
         chmod u+x ~/lint/buildifier
-  install-ktlint:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    env:
-      KTLINT_VERSION: 0.40.0
-    steps:
-    - name: Cache ktlint
-      id: cache-ktlint
-      uses: actions/cache@v2
-      with:
-        path: ~/lint/ktlint
-        key: ktlint-${{ env.KTLINT_VERSION }}
+
     - name: Install ktlint
-      if: steps.cache-ktlint.outputs.cache-hit != 'true'
+      env:
+        KTLINT_VERSION: 0.40.0
       run: |
-        mkdir -p ~/lint
         wget -O ~/lint/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
         chmod u+x ~/lint/ktlint
-  install-google-java-format:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    env:
-      GOOGLE_JAVA_FORMAT_VERSION: 1.9
-    steps:
-    - name: Cache google-java-format
-      id: cache-google-java-format
-      uses: actions/cache@v2
-      with:
-        path: ~/lint/google-java-format*
-        key: google-java-format-${{ env.GOOGLE_JAVA_FORMAT_VERSION }}
+
     - name: Install google-java-format
-      if: steps.cache-google-java-format.outputs.cache-hit != 'true'
+      env:
+        GOOGLE_JAVA_FORMAT_VERSION: 1.9
       run: |
-        mkdir -p ~/lint
         wget -O ~/lint/google-java-format.jar "https://github.com/google/google-java-format/releases/download/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}-all-deps.jar"
         echo '#!/usr/bin/env bash' > ~/lint/google-java-format
         echo 'java -jar ~/lint/google-java-format.jar' >> ~/lint/google-java-format
         chmod u+x ~/lint/google-java-format
-  install-addlicense:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    env:
-      ADDLICENSE_VERSION: a0294312aa76d31c0bd7e49083d88a2a04d9b3d1
-    steps:
-    - name: Cache addlicense
-      id: cache-addlicense
-      uses: actions/cache@v2
-      with:
-        path: ~/lint/addlicense
-        key: addlicense-${{ env.ADDLICENSE_VERSION }}
+        
     - name: Install addlicense
-      if: steps.cache-addlicense.outputs.cache-hit != 'true'
+      env:
+        ADDLICENSE_VERSION: a0294312aa76d31c0bd7e49083d88a2a04d9b3d
       run: |
         mkdir -p /tmp/addlicense
         cd /tmp/addlicense
         go mod init temp
         go get -u -d "github.com/google/addlicense@${ADDLICENSE_VERSION}"
         go build -ldflags '-s' github.com/google/addlicense
-        mkdir -p ~/lint
         cp addlicense ~/lint/
-  lint:
-    runs-on: ubuntu-latest
-    needs: [install-buildifier, install-ktlint, install-google-java-format, install-addlicense]
-    defaults:
-      run:
-        shell: bash
-    steps:
+        cd -
+
+    - name: Install cpplint
+      run: pip install cpplint
+
     - name: Check out revision
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Install cpplint
-      run: pip install cpplint
+
     - name: Lint
       env:
         SUBTREES: any-sketch any-sketch-java cross-media-measurement cross-media-measurement-api examples rules-swig
