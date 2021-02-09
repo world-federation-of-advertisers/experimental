@@ -20,14 +20,27 @@ jobs:
     - name: Check out revision
       uses: actions/checkout@v2
 
+    - name: Set workspace path hash
+      run: |
+        workspace_path="$(bazelisk info workspace)"
+        workspace_path_hash="$(
+          echo -n "${workspace_path}" | md5sum | cut -d ' ' -f 1
+        )"
+        echo "workspace_path_hash=${workspace_path_hash}" >> $GITHUB_ENV
+
+    - name: Set output base path
+      run: echo "output_base_path=$(bazelisk info output_base)" >> $GITHUB_ENV
+
+    - name: Set tree hash
+      run: echo "tree_hash=$(git rev-parse HEAD:)" >> $GITHUB_ENV
+
     - name: Set up build cache
       uses: actions/cache@v2
       with:
-        path: ~/.cache/bazel
-        key: bazel-xmms-${{ hashFiles('cross-media-measurement/WORKSPACE') }}
+        path: ${{ env.output_base_path }}
+        key: bazel-${{ env.workspace_path_hash }}-${{ env.tree_hash }}
         restore-keys: |
-          bazel-xmms-
-          bazel-
+          bazel-${{ env.workspace_path_hash }}-
 
     - name: Build
       run: bazelisk build --keep_going //...
