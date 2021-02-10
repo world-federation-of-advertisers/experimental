@@ -21,15 +21,15 @@
 #include <grpcpp/security/credentials.h>
 #include "src/main/proto/wfa/examples/streaming/hello_streaming_service.grpc.pb.h"
 
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::ClientReader;
-using grpc::ClientReaderWriter;
-using grpc::ClientWriter;
-using grpc::Status;
-using wfa_examples::streaming::HelloStreaming;
-using wfa_examples::streaming::SayHelloStreamingRequest;
-using wfa_examples::streaming::SayHelloStreamingResponse;
+using ::grpc::Channel;
+using ::grpc::ClientContext;
+using ::grpc::ClientReader;
+using ::grpc::ClientReaderWriter;
+using ::grpc::ClientWriter;
+using ::grpc::Status;
+using ::wfa_examples::streaming::HelloStreaming;
+using ::wfa_examples::streaming::SayHelloStreamingRequest;
+using ::wfa_examples::streaming::SayHelloStreamingResponse;
 
 int main(int argc, char** argv) {
   std::string server_address = "0.0.0.0:50051";

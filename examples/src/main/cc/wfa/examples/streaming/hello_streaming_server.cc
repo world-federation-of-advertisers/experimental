@@ -21,14 +21,14 @@
 #include <grpcpp/security/server_credentials.h>
 #include "src/main/proto/wfa/examples/streaming/hello_streaming_service.grpc.pb.h"
 
-using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::ServerReader;
-using grpc::ServerContext;
-using grpc::Status;
-using wfa_examples::streaming::HelloStreaming;
-using wfa_examples::streaming::SayHelloStreamingRequest;
-using wfa_examples::streaming::SayHelloStreamingResponse;
+using ::grpc::Server;
+using ::grpc::ServerBuilder;
+using ::grpc::ServerReader;
+using ::grpc::ServerContext;
+using ::grpc::Status;
+using ::wfa_examples::streaming::HelloStreaming;
+using ::wfa_examples::streaming::SayHelloStreamingRequest;
+using ::wfa_examples::streaming::SayHelloStreamingResponse;
 
 class HelloStreamingImpl final : public HelloStreaming::Service {
  public:
