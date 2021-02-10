@@ -18,10 +18,11 @@ package main
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
 	"io"
 	"log"
 	"net"
+
+	"google.golang.org/grpc"
 	pb "wfa/examples/streaming/grpc"
 )
 
@@ -30,7 +31,7 @@ type helloStreamingServer struct {
 }
 
 func (s *helloStreamingServer) SayHelloStreaming(stream pb.HelloStreaming_SayHelloStreamingServer) error {
-	names := []string{}
+	var names []string
 	for {
 		request, err := stream.Recv()
 		if err == io.EOF {

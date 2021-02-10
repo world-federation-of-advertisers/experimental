@@ -18,9 +18,10 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc"
 	"log"
 	"time"
+
+	"google.golang.org/grpc"
 	pb "wfa/examples/streaming/grpc"
 )
 
