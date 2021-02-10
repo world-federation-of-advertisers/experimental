@@ -1,0 +1,75 @@
+# Copyright 2021 The Cross-Media Measurement Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Build and test all Bazel targets in the specified Bazel workspaces.
+
+name: Build and test Bazel targets
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  any-sketch:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Bazel build and test
+      uses: ./.github/actions/bazel-build-test
+      with:
+        workspace-path: any-sketch
+  any-sketch-java:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Bazel build and test
+      uses: ./.github/actions/bazel-build-test
+      with:
+        workspace-path: any-sketch-java
+  cross-media-measurement:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Bazel build and test
+      uses: ./.github/actions/bazel-build-test
+      with:
+        workspace-path: cross-media-measurement
+  cross-media-measurement-api:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Bazel build and test
+      uses: ./.github/actions/bazel-build-test
+      with:
+        workspace-path: cross-media-measurement-api
+  examples:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out revision
+      uses: actions/checkout@v2
+
+    - name: Bazel build and test
+      uses: ./.github/actions/bazel-build-test
+      with:
+        workspace-path: examples
