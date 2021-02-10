@@ -131,6 +131,12 @@ local_repository(
     path = "../cross-media-measurement-api",
 )
 
+# Measurement System.
+local_repository(
+    name = "wfa_measurement_system",
+    path = "../cross-media-measurement",
+)
+
 # Core AnySketch.
 local_repository(
     name = "any_sketch",
