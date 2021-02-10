@@ -18,7 +18,6 @@ package wfa_examples.streaming;
 
 option java_package = "org.wfanet.examples.streaming";
 option java_multiple_files = true;
-option go_package = "wfa/examples/streaming";
 
 service HelloStreaming {
   rpc SayHelloStreaming(stream SayHelloStreamingRequest)
