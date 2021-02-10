@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"time"
@@ -26,8 +25,7 @@ import (
 )
 
 func main() {
-	serverPort := "50051"
-	address := fmt.Sprintf("localhost:%s", serverPort)
+	address := "localhost:50051"
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)

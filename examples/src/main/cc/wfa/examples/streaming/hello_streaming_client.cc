@@ -31,15 +31,8 @@ using wfa_examples::streaming::HelloStreaming;
 using wfa_examples::streaming::SayHelloStreamingRequest;
 using wfa_examples::streaming::SayHelloStreamingResponse;
 
-std::string GetServerAddress() {
-  std::string server_host("0.0.0.0");
-  std::string server_port("50051");
-  std::string server_address = server_host + ":" + server_port;
-  return server_address;
-}
-
 int main(int argc, char** argv) {
-  std::string server_address = GetServerAddress();
+  std::string server_address = "0.0.0.0:50051";
 
   std::cout << "Server Address: " << server_address << std::endl;
 

@@ -45,13 +45,13 @@ func (s *helloStreamingServer) SayHelloStreaming(stream pb.HelloStreaming_SayHel
 }
 
 func main() {
-	serverPort := "50051"
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", serverPort))
+	address := "localhost:50051"
+	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterHelloStreamingServer(grpcServer, &helloStreamingServer{})
-	log.Printf("Golang server listening on :%s...", serverPort)
+	log.Printf("Golang server listening: %s...", address)
 	grpcServer.Serve(lis)
 }
