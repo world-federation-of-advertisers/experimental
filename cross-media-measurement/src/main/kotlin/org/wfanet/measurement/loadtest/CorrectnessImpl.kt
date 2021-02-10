@@ -100,11 +100,9 @@ class CorrectnessImpl(
     logger.info("Created an Advertiser: $advertiser")
     val externalAdvertiserId = ExternalId(advertiser.externalAdvertiserId)
 
-    val generatedCampaigns = mutableListOf<GeneratedCampaign>()
-    (1..dataProviderCount)
-      .map {
-        relationalDatabase.createDataProvider(externalAdvertiserId).toList(generatedCampaigns)
-      }
+    val generatedCampaigns = List(dataProviderCount) {
+      relationalDatabase.createDataProvider(externalAdvertiserId).toList()
+    }.flatten()
 
     // Schedule a report before loading the metric requisitions.
     val campaignIds = generatedCampaigns.map { it.campaignId }
