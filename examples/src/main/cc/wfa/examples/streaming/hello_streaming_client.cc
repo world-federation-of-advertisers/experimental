@@ -1,109 +1,76 @@
-// Copyright 2021 The Cross-Media Measurement Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2021 The Cross-Media Measurement Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include "src/main/cc/wfa/examples/streaming/hello_streaming_client.h"
-
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#include "src/main/proto/wfa/examples/streaming/hello_streaming_service.grpc.pb.h"
 
-#include <iostream>
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::ClientReader;
+using grpc::ClientReaderWriter;
+using grpc::ClientWriter;
+using grpc::Status;
+using wfa_examples::streaming::HelloStreaming;
+using wfa_examples::streaming::SayHelloStreamingRequest;
+using wfa_examples::streaming::SayHelloStreamingResponse;
 
-#include "absl/container/fixed_array.h"
-
-namespace wfa_examples {
-namespace streaming {
-namespace {
-
-using ::grpc::Channel;
-using ::grpc::ClientContext;
-using ::grpc::ClientWriter;
-using ::grpc::CreateChannel;
-
-absl::Status MakeStatus(const grpc::Status& grpc_status) {
-  if (grpc_status.ok()) {
-    return absl::OkStatus();
-  }
-
-  auto status_code = static_cast<absl::StatusCode>(grpc_status.error_code());
-  return absl::Status(status_code, grpc_status.error_message());
+std::string GetServerAddress() {
+  std::string server_host("0.0.0.0");
+  std::string server_port("50051");
+  std::string server_address = server_host + ":" + server_port;
+  return server_address;
 }
 
-void RunClient(absl::string_view server_address,
-               absl::Span<const absl::string_view> names) {
-  HelloStreamingClient client(CreateChannel(
-      std::string(server_address), grpc::InsecureChannelCredentials()));
-  absl::StatusOr<std::vector<std::string>> messages_or = client.SayHello(names);
-  if (!messages_or.ok()) {
-    std::cerr << "RPC failed " << messages_or.status() << std::endl;
-    return;
-  }
+int main(int argc, char** argv) {
+  std::string server_address = GetServerAddress();
 
-  for (const std::string& message : messages_or.value()) {
-    std::cout << message << std::endl;
-  }
-}
+  std::cout << "Server Address: " << server_address << std::endl;
 
-}  // namespace
+  std::cout << "Starting client..." << std::endl;
 
-HelloStreamingClient::HelloStreamingClient(std::shared_ptr<Channel> channel)
-    : stub_(HelloStreaming::NewStub(channel)) {}
+  std::shared_ptr<Channel> channel =
+      grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials());
+  std::unique_ptr<HelloStreaming::Stub> stub = HelloStreaming::NewStub(channel);
 
-absl::StatusOr<std::vector<std::string>> HelloStreamingClient::SayHello(
-    absl::Span<const absl::string_view> names) {
   ClientContext context;
   SayHelloStreamingResponse response;
-  std::unique_ptr<ClientWriter<SayHelloStreamingRequest>> writer =
-      stub_->SayHelloStreaming(&context, &response);
-
-  for (absl::string_view name : names) {
+  std::unique_ptr<ClientWriter<SayHelloStreamingRequest> > writer(
+      stub->SayHelloStreaming(&context, &response));
+  for (const std::string& name : {"Alice", "Bob", "Carol"}) {
     SayHelloStreamingRequest request;
-    request.set_name(std::string(name));
+    request.set_name(name);
     writer->Write(request);
   }
   writer->WritesDone();
+  Status status = writer->Finish();
 
-  grpc::Status status = writer->Finish();
-  if (!status.ok()) {
-    return MakeStatus(status);
+  if (status.ok()) {
+    std::cout << "Finished streaming RPC" << std::endl;
+    for (const std::string& message : response.message()) {
+      std::cout << "Received: " << message << std::endl;
+    }
+  } else {
+    std::cout << "Streaming RPC failed" << std::endl;
+    std::cout << status.error_code() << std::endl;
+    std::exit(EXIT_FAILURE);
   }
-
-  // Copy response messages to return.
-  std::vector<std::string> messages;
-  for (const std::string& message : response.message()) {
-    messages.push_back(message);
-  }
-  return messages;
-}
-
-}  // namespace streaming
-}  // namespace wfa_examples
-
-int main(int argc, char** argv) {
-  if (argc < 3) {
-    std::cerr << "Usage:"
-              << " hello_streaming_client <server_address> <name> [<name>...]"
-              << std::endl
-              << "\tExample: hello_streaming_client localhost:50051"
-              << " Alice Bob Carol" << std::endl;
-    return 1;
-  }
-
-  auto args = absl::MakeConstSpan(argv, argc);
-  auto names = args.subspan(2);
-  wfa_examples::streaming::RunClient(
-      args.at(1),
-      absl::FixedArray<absl::string_view>(names.begin(), names.end()));
 
   return 0;
 }
