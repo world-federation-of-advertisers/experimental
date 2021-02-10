@@ -1,0 +1,17 @@
+{
+  "name": "bazel-build-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@actions/cache": "^1.0.6",
+    "@actions/core": "^1.2.6",
+    "@actions/exec": "^1.0.4"
+  }
+}
