@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     defaults:
       run:
         shell: bash
@@ -20,51 +20,13 @@ jobs:
         java-package: jre
         architecture: x64
 
-    - name: Make linter directory
-      run: mkdir -p ~/lint
-
-    - name: Install buildifier
-      env:
-        BUILDIFIER_VERSION: 4.0.0
-      run: |
-        wget -O ~/lint/buildifier "https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64"
-        chmod u+x ~/lint/buildifier
-
-    - name: Install ktlint
-      env:
-        KTLINT_VERSION: 0.40.0
-      run: |
-        wget -O ~/lint/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
-        chmod u+x ~/lint/ktlint
-
-    - name: Install google-java-format
-      env:
-        GOOGLE_JAVA_FORMAT_VERSION: 1.9
-      run: |
-        wget -O ~/lint/google-java-format.jar "https://github.com/google/google-java-format/releases/download/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}-all-deps.jar"
-        echo '#!/usr/bin/env bash' > ~/lint/google-java-format
-        echo 'java -jar ~/lint/google-java-format.jar' >> ~/lint/google-java-format
-        chmod u+x ~/lint/google-java-format
-        
-    - name: Install addlicense
-      env:
-        ADDLICENSE_VERSION: a0294312aa76d31c0bd7e49083d88a2a04d9b3d
-      run: |
-        mkdir -p /tmp/addlicense
-        cd /tmp/addlicense
-        go mod init temp
-        go get -u -d "github.com/google/addlicense@${ADDLICENSE_VERSION}"
-        go build -ldflags '-s' github.com/google/addlicense
-        cp addlicense ~/lint/
-        cd -
-
-    - name: Install cpplint
-      run: pip install cpplint
-
     - name: Check out revision
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
+    - name: Set up linters
+      uses: ./.github/actions/set-up-linters
 
     - name: Lint
       env:
@@ -73,5 +35,5 @@ jobs:
         for subtree in $SUBTREES; do (
           cd "${subtree}"
           echo "Running linters in ${subtree}"
-          PATH="$HOME/lint:$PATH" ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+          ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
         ); done
