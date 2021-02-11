@@ -20,7 +20,7 @@ jobs:
       env:
         BUILDIFIER_VERSION: 4.0.0
       run: |
-        wget -O ~/lint/buildifier "https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-darwin-amd64"
+        wget -O ~/lint/buildifier "https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64"
         chmod u+x ~/lint/buildifier
 
     - name: Install ktlint
