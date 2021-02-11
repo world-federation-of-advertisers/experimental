@@ -13,6 +13,13 @@ jobs:
       run:
         shell: bash
     steps:
+    - name: Set up JRE 11.0.10 for x64
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11.0.10'
+        java-package: jre
+        architecture: x64
+
     - name: Make linter directory
       run: mkdir -p ~/lint
 
