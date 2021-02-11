@@ -91,9 +91,3 @@ local_repository(
     name = "wfa_measurement_proto",
     path = "../cross-media-measurement-api",
 )
-
-# Measurement system.
-local_repository(
-    name = "wfa_measurement_system",
-    path = "../cross-media-measurement",
-)

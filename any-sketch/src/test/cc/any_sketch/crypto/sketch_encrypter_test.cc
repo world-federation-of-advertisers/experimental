@@ -37,6 +37,7 @@ using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
 using ::testing::Not;
 using ::testing::SizeIs;
+using ::wfa::common::ElGamalPublicKey;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
 
@@ -360,29 +361,28 @@ TEST_F(SketchEncrypterTest, TestDestroyedRegistersUsingFlaggedKey) {
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysNormalCases) {
-  ElGamalPublicKeys key1;
-  key1.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
-  key1.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY1));
-  ElGamalPublicKeys key2;
-  key2.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
-  key2.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY2));
-  ElGamalPublicKeys key3;
-  key3.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
-  key3.set_el_gamal_y(absl::HexStringToBytes(kElGamalPublicKeyY3));
-  std::vector<ElGamalPublicKeys> keys{key1, key2, key3};
+  ElGamalPublicKey key1;
+  key1.set_generator(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key1.set_element(absl::HexStringToBytes(kElGamalPublicKeyY1));
+  ElGamalPublicKey key2;
+  key2.set_generator(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key2.set_element(absl::HexStringToBytes(kElGamalPublicKeyY2));
+  ElGamalPublicKey key3;
+  key3.set_generator(absl::HexStringToBytes(kElGamalPublicKeyG));
+  key3.set_element(absl::HexStringToBytes(kElGamalPublicKeyY3));
+  std::vector<ElGamalPublicKey> keys{key1, key2, key3};
 
-  ElGamalPublicKeys combinedKey;
-  combinedKey.set_el_gamal_g(absl::HexStringToBytes(kElGamalPublicKeyG));
-  combinedKey.set_el_gamal_y(
-      absl::HexStringToBytes(kCombinedElGamalPublicKeyY));
+  ElGamalPublicKey combinedKey;
+  combinedKey.set_generator(absl::HexStringToBytes(kElGamalPublicKeyG));
+  combinedKey.set_element(absl::HexStringToBytes(kCombinedElGamalPublicKeyY));
 
-  ASSERT_OK_AND_ASSIGN(ElGamalPublicKeys result,
+  ASSERT_OK_AND_ASSIGN(ElGamalPublicKey result,
                        CombineElGamalPublicKeys(kTestCurveId, keys));
   EXPECT_THAT(result, EqualsProto(combinedKey));
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysEmptyInputShouldThrow) {
-  std::vector<ElGamalPublicKeys> keys;
+  std::vector<ElGamalPublicKey> keys;
   auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
   ASSERT_FALSE(result.ok());
   EXPECT_THAT(result.status(),
@@ -390,14 +390,14 @@ TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysEmptyInputShouldThrow) {
 }
 
 TEST_F(SketchEncrypterTest, CombineElGamalPublicKeysInvalidInputShouldThrow) {
-  ElGamalPublicKeys key1;
-  key1.set_el_gamal_g("foo");
-  key1.set_el_gamal_y("bar");
-  ElGamalPublicKeys key2;
-  key2.set_el_gamal_g("foo2");
-  key2.set_el_gamal_y("bar2");
+  ElGamalPublicKey key1;
+  key1.set_generator("foo");
+  key1.set_element("bar");
+  ElGamalPublicKey key2;
+  key2.set_generator("foo2");
+  key2.set_element("bar2");
 
-  std::vector<ElGamalPublicKeys> keys{key1, key2};
+  std::vector<ElGamalPublicKey> keys{key1, key2};
   auto result = CombineElGamalPublicKeys(kTestCurveId, keys);
   ASSERT_FALSE(result.ok());
   EXPECT_THAT(result.status(),
