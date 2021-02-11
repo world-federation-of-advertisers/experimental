@@ -24,6 +24,7 @@ on:
 
 jobs:
   any-sketch:
+    name: Build and test any-sketch targets
     runs-on: ubuntu-20.04
     steps:
     - name: Check out revision
@@ -32,8 +33,9 @@ jobs:
     - name: Bazel build and test
       uses: ./.github/actions/bazel-build-test
       with:
-        workspace-path: any-sketch
+        workspace-path: ${{ github.job }}
   any-sketch-java:
+    name: Build and test any-sketch-java targets
     runs-on: ubuntu-20.04
     steps:
     - name: Check out revision
@@ -42,8 +44,9 @@ jobs:
     - name: Bazel build and test
       uses: ./.github/actions/bazel-build-test
       with:
-        workspace-path: any-sketch-java
+        workspace-path: ${{ github.job }}
   cross-media-measurement:
+    name: Build and test cross-media-measurement targets
     runs-on: ubuntu-20.04
     steps:
     - name: Check out revision
@@ -52,8 +55,9 @@ jobs:
     - name: Bazel build and test
       uses: ./.github/actions/bazel-build-test
       with:
-        workspace-path: cross-media-measurement
+        workspace-path: ${{ github.job }}
   cross-media-measurement-api:
+    name: Build and test cross-media-measurement-api targets
     runs-on: ubuntu-20.04
     steps:
     - name: Check out revision
@@ -62,8 +66,9 @@ jobs:
     - name: Bazel build and test
       uses: ./.github/actions/bazel-build-test
       with:
-        workspace-path: cross-media-measurement-api
+        workspace-path: ${{ github.job }}
   examples:
+    name: Build and test examples targets
     runs-on: ubuntu-20.04
     steps:
     - name: Check out revision
@@ -72,4 +77,4 @@ jobs:
     - name: Bazel build and test
       uses: ./.github/actions/bazel-build-test
       with:
-        workspace-path: examples
+        workspace-path: ${{ github.job }}
