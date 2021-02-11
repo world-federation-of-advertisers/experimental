@@ -16,25 +16,18 @@ syntax = "proto3";
 
 package wfa.any_sketch.crypto;
 
+import "wfa/common/el_gamal_key.proto";
 import "wfa/measurement/api/v1alpha/sketch.proto";
 
 option java_package = "org.wfanet.anysketch.crypto";
 option java_multiple_files = true;
-
-// Public keys of the ElGamal cipher.
-message ElGamalPublicKeys {
-  // Public key g (generator) of the ElGamal cipher.
-  bytes el_gamal_g = 1;
-  // Public key y (g^sk) of the ElGamal cipher.
-  bytes el_gamal_y = 2;
-}
 
 // The request to encrypt a sketch.
 message EncryptSketchRequest {
   // The input sketch
   wfa.measurement.api.v1alpha.Sketch sketch = 1;
   // Public keys of the ElGamal cipher used to encrypt the sketch
-  ElGamalPublicKeys el_gamal_keys = 2;
+  wfa.common.ElGamalPublicKey el_gamal_keys = 2;
   // The elliptical curve to work on.
   int64 curve_id = 3;
   // Maximum value to encrypt. Every value greater than the maximum_value
@@ -83,11 +76,11 @@ message CombineElGamalPublicKeysRequest {
   // The elliptical curve to work on.
   int64 curve_id = 1;
   // Public keys to combine. All keys should contain the same generator.
-  repeated ElGamalPublicKeys el_gamal_keys = 2;
+  repeated wfa.common.ElGamalPublicKey el_gamal_keys = 2;
 }
 
 // The response of combining a list of Elgamal public keys
 message CombineElGamalPublicKeysResponse {
   // The combined public keys.
-  ElGamalPublicKeys el_gamal_keys = 1;
+  wfa.common.ElGamalPublicKey el_gamal_keys = 1;
 }

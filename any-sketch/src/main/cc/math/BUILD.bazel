@@ -1,0 +1,38 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "distributions",
+    srcs = [
+        "distributions.cc",
+    ],
+    hdrs = [
+        "distributions.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:bit_gen_ref",
+        "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_private_join_and_compute//util:status_includes",
+    ],
+)
+
+cc_library(
+    name = "noise_parameters_computation",
+    srcs = [
+        "noise_parameters_computation.cc",
+    ],
+    hdrs = [
+        "noise_parameters_computation.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "//src/main/cc/math:distributions",
+        "//src/main/proto/wfa/common:noise_parameters_cc_proto",
+    ],
+)

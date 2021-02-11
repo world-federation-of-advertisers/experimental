@@ -23,10 +23,10 @@
 
 ABSL_FLAG(int, curve_id, 0, "The Elliptic curve id.");
 
-ABSL_FLAG(std::vector<std::string>, elgamal_y_list, {},
-          "The list of ElGamal Y keys to combine.");
+ABSL_FLAG(std::vector<std::string>, element_list, {},
+          "The list of ElGamal public key elements to combine.");
 
-using ::wfa::any_sketch::crypto::ElGamalPublicKeys;
+using ::wfa::common::ElGamalPublicKey;
 
 int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
@@ -35,20 +35,21 @@ int main(int argc, char** argv) {
   CHECK(curveId > 0) << "curveId should be greater than 0";
   std::cerr << "curveId: " << curveId << "\n";
 
-  std::vector<ElGamalPublicKeys> keys;
+  std::vector<ElGamalPublicKey> keys;
 
   std::cerr << "Keys to combine:\n";
-  for (const std::string& y : absl::GetFlag(FLAGS_elgamal_y_list)) {
+  for (const std::string& y : absl::GetFlag(FLAGS_element_list)) {
     std::cerr << y << "\n";
     keys.emplace_back();
     // The generator g doesn't matter, only set the y component.
-    keys.back().set_el_gamal_y(absl::HexStringToBytes(y));
+    keys.back().set_element(absl::HexStringToBytes(y));
   }
 
-  auto result = CombineElGamalPublicKeys(curveId, keys).value();
-  std::cerr << "\nResult:\n" + absl::BytesToHexString(result.el_gamal_y())
+  auto result =
+      wfa::any_sketch::crypto::CombineElGamalPublicKeys(curveId, keys).value();
+  std::cerr << "\nResult:\n" + absl::BytesToHexString(result.element())
             << std::endl;
 
-  std::cout << absl::BytesToHexString(result.el_gamal_y());
+  std::cout << absl::BytesToHexString(result.element());
   return 0;
 }

@@ -83,8 +83,8 @@ TEST(SketchEncrypterJavaAdapterTest, basicBehavior) {
 
   // Build the request
   wfa::any_sketch::crypto::EncryptSketchRequest request;
-  request.mutable_el_gamal_keys()->set_el_gamal_g(public_key_pair.first);
-  request.mutable_el_gamal_keys()->set_el_gamal_y(public_key_pair.second);
+  request.mutable_el_gamal_keys()->set_generator(public_key_pair.first);
+  request.mutable_el_gamal_keys()->set_element(public_key_pair.second);
   request.set_curve_id(kTestCurveId);
   request.set_maximum_value(kMaxCounterValue);
   *request.mutable_sketch()->mutable_config() =
@@ -118,8 +118,8 @@ TEST(SketchEncrypterJavaAdapterTest, noiseShouldBeAddedIfNoiseParameterIsSet) {
   request.mutable_noise_parameter()->set_epsilon(1);
   request.mutable_noise_parameter()->set_delta(0.01);
   request.mutable_noise_parameter()->set_publisher_count(3);
-  request.mutable_el_gamal_keys()->set_el_gamal_g(public_key_pair.first);
-  request.mutable_el_gamal_keys()->set_el_gamal_y(public_key_pair.second);
+  request.mutable_el_gamal_keys()->set_generator(public_key_pair.first);
+  request.mutable_el_gamal_keys()->set_element(public_key_pair.second);
   request.set_curve_id(kTestCurveId);
   request.set_maximum_value(kMaxCounterValue);
   *request.mutable_sketch()->mutable_config() =
