@@ -59,7 +59,10 @@ jobs:
         cd -
 
     - name: Install cpplint
-      run: pip install cpplint
+      run: |
+        pip3 install --user cpplint
+        # TODO: Remove once https://github.com/actions/virtual-environments/issues/2455 is deployed
+        ln -s ~/.local/bin/cpplint ~/lint/
 
     - name: Check out revision
       uses: actions/checkout@v2
