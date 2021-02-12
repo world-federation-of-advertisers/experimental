@@ -48,12 +48,12 @@ jobs:
         
     - name: Install addlicense
       env:
-        ADDLICENSE_VERSION: a0294312aa76d31c0bd7e49083d88a2a04d9b3d
+        ADDLICENSE_VERSION: 0.0.0-20200906110928-a0294312aa76
       run: |
         mkdir -p /tmp/addlicense
         cd /tmp/addlicense
         go mod init temp
-        go get -u -d "github.com/google/addlicense@${ADDLICENSE_VERSION}"
+        go get -u -d "github.com/google/addlicense@v${ADDLICENSE_VERSION}"
         go build -ldflags '-s' github.com/google/addlicense
         cp addlicense ~/lint/
         cd -
