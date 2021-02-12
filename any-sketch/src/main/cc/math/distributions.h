@@ -33,7 +33,7 @@ struct DistributedGeometricRandomComponentOptions {
   int64_t shift_offset = 0;
 };
 
-// TODO: add link to the paper. Definition 2.
+// TODO(@wangyaopw): add link to the paper. Definition 2.
 struct TruncatedDiscreteLaplaceDistributedOptions {
   int64_t mu;
   double s;

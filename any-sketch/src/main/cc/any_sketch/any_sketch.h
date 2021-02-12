@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_
-#define SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_
+#ifndef SRC_MAIN_CC_ANY_SKETCH_ANY_SKETCH_H_
+#define SRC_MAIN_CC_ANY_SKETCH_ANY_SKETCH_H_
 
 #include <cstdint>
 #include <memory>
@@ -128,4 +128,4 @@ class AnySketch {
 
 }  // namespace wfa::any_sketch
 
-#endif  // SRC_MAIN_CC_WFA_ANY_SKETCH_ANY_SKETCH_H_
+#endif  // SRC_MAIN_CC_ANY_SKETCH_ANY_SKETCH_H_

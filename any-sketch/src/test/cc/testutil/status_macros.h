@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_MAIN_CC_ANY_SKETCH_UTIL_TESTING_STATUS_MACROS_H_
-#define SRC_MAIN_CC_ANY_SKETCH_UTIL_TESTING_STATUS_MACROS_H_
+#include <utility>
+
+#ifndef SRC_TEST_CC_TESTUTIL_STATUS_MACROS_H_
+#define SRC_TEST_CC_TESTUTIL_STATUS_MACROS_H_
 
 #define ASSERT_OK_AND_ASSIGN(lhs, rexpr) \
   ASSERT_OK_AND_ASSIGN_IMPL(             \
@@ -28,4 +30,4 @@
 
 #define STATUS_MACROS_CONCAT_IMPL(x, y) x##y
 
-#endif  // SRC_MAIN_CC_ANY_SKETCH_UTIL_TESTING_STATUS_MACROS_H_
+#endif  // SRC_TEST_CC_TESTUTIL_STATUS_MACROS_H_

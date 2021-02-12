@@ -15,6 +15,8 @@
 #ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_H_
 #define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_H_
 
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/status/statusor.h"

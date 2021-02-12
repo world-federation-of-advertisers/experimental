@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_TEST_CC_WFA_TESTUTIL_RANDOM_H_
-#define SRC_TEST_CC_WFA_TESTUTIL_RANDOM_H_
+#ifndef SRC_TEST_CC_TESTUTIL_RANDOM_H_
+#define SRC_TEST_CC_TESTUTIL_RANDOM_H_
 
 #include <cstdint>
 #include <limits>
@@ -24,4 +24,4 @@ int64_t RandomInt64(int64_t max = std::numeric_limits<int64_t>::max());
 
 }  // namespace wfa
 
-#endif  // SRC_TEST_CC_WFA_TESTUTIL_RANDOM_H_
+#endif  // SRC_TEST_CC_TESTUTIL_RANDOM_H_

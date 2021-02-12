@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
+
+#include <memory>
+#include <string>
+#include <utility>
 
 // TODO(wangyaopw): use "external/*" path for external dependencies
 #include "absl/container/flat_hash_map.h"

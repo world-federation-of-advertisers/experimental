@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_TEST_CC_WFA_TESTUTIL_MATCHERS_H_
-#define SRC_TEST_CC_WFA_TESTUTIL_MATCHERS_H_
+#ifndef SRC_TEST_CC_TESTUTIL_MATCHERS_H_
+#define SRC_TEST_CC_TESTUTIL_MATCHERS_H_
+
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -53,4 +55,4 @@ MATCHER_P2(StatusIs, code, message, "") {
 }
 }  // namespace wfa
 
-#endif  // SRC_TEST_CC_WFA_TESTUTIL_MATCHERS_H_
+#endif  // SRC_TEST_CC_TESTUTIL_MATCHERS_H_

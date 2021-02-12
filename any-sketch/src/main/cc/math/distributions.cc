@@ -74,7 +74,7 @@ absl::StatusOr<int64_t> GetDistributedGeometricRandomComponent(
     return absl::InvalidArgumentError("The num should be positive.");
   }
 
-  // TODO: switch to an OpenSSL-based random number generator
+  // TODO(@wangyaopw): switch to an OpenSSL-based random number generator
   absl::BitGen rnd;
   ASSIGN_OR_RETURN(int64_t polya_a, GetTruncatedPolyaRandomVariable(
                                         options.truncate_threshold,
@@ -87,7 +87,7 @@ absl::StatusOr<int64_t> GetDistributedGeometricRandomComponent(
 
 absl::StatusOr<int64_t> GetTruncatedDiscreteLaplaceDistributedRandomNumber(
     TruncatedDiscreteLaplaceDistributedOptions options) {
-  // TODO: switch to an OpenSSL-based random number generator
+  // TODO(@wangyaopw): switch to an OpenSSL-based random number generator
   absl::BitGen rnd;
   for (int i = 0; i < kMaximumAttempts; ++i) {
     ASSIGN_OR_RETURN(int64_t dlap, GetDlapVariable(options.s, rnd));

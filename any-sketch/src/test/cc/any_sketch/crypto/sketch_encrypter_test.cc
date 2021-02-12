@@ -55,7 +55,6 @@ constexpr char kElGamalPublicKeyY3[] =
 constexpr char kCombinedElGamalPublicKeyY[] =
     "02505d7b3ac4c3c387c74132ab677a3421e883b90d4c83dc766e400fe67acc1f04";
 
-// TODO: use protocol buffer matchers when they are available
 // Returns true if the decryption of expected is the same with that of arg.
 MATCHER_P2(HasSameDecryption, original_cipher, expected, "") {
   absl::StatusOr<std::string> decrypted_actual =

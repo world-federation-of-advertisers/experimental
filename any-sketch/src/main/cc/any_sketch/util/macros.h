@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <utility>
+
 #ifndef SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 #define SRC_MAIN_CC_ANY_SKETCH_UTIL_MACROS_H_
 

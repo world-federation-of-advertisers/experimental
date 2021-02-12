@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_
-#define ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_
+#ifndef SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_
+#define SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_
+
+#include <memory>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "src/main/cc/any_sketch/aggregators.h"
@@ -29,4 +32,4 @@ struct ValueFunction {
 
 }  // namespace wfa::any_sketch
 
-#endif  // ORG_WFANET_ANYSKETCH_SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_
+#endif  // SRC_MAIN_CC_ANY_SKETCH_VALUE_FUNCTION_H_

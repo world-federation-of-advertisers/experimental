@@ -19,7 +19,7 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/escaping.h"
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
 
 ABSL_FLAG(int, curve_id, 0, "The Elliptic curve id.");
 

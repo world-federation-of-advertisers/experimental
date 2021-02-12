@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter_adapter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
 
 #include "absl/memory/memory.h"
 #include "sketch_encrypter.h"
