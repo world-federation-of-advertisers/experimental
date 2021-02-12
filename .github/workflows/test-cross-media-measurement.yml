@@ -4,9 +4,9 @@ name: Build and run all targets in cross-media-measurement
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-test:
@@ -20,14 +20,26 @@ jobs:
     - name: Check out revision
       uses: actions/checkout@v2
 
+    - name: Set execroot hash
+      run: |
+        execroot_hash="$(
+          bazelisk info execution_root | tr -d '\n' | git hash-object --stdin
+        )"
+        echo "execroot_hash=${execroot_hash}" >> $GITHUB_ENV
+
+    - name: Set output base path
+      run: echo "output_base_path=$(bazelisk info output_base)" >> $GITHUB_ENV
+
+    - name: Set tree hash
+      run: echo "tree_hash=$(git rev-parse HEAD:)" >> $GITHUB_ENV
+
     - name: Set up build cache
       uses: actions/cache@v2
       with:
-        path: ~/.cache/bazel
-        key: bazel-xmms-${{ hashFiles('cross-media-measurement/WORKSPACE') }}
+        path: ${{ env.output_base_path }}
+        key: bazel-${{ env.execroot_hash }}-${{ env.tree_hash }}
         restore-keys: |
-          bazel-xmms-
-          bazel-
+          bazel-${{ env.execroot_hash }}-
 
     - name: Build
       run: bazelisk build --keep_going //...
