@@ -43,7 +43,7 @@ jobs:
       run: |
         wget -O ~/lint/google-java-format.jar "https://github.com/google/google-java-format/releases/download/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}-all-deps.jar"
         echo '#!/usr/bin/env bash' > ~/lint/google-java-format
-        echo 'java -jar ~/lint/google-java-format.jar' >> ~/lint/google-java-format
+        echo 'java -jar ~/lint/google-java-format.jar "$@"' >> ~/lint/google-java-format
         chmod u+x ~/lint/google-java-format
         
     - name: Install addlicense
