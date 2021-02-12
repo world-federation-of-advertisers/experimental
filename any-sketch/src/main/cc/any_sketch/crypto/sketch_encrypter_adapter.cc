@@ -14,8 +14,11 @@
 
 #include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
 
+#include <string>
+#include <vector>
+
 #include "absl/memory/memory.h"
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
 #include "util/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 

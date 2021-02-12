@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_PROTOCAL_ENCRYPTION_UTILITY_H_
-#define WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_PROTOCAL_ENCRYPTION_UTILITY_H_
+#ifndef SRC_MAIN_CC_WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_LIQUID_LEGIONS_V1_ENCRYPTION_UTILITY_H_
+#define SRC_MAIN_CC_WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_LIQUID_LEGIONS_V1_ENCRYPTION_UTILITY_H_
 
 #include "absl/status/statusor.h"
 #include "wfa/measurement/protocol/crypto/liquid_legions_v1_encryption_methods.pb.h"
@@ -59,4 +59,4 @@ DecryptLastLayerFlagAndCount(
 
 }  // namespace wfa::measurement::protocol::liquid_legions_v1
 
-#endif  // WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_PROTOCAL_ENCRYPTION_UTILITY_H_
+#endif  // SRC_MAIN_CC_WFA_MEASUREMENT_PROTOCOL_LIQUID_LEGIONS_V1_LIQUID_LEGIONS_V1_ENCRYPTION_UTILITY_H_

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "wfa/measurement/protocol/liquid_legions_v1/liquid_legions_v1_encryption_utility_wrapper.h"
+
 #include "absl/status/statusor.h"
 #include "util/status_macros.h"
 #include "wfa/measurement/common/crypto/encryption_utility_helper.h"
@@ -29,7 +31,7 @@ absl::StatusOr<std::string> AddNoiseToSketch(
   ASSIGN_OR_RETURN(AddNoiseToSketchResponse result,
                    AddNoiseToSketch(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> BlindOneLayerRegisterIndex(
     const std::string& serialized_request) {
@@ -38,7 +40,7 @@ absl::StatusOr<std::string> BlindOneLayerRegisterIndex(
   ASSIGN_OR_RETURN(BlindOneLayerRegisterIndexResponse result,
                    BlindOneLayerRegisterIndex(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> BlindLastLayerIndexThenJoinRegisters(
     const std::string& serialized_request) {
@@ -47,7 +49,7 @@ absl::StatusOr<std::string> BlindLastLayerIndexThenJoinRegisters(
   ASSIGN_OR_RETURN(BlindLastLayerIndexThenJoinRegistersResponse result,
                    BlindLastLayerIndexThenJoinRegisters(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> DecryptOneLayerFlagAndCount(
     const std::string& serialized_request) {
@@ -56,7 +58,7 @@ absl::StatusOr<std::string> DecryptOneLayerFlagAndCount(
   ASSIGN_OR_RETURN(DecryptOneLayerFlagAndCountResponse result,
                    DecryptOneLayerFlagAndCount(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> DecryptLastLayerFlagAndCount(
     const std::string& serialized_request) {
@@ -65,6 +67,6 @@ absl::StatusOr<std::string> DecryptLastLayerFlagAndCount(
   ASSIGN_OR_RETURN(DecryptLastLayerFlagAndCountResponse result,
                    DecryptLastLayerFlagAndCount(request_proto));
   return result.SerializeAsString();
-};
+}
 
 }  // namespace wfa::measurement::protocol::liquid_legions_v1

@@ -14,6 +14,11 @@
 
 #include "wfa/measurement/protocol/liquid_legions_v1/liquid_legions_v1_encryption_utility.h"
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
@@ -93,8 +98,6 @@ absl::StatusOr<absl::flat_hash_map<std::string, int>> CreateCountLookUpTable(
   return count_lookup_table;
 }
 
-// TODO: delete this method after DecryptLastLayerFlagAndCount() uses the
-// ProtocolCryptor.
 absl::StatusOr<std::string> GetIsNotDestroyedFlag(const int curve_id) {
   auto ctx = absl::make_unique<Context>();
   ASSIGN_OR_RETURN(auto ec_group, ECGroup::Create(curve_id, ctx.get()));
@@ -234,7 +237,7 @@ absl::StatusOr<BlindOneLayerRegisterIndexResponse> BlindOneLayerRegisterIndex(
 
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
   return response;
-};
+}
 
 absl::StatusOr<BlindLastLayerIndexThenJoinRegistersResponse>
 BlindLastLayerIndexThenJoinRegisters(
@@ -279,7 +282,7 @@ BlindLastLayerIndexThenJoinRegisters(
 
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
   return response;
-};
+}
 
 absl::StatusOr<DecryptOneLayerFlagAndCountResponse> DecryptOneLayerFlagAndCount(
     const DecryptOneLayerFlagAndCountRequest& request) {
@@ -317,7 +320,7 @@ absl::StatusOr<DecryptOneLayerFlagAndCountResponse> DecryptOneLayerFlagAndCount(
 
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
   return response;
-};
+}
 
 absl::StatusOr<DecryptLastLayerFlagAndCountResponse>
 DecryptLastLayerFlagAndCount(
@@ -387,7 +390,7 @@ DecryptLastLayerFlagAndCount(
 
   response.set_elapsed_cpu_time_millis(timer.ElapsedMillis());
   return response;
-};
+}
 
 absl::StatusOr<AddNoiseToSketchResponse> AddNoiseToSketch(
     const AddNoiseToSketchRequest& request) {
@@ -395,8 +398,8 @@ absl::StatusOr<AddNoiseToSketchResponse> AddNoiseToSketch(
 
   AddNoiseToSketchResponse response;
   *response.mutable_sketch() = request.sketch();
-  // TODO: actually add noise to the sketch.
-  //  For the POC, we only shuffle the registers.
+  //  For the POC, we only shuffle the registers. Noise is supported in the LLV2
+  //  protocol.
   RETURN_IF_ERROR(
       SortStringByBlock<kBytesPerCipherRegister>(*response.mutable_sketch()));
 

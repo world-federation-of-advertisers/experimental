@@ -15,6 +15,8 @@
 #ifndef SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_ADAPTER_H_
 #define SRC_MAIN_CC_ANY_SKETCH_CRYPTO_SKETCH_ENCRYPTER_ADAPTER_H_
 
+#include <string>
+
 #include "absl/status/statusor.h"
 
 // Wrapper methods used to generate the swig/JNI Java classes.

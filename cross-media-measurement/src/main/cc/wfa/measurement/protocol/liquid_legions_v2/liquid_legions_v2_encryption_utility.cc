@@ -14,6 +14,11 @@
 
 #include "wfa/measurement/protocol/liquid_legions_v2/liquid_legions_v2_encryption_utility.h"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"

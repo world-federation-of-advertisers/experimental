@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "wfa/measurement/protocol/liquid_legions_v2/liquid_legions_v2_encryption_utility_wrapper.h"
+
 #include "absl/status/statusor.h"
 #include "util/status_macros.h"
 #include "wfa/measurement/common/crypto/encryption_utility_helper.h"
@@ -31,7 +33,7 @@ absl::StatusOr<std::string> CompleteSetupPhase(
   ASSIGN_OR_RETURN(CompleteSetupPhaseResponse result,
                    CompleteSetupPhase(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseOne(
     const std::string& serialized_request) {
@@ -40,7 +42,7 @@ absl::StatusOr<std::string> CompleteExecutionPhaseOne(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseOneResponse result,
                    CompleteExecutionPhaseOne(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseOneAtAggregator(
     const std::string& serialized_request) {
@@ -49,7 +51,7 @@ absl::StatusOr<std::string> CompleteExecutionPhaseOneAtAggregator(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseOneAtAggregatorResponse result,
                    CompleteExecutionPhaseOneAtAggregator(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseTwo(
     const std::string& serialized_request) {
@@ -58,7 +60,7 @@ absl::StatusOr<std::string> CompleteExecutionPhaseTwo(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseTwoResponse result,
                    CompleteExecutionPhaseTwo(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseTwoAtAggregator(
     const std::string& serialized_request) {
@@ -67,7 +69,7 @@ absl::StatusOr<std::string> CompleteExecutionPhaseTwoAtAggregator(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseTwoAtAggregatorResponse result,
                    CompleteExecutionPhaseTwoAtAggregator(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseThree(
     const std::string& serialized_request) {
@@ -76,7 +78,7 @@ absl::StatusOr<std::string> CompleteExecutionPhaseThree(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseThreeResponse result,
                    CompleteExecutionPhaseThree(request_proto));
   return result.SerializeAsString();
-};
+}
 
 absl::StatusOr<std::string> CompleteExecutionPhaseThreeAtAggregator(
     const std::string& serialized_request) {
@@ -85,6 +87,6 @@ absl::StatusOr<std::string> CompleteExecutionPhaseThreeAtAggregator(
   ASSIGN_OR_RETURN(CompleteExecutionPhaseThreeAtAggregatorResponse result,
                    CompleteExecutionPhaseThreeAtAggregator(request_proto));
   return result.SerializeAsString();
-};
+}
 
 }  // namespace wfa::measurement::protocol::liquid_legions_v2
