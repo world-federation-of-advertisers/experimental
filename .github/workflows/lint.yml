@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     defaults:
       run:
         shell: bash
@@ -43,23 +43,29 @@ jobs:
       run: |
         wget -O ~/lint/google-java-format.jar "https://github.com/google/google-java-format/releases/download/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}-all-deps.jar"
         echo '#!/usr/bin/env bash' > ~/lint/google-java-format
-        echo 'java -jar ~/lint/google-java-format.jar' >> ~/lint/google-java-format
+        echo 'java -jar ~/lint/google-java-format.jar "$@"' >> ~/lint/google-java-format
         chmod u+x ~/lint/google-java-format
         
     - name: Install addlicense
       env:
-        ADDLICENSE_VERSION: a0294312aa76d31c0bd7e49083d88a2a04d9b3d
+        ADDLICENSE_VERSION: 0.0.0-20200906110928-a0294312aa76
       run: |
         mkdir -p /tmp/addlicense
         cd /tmp/addlicense
         go mod init temp
-        go get -u -d "github.com/google/addlicense@${ADDLICENSE_VERSION}"
+        go get -u -d "github.com/google/addlicense@v${ADDLICENSE_VERSION}"
         go build -ldflags '-s' github.com/google/addlicense
         cp addlicense ~/lint/
         cd -
 
     - name: Install cpplint
-      run: pip install cpplint
+      run: |
+        pip3 install --user cpplint
+        # TODO: Remove once https://github.com/actions/virtual-environments/issues/2455 is deployed
+        ln -s ~/.local/bin/cpplint ~/lint/
+
+    - name: Add linters to $PATH
+      run: echo "$HOME/lint" >> $GITHUB_PATH
 
     - name: Check out revision
       uses: actions/checkout@v2
@@ -73,5 +79,5 @@ jobs:
         for subtree in $SUBTREES; do (
           cd "${subtree}"
           echo "Running linters in ${subtree}"
-          PATH="$HOME/lint:$PATH" ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+          ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
         ); done
