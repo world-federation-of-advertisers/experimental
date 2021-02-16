@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
-#define WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
+#ifndef SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
+#define SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
 
 #include <memory>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -104,4 +105,4 @@ absl::StatusOr<std::unique_ptr<ProtocolCryptor>> CreateProtocolCryptorWithKeys(
 
 }  // namespace wfa::measurement::common::crypto
 
-#endif  // WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
+#endif  // SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_PROTOCOL_CRYPTOR_H_
