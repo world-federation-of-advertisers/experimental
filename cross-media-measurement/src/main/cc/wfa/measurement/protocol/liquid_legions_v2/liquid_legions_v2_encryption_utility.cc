@@ -65,6 +65,7 @@ using ::wfa::measurement::common::crypto::kGenerateWithNewPohligHellmanKey;
 using ::wfa::measurement::common::crypto::kPaddingNoiseRegisterId;
 using ::wfa::measurement::common::crypto::kPublisherNoiseRegisterId;
 using ::wfa::measurement::common::crypto::kUnitECPointSeed;
+using ::wfa::measurement::common::crypto::MultiplyEcPointPairByScalar;
 using ::wfa::measurement::common::crypto::ProtocolCryptor;
 using ::wfa::measurement::common::crypto::StartedThreadCpuTimer;
 
@@ -77,8 +78,10 @@ using ::wfa::measurement::common::crypto::StartedThreadCpuTimer;
 // sub_permutation would be ignored during SameKeyAggregation.
 absl::Status MergeCountsUsingSameKeyAggregation(
     absl::Span<const size_t> sub_permutation, absl::string_view registers,
-    ProtocolCryptor& protocol_cryptor, int total_sketches_count,
-    std::string& response) {
+    ProtocolCryptor& protocol_cryptor,
+    const ElGamalEcPointPair& destroyed_key_constant_ec_pair,
+    const ElGamalEcPointPair& blinded_histogram_noise_key_constant_ec_pair,
+    int total_sketches_count, std::string& response) {
   if (sub_permutation.empty()) {
     return absl::InternalError("Empty sub permutation.");
   }
@@ -86,13 +89,6 @@ absl::Status MergeCountsUsingSameKeyAggregation(
     // These are publisher noises or padding noises, skip all of them.
     return absl::OkStatus();
   }
-  ASSIGN_OR_RETURN(ElGamalEcPointPair destroyed_key_constant_ec_pair,
-                   protocol_cryptor.EncryptPlaintextToEcPointsCompositeElGamal(
-                       kDestroyedRegisterKey));
-  ASSIGN_OR_RETURN(
-      ElGamalEcPointPair blinded_histogram_noise_key_constant_ec_pair,
-      protocol_cryptor.EncryptPlaintextToEcPointsCompositeElGamal(
-          kBlindedHistogramNoiseRegisterKey));
 
   ASSIGN_OR_RETURN(
       KeyCountPairCipherText key_count_0,
@@ -113,7 +109,6 @@ absl::Status MergeCountsUsingSameKeyAggregation(
     ASSIGN_OR_RETURN(
         KeyCountPairCipherText next_key_count,
         ExtractKeyCountPairFromRegisters(registers, sub_permutation[i]));
-    // Get the ECPoints of this (Key, count) pair, 2 for key, and 2 for count.
     ASSIGN_OR_RETURN(ElGamalEcPointPair count_i,
                      protocol_cryptor.ToElGamalEcPoints(next_key_count.count));
     ASSIGN_OR_RETURN(ElGamalEcPointPair key_i,
@@ -126,9 +121,12 @@ absl::Status MergeCountsUsingSameKeyAggregation(
     // total_count +=  count_i
     ASSIGN_OR_RETURN(total_count, AddEcPointPairs(total_count, count_i));
   }
-  // group_count = total_count + flag_a
+  // group_count = total_count + flag_a*r
+  ASSIGN_OR_RETURN(
+      ElGamalEcPointPair randomized_flag_a,
+      MultiplyEcPointPairByScalar(flag_a, protocol_cryptor.NextRandomBigNum()));
   ASSIGN_OR_RETURN(ElGamalEcPointPair group_count,
-                   AddEcPointPairs(total_count, flag_a));
+                   AddEcPointPairs(total_count, randomized_flag_a));
   // flag_b =  r*(destroyed_key_constant + flag_a - Key[0])
   ASSIGN_OR_RETURN(ElGamalEcPointPair flag_b,
                    AddEcPointPairs(destroyed_key_constant_ec_pair, flag_a));
@@ -164,6 +162,14 @@ absl::Status JoinRegistersByIndexAndMergeCounts(
     return absl::OkStatus();
   }
 
+  ASSIGN_OR_RETURN(ElGamalEcPointPair destroyed_key_constant_ec_pair,
+                   protocol_cryptor.EncryptPlaintextToEcPointsCompositeElGamal(
+                       kDestroyedRegisterKey));
+  ASSIGN_OR_RETURN(
+      ElGamalEcPointPair blinded_histogram_noise_key_constant_ec_pair,
+      protocol_cryptor.EncryptPlaintextToEcPointsCompositeElGamal(
+          kBlindedHistogramNoiseRegisterKey));
+
   int start = 0;
   for (size_t i = 0; i < register_count; ++i) {
     if (blinded_register_indexes[permutation[i]] ==
@@ -175,7 +181,9 @@ absl::Status JoinRegistersByIndexAndMergeCounts(
       // append the result to the response.
       RETURN_IF_ERROR(MergeCountsUsingSameKeyAggregation(
           permutation.subspan(start, i - start), registers, protocol_cryptor,
-          total_sketches_count, response));
+          destroyed_key_constant_ec_pair,
+          blinded_histogram_noise_key_constant_ec_pair, total_sketches_count,
+          response));
       // Reset the starting point.
       start = i;
     }
@@ -183,7 +191,9 @@ absl::Status JoinRegistersByIndexAndMergeCounts(
   // Process the last group and append the result to the response.
   return MergeCountsUsingSameKeyAggregation(
       permutation.subspan(start, register_count - start), registers,
-      protocol_cryptor, total_sketches_count, response);
+      protocol_cryptor, destroyed_key_constant_ec_pair,
+      blinded_histogram_noise_key_constant_ec_pair, total_sketches_count,
+      response);
 }
 
 absl::StatusOr<int64_t> EstimateReach(double liquid_legions_decay_rate,
@@ -252,8 +262,9 @@ absl::StatusOr<int64_t> AddBlindedHistogramNoise(
     // Add noise_register_count_for_bucket_k such distinct register ids.
     for (int i = 0; i < noise_register_count_for_bucket_k; ++i) {
       // The prefix is to ensure the value is not in the regular id space.
-      std::string register_id = absl::StrCat(
-          "blinded_histogram_noise", protocol_cryptor.NextRandomBigNum());
+      std::string register_id =
+          absl::StrCat("blinded_histogram_noise",
+                       protocol_cryptor.NextRandomBigNumAsString());
       ASSIGN_OR_RETURN(std::string register_id_ec,
                        protocol_cryptor.MapToCurve(register_id));
       // Add k registers with the same register_id but different keys and
@@ -292,9 +303,9 @@ absl::StatusOr<int64_t> AddNoiseForPublisherNoise(
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, publisher_noise_register_id_ec, data));
     // Add register key, a random number.
-    ASSIGN_OR_RETURN(
-        std::string random_key_ec,
-        protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNum()));
+    ASSIGN_OR_RETURN(std::string random_key_ec,
+                     protocol_cryptor.MapToCurve(
+                         protocol_cryptor.NextRandomBigNumAsString()));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, random_key_ec, data));
     // Add register count, which can be of arbitrary value. Use the same value
@@ -319,8 +330,8 @@ absl::StatusOr<int64_t> AddGlobalReachDpNoise(
   for (int i = 0; i < noise_registers_count; ++i) {
     // Add register id, a random number.
     // The prefix is to ensure the value is not in the regular id space.
-    std::string register_id =
-        absl::StrCat("reach_dp_noise", protocol_cryptor.NextRandomBigNum());
+    std::string register_id = absl::StrCat(
+        "reach_dp_noise", protocol_cryptor.NextRandomBigNumAsString());
     ASSIGN_OR_RETURN(std::string register_id_ec,
                      protocol_cryptor.MapToCurve(register_id));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
@@ -349,9 +360,9 @@ absl::Status AddPaddingReachNoise(ProtocolCryptor& protocol_cryptor,
     // Add register_id, a predefined constant
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, padding_noise_register_id_ec, data));
-    ASSIGN_OR_RETURN(
-        std::string random_key_ec,
-        protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNum()));
+    ASSIGN_OR_RETURN(std::string random_key_ec,
+                     protocol_cryptor.MapToCurve(
+                         protocol_cryptor.NextRandomBigNumAsString()));
     // Add register key, random number
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, random_key_ec, data));
@@ -386,9 +397,10 @@ absl::StatusOr<int64_t> AddFrequencyDpNoise(
       // Adds flag_2 and flag_3, which are random numbers encrypted by the
       // partial_protocol_cryptor.
       for (int j = 0; j < 2; ++j) {
-        ASSIGN_OR_RETURN(std::string random_values,
-                         partial_protocol_cryptor.MapToCurve(
-                             partial_protocol_cryptor.NextRandomBigNum()));
+        ASSIGN_OR_RETURN(
+            std::string random_values,
+            partial_protocol_cryptor.MapToCurve(
+                partial_protocol_cryptor.NextRandomBigNumAsString()));
         RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
             partial_protocol_cryptor, random_values, data));
       }
@@ -416,16 +428,17 @@ absl::StatusOr<int64_t> AddDestroyedFrequencyNoise(
   for (int i = 0; i < noise_tuples_count; ++i) {
     for (int j = 0; j < 3; ++j) {
       // Add three random flags encrypted using the partial_protocol_cryptor.
-      ASSIGN_OR_RETURN(std::string random_values,
-                       partial_protocol_cryptor.MapToCurve(
-                           partial_protocol_cryptor.NextRandomBigNum()));
+      ASSIGN_OR_RETURN(
+          std::string random_values,
+          partial_protocol_cryptor.MapToCurve(
+              partial_protocol_cryptor.NextRandomBigNumAsString()));
       RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
           partial_protocol_cryptor, random_values, data));
     }
     // Add a random count encrypted using the full_protocol_cryptor.
     ASSIGN_OR_RETURN(std::string random_values,
                      full_protocol_cryptor.MapToCurve(
-                         full_protocol_cryptor.NextRandomBigNum()));
+                         full_protocol_cryptor.NextRandomBigNumAsString()));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         full_protocol_cryptor, random_values, data));
   }
@@ -456,7 +469,7 @@ absl::Status AddPaddingFrequencyNoise(ProtocolCryptor& full_protocol_cryptor,
     // arbitrary value.
     ASSIGN_OR_RETURN(std::string random_values,
                      partial_protocol_cryptor.MapToCurve(
-                         partial_protocol_cryptor.NextRandomBigNum()));
+                         partial_protocol_cryptor.NextRandomBigNumAsString()));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         partial_protocol_cryptor, random_values, data));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
@@ -525,6 +538,9 @@ absl::Status AddAllFrequencyNoise(
       noise_parameters.contributors_count());
   int64_t total_noise_tuples_count =
       options.shift_offset * 2 * (noise_parameters.maximum_frequency() + 1);
+  // Reserve extra space for noise tuples in data.
+  data.reserve(data.size() +
+               total_noise_tuples_count * kBytesPerFlagsCountTuple);
   ASSIGN_OR_RETURN(
       int frequency_dp_noise_tuples_count,
       AddFrequencyDpNoise(full_protocol_cryptor, partial_protocol_cryptor,
