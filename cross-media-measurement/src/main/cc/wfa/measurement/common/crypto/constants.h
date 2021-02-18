@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
-#define WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
+#ifndef SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
+#define SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
+
+#include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 
@@ -56,4 +59,4 @@ inline const std::pair<std::string, std::string>
 
 }  // namespace wfa::measurement::common::crypto
 
-#endif  // WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
+#endif  // SRC_MAIN_CC_WFA_MEASUREMENT_COMMON_CRYPTO_CONSTANTS_H_
