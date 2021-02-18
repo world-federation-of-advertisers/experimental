@@ -49,6 +49,10 @@ inline constexpr absl::string_view kGenerateWithNewPohligHellmanKey = "";
 inline constexpr absl::string_view kGenerateWithNewElGamalPrivateKey = "";
 inline const std::pair<std::string, std::string>
     kGenerateWithNewElGamalPublicKey = {"", ""};
+inline const std::pair<std::string, std::string> kGenerateNewCompositeCipher = {
+    "", ""};
+inline const std::pair<std::string, std::string>
+    kGenerateNewParitialCompositeCipher = {"", ""};
 
 }  // namespace wfa::measurement::common::crypto
 
