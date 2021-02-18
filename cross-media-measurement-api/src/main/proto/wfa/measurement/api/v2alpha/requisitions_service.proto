@@ -83,7 +83,8 @@ message ListMetricRequisitionsResponse {
 
 // Request message for `RefuseMetricRequisition` method.
 message RefuseMetricRequisitionRequest {
-  // Resource key of the `MetricRequisition` to mark as `UNFILLABLE`. Required.
+  // Resource key of the `MetricRequisition` to mark as
+  // `PERMANENTLY_UNFILLABLE`. Required.
   MetricRequisition.Key key = 1;
 
   // Details about the refusal.
