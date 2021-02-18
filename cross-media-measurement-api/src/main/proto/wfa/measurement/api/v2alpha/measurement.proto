@@ -1,4 +1,4 @@
-// Copyright 2020 The Cross-Media Measurement Authors
+// Copyright 2020 The Measurement Proto Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ message Measurement {
     // ID of this `Measurement`.
     string measurement_id = 2;
   }
-  // Resource key.  trying
+  // Resource key.
   Key key = 1;
 
   // Metric definition for requisitions. Required. Immutable.
@@ -82,4 +82,10 @@ message Measurement {
   // Result of this `Measurement` computation. Output-only. Only set if `state`
   // is `SUCCEEDED`.
   Result result = 5;
+
+  // Map of caller-defined tag keys to values for this `Measurement`.
+  // These are to enable `MeasurementConsumer`s to apply labels to the
+  // `Measurement` to aid in filtering and identifying later on.
+  // Do not put sensitive data in this field.
+  map<string, string> tags = 12;
 }
