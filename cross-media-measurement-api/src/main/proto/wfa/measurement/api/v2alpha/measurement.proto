@@ -30,7 +30,7 @@ message Measurement {
     // ID of this `Measurement`.
     string measurement_id = 2;
   }
-  // Resource key.
+  // Resource key.  trying
   Key key = 1;
 
   // Metric definition for requisitions. Required. Immutable.
