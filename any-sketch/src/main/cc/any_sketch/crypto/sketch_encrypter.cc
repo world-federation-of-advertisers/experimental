@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
+
+#include <memory>
+#include <string>
+#include <utility>
 
 // TODO(wangyaopw): use "external/*" path for external dependencies
 #include "absl/container/flat_hash_map.h"
 #include "crypto/commutative_elgamal.h"
 #include "crypto/context.h"
 #include "crypto/ec_group.h"
+#include "math/distributions.h"
+#include "math/noise_parameters_computation.h"
 #include "src/main/cc/any_sketch/util/macros.h"
 #include "util/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
-#include "wfa/measurement/common/crypto/noise_parameters_computation.h"
-#include "wfa/measurement/common/crypto/parameters.pb.h"
-#include "wfa/measurement/common/math/distributions.h"
-#include "wfa/measurement/common/string_block_sorter.h"
+#include "wfa/common/noise_parameters.pb.h"
 
 namespace wfa::any_sketch::crypto {
 
@@ -35,13 +38,11 @@ using ::private_join_and_compute::CommutativeElGamal;
 using ::private_join_and_compute::Context;
 using ::private_join_and_compute::ECGroup;
 using ::private_join_and_compute::ECPoint;
+using ::wfa::common::DifferentialPrivacyParams;
+using ::wfa::math::GetPublisherNoiseOptions;
+using ::wfa::math::GetTruncatedDiscreteLaplaceDistributedRandomNumber;
 using ::wfa::measurement::api::v1alpha::Sketch;
 using ::wfa::measurement::api::v1alpha::SketchConfig;
-using ::wfa::measurement::common::SortStringByBlock;
-using ::wfa::measurement::common::crypto::DifferentialPrivacyParams;
-using ::wfa::measurement::common::crypto::GetPublisherNoiseOptions;
-using ::wfa::measurement::common::math::
-    GetTruncatedDiscreteLaplaceDistributedRandomNumber;
 using DestroyedRegisterStrategy =
     ::wfa::any_sketch::crypto::EncryptSketchRequest::DestroyedRegisterStrategy;
 using BlindersCiphertext = std::pair<std::string, std::string>;
@@ -426,8 +427,8 @@ absl::StatusOr<std::unique_ptr<SketchEncrypter>> CreateWithPublicKey(
   return {std::move(result)};
 }
 
-absl::StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
-    int curve_id, const std::vector<ElGamalPublicKeys>& keys) {
+absl::StatusOr<common::ElGamalPublicKey> CombineElGamalPublicKeys(
+    int curve_id, const std::vector<common::ElGamalPublicKey>& keys) {
   if (keys.empty()) {
     return absl::InvalidArgumentError("Keys cannot be empty");
   }
@@ -435,28 +436,28 @@ absl::StatusOr<ElGamalPublicKeys> CombineElGamalPublicKeys(
     return keys[0];
   }
 
-  ElGamalPublicKeys result;
-  result.set_el_gamal_g(keys[0].el_gamal_g());
+  common::ElGamalPublicKey result;
+  result.set_generator(keys[0].generator());
 
   Context ctx;
   ASSIGN_OR_RETURN_ERROR(ECGroup ec_group, ECGroup::Create(curve_id, &ctx),
                          absl::StrCat("Invalid Curve_id: ", curve_id));
-  ASSIGN_OR_RETURN_ERROR(
-      ECPoint combined_element_ec, ec_group.CreateECPoint(keys[0].el_gamal_y()),
-      absl::StrCat("Invalid ECPoint: ", keys[0].el_gamal_y()));
+  ASSIGN_OR_RETURN_ERROR(ECPoint combined_element_ec,
+                         ec_group.CreateECPoint(keys[0].element()),
+                         absl::StrCat("Invalid ECPoint: ", keys[0].element()));
 
   for (size_t i = 1; i < keys.size(); i++) {
-    if (keys[i].el_gamal_g() != result.el_gamal_g()) {
+    if (keys[i].generator() != result.generator()) {
       return absl::InvalidArgumentError(
-          absl::StrCat("Generators don't match", keys[i].el_gamal_g(), " vs ",
-                       result.el_gamal_g()));
+          absl::StrCat("Generators don't match", keys[i].generator(), " vs ",
+                       result.generator()));
     }
     ASSIGN_OR_RETURN_ERROR(
-        ECPoint element_ec, ec_group.CreateECPoint(keys[i].el_gamal_y()),
-        absl::StrCat("Invalid ECPoint: ", keys[i].el_gamal_y()));
+        ECPoint element_ec, ec_group.CreateECPoint(keys[i].element()),
+        absl::StrCat("Invalid ECPoint: ", keys[i].element()));
     ASSIGN_OR_RETURN(combined_element_ec, combined_element_ec.Add(element_ec));
   }
-  ASSIGN_OR_RETURN(*result.mutable_el_gamal_y(),
+  ASSIGN_OR_RETURN(*result.mutable_element(),
                    combined_element_ec.ToBytesCompressed());
   return std::move(result);
 }

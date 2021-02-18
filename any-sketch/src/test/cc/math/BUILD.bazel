@@ -1,0 +1,29 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "noise_parameters_computation_test",
+    size = "small",
+    srcs = [
+        "noise_parameters_computation_test.cc",
+    ],
+    deps = [
+        "//src/main/cc/math:noise_parameters_computation",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "distributions_test",
+    size = "small",
+    srcs = [
+        "distributions_test.cc",
+    ],
+    deps = [
+        "//src/main/cc/math:distributions",
+        "//src/test/cc/testutil:status_macros",
+        "@com_google_private_join_and_compute//util:status_includes",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

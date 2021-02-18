@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sketch_encrypter_adapter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter_adapter.h"
+
+#include <string>
+#include <vector>
 
 #include "absl/memory/memory.h"
-#include "sketch_encrypter.h"
+#include "src/main/cc/any_sketch/crypto/sketch_encrypter.h"
 #include "util/status_macros.h"
 #include "wfa/any_sketch/crypto/sketch_encryption_methods.pb.h"
 
@@ -31,8 +34,8 @@ absl::StatusOr<std::string> EncryptSketch(
   ASSIGN_OR_RETURN(auto sketch_encrypter,
                    CreateWithPublicKey(
                        request_proto.curve_id(), request_proto.maximum_value(),
-                       {.u = request_proto.el_gamal_keys().el_gamal_g(),
-                        .e = request_proto.el_gamal_keys().el_gamal_y()}));
+                       {.u = request_proto.el_gamal_keys().generator(),
+                        .e = request_proto.el_gamal_keys().element()}));
 
   EncryptSketchResponse response;
   ASSIGN_OR_RETURN(
@@ -57,8 +60,9 @@ absl::StatusOr<std::string> CombineElGamalPublicKeys(
         "failed to parse the CombineElGamalPublicKeysRequest proto.");
   }
   CombineElGamalPublicKeysResponse response;
-  std::vector<ElGamalPublicKeys> keys(request_proto.el_gamal_keys().begin(),
-                                      request_proto.el_gamal_keys().end());
+  std::vector<common::ElGamalPublicKey> keys(
+      request_proto.el_gamal_keys().begin(),
+      request_proto.el_gamal_keys().end());
   ASSIGN_OR_RETURN(*response.mutable_el_gamal_keys(),
                    CombineElGamalPublicKeys(request_proto.curve_id(), keys));
   return response.SerializeAsString();

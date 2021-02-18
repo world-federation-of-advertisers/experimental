@@ -22,6 +22,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.wfanet.common.ElGamalPublicKey;
 import org.wfanet.measurement.api.v1alpha.Sketch;
 import org.wfanet.measurement.api.v1alpha.Sketch.Register;
 import org.wfanet.measurement.api.v1alpha.SketchConfig;
@@ -84,9 +85,9 @@ public class SketchJavaEncrypterTest {
             .setCurveId(CURVE_ID)
             .setMaximumValue(MAX_COUNTER_VALUE)
             .setElGamalKeys(
-                ElGamalPublicKeys.newBuilder()
-                    .setElGamalG(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
-                    .setElGamalY(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
+                ElGamalPublicKey.newBuilder()
+                    .setGenerator(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
+                    .setElement(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
             .build();
 
     EncryptSketchResponse response =
@@ -104,9 +105,9 @@ public class SketchJavaEncrypterTest {
             .setCurveId(CURVE_ID)
             .setMaximumValue(MAX_COUNTER_VALUE)
             .setElGamalKeys(
-                ElGamalPublicKeys.newBuilder()
-                    .setElGamalG(ByteString.copyFromUtf8("invalidKey_a"))
-                    .setElGamalY(ByteString.copyFromUtf8("invalidKey_b")))
+                ElGamalPublicKey.newBuilder()
+                    .setGenerator(ByteString.copyFromUtf8("invalidKey_a"))
+                    .setElement(ByteString.copyFromUtf8("invalidKey_b")))
             .build();
 
     RuntimeException exception =
@@ -127,9 +128,9 @@ public class SketchJavaEncrypterTest {
             .setCurveId(CURVE_ID)
             .setMaximumValue(MAX_COUNTER_VALUE)
             .setElGamalKeys(
-                ElGamalPublicKeys.newBuilder()
-                    .setElGamalG(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
-                    .setElGamalY(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
+                ElGamalPublicKey.newBuilder()
+                    .setGenerator(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_G))
+                    .setElement(com.google.protobuf.ByteString.copyFrom(PUBLIC_KEY_Y)))
             .build();
 
     RuntimeException exception =
@@ -145,9 +146,9 @@ public class SketchJavaEncrypterTest {
         CombineElGamalPublicKeysRequest.newBuilder()
             .setCurveId(CURVE_ID)
             .addElGamalKeys(
-                ElGamalPublicKeys.newBuilder()
-                    .setElGamalG(ByteString.copyFromUtf8("foo"))
-                    .setElGamalY(ByteString.copyFromUtf8("bar")))
+                ElGamalPublicKey.newBuilder()
+                    .setGenerator(ByteString.copyFromUtf8("foo"))
+                    .setElement(ByteString.copyFromUtf8("bar")))
             .build();
 
     CombineElGamalPublicKeysResponse response =

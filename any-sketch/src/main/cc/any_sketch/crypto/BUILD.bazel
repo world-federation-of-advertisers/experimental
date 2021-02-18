@@ -8,15 +8,15 @@ cc_library(
     ],
     deps = [
         "//src/main/cc/any_sketch/util:macros",
+        "//src/main/cc/math:distributions",
+        "//src/main/cc/math:noise_parameters_computation",
         "//src/main/proto/wfa/any_sketch/crypto:sketch_encryption_methods_cc_proto",
+        "//src/main/proto/wfa/common:el_gamal_key_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/types:span",
         "@com_google_private_join_and_compute//crypto:commutative_elgamal",
         "@com_google_private_join_and_compute//util:status_includes",
         "@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v1alpha:sketch_cc_proto",
-        "@wfa_measurement_system//src/main/cc/wfa/measurement/common:string_block_sorter",
-        "@wfa_measurement_system//src/main/cc/wfa/measurement/common/crypto:noise_parameters_computation",
-        "@wfa_measurement_system//src/main/cc/wfa/measurement/common/math:distributions",
     ],
 )
 
