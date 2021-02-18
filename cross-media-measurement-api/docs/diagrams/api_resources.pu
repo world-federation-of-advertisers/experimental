@@ -26,7 +26,7 @@ resource(CombinedPublicKey) {
   Get()
 }
 resource(Measurement) {
-  measurement_spec
+  metric_definition
   data_provider_entries
   state
   result
@@ -47,7 +47,7 @@ together {
   }
 }
 
-collection(requisitions, Requisition) {
+collection(metricRequisitions, MetricRequisition) {
   List([states])
 }
 collection(eventGroups, EventGroup) {
@@ -59,13 +59,13 @@ collection(measurements, Measurement) {
   List([states])
 }
 
-resource(Requisition) {
+resource(MetricRequisition) {
   measurement
   requisition_spec
   state
   Get()
   Refuse(refusal)
-  Fulfill()
+  Fulfill(metric_value)
 }
 resource(EventGroup) {
   measurement_consumer
@@ -73,11 +73,11 @@ resource(EventGroup) {
 }
 
 DataProvider *-- eventGroups
-DataProvider *-- requisitions
+DataProvider *-- metricRequisitions
 EventGroup "many" ..> "1" MeasurementConsumer
 
-Requisition "many" .> "many" EventGroup
-Requisition "many" .> "1" Measurement
+MetricRequisition "many" .> "many" EventGroup
+MetricRequisition "many" .> "1" Measurement
 
 MeasurementConsumer *-- measurements
 Measurement "many" .> "1" CombinedPublicKey
