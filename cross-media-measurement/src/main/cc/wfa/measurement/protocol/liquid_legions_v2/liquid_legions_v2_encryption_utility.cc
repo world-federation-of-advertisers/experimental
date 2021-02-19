@@ -369,7 +369,8 @@ absl::Status AddPaddingReachNoise(ProtocolCryptor& protocol_cryptor,
   for (int64_t i = 0; i < count; ++i) {
     // Add register_id, a predefined constant
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
-        protocol_cryptor,  CompositeType::kFull, padding_noise_register_id_ec, data));
+        protocol_cryptor, CompositeType::kFull, padding_noise_register_id_ec,
+        data));
     ASSIGN_OR_RETURN(std::string random_key_ec,
                      protocol_cryptor.MapToCurve(
                          protocol_cryptor.NextRandomBigNumAsString()));
@@ -406,9 +407,9 @@ absl::StatusOr<int64_t> AddFrequencyDpNoise(
       // Adds flag_2 and flag_3, which are random numbers encrypted using the
       // partial composite key.
       for (int j = 0; j < 2; ++j) {
-        ASSIGN_OR_RETURN(
-            std::string random_values,
-            protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNumAsString()));
+        ASSIGN_OR_RETURN(std::string random_values,
+                         protocol_cryptor.MapToCurve(
+                             protocol_cryptor.NextRandomBigNumAsString()));
         RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
             protocol_cryptor, CompositeType::kPartial, random_values, data));
       }
@@ -437,16 +438,16 @@ absl::StatusOr<int64_t> AddDestroyedFrequencyNoise(
     for (int j = 0; j < 3; ++j) {
       // Add three random flags encrypted using the partial composite ElGamal
       // Key.
-      ASSIGN_OR_RETURN(
-          std::string random_values,
-          protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNumAsString()));
+      ASSIGN_OR_RETURN(std::string random_values,
+                       protocol_cryptor.MapToCurve(
+                           protocol_cryptor.NextRandomBigNumAsString()));
       RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
           protocol_cryptor, CompositeType::kPartial, random_values, data));
     }
     // Add a random count encrypted using the full composite ElGamal Key.
-    ASSIGN_OR_RETURN(
-        std::string random_values,
-        protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNumAsString()));
+    ASSIGN_OR_RETURN(std::string random_values,
+                     protocol_cryptor.MapToCurve(
+                         protocol_cryptor.NextRandomBigNumAsString()));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, CompositeType::kFull, random_values, data));
   }
@@ -475,9 +476,9 @@ absl::Status AddPaddingFrequencyNoise(ProtocolCryptor& protocol_cryptor,
     // partial and full composite ElGamal Keys respectively. We use a
     // same random number here since the count value is not used and can be of
     // arbitrary value.
-    ASSIGN_OR_RETURN(
-        std::string random_values,
-        protocol_cryptor.MapToCurve(protocol_cryptor.NextRandomBigNumAsString()));
+    ASSIGN_OR_RETURN(std::string random_values,
+                     protocol_cryptor.MapToCurve(
+                         protocol_cryptor.NextRandomBigNumAsString()));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
         protocol_cryptor, CompositeType::kPartial, random_values, data));
     RETURN_IF_ERROR(EncryptCompositeElGamalAndAppendToString(
@@ -545,7 +546,7 @@ absl::Status AddAllFrequencyNoise(
       noise_parameters.contributors_count());
   int64_t total_noise_tuples_count =
       options.shift_offset * 2 * (noise_parameters.maximum_frequency() + 1);
-    // Reserve extra space for noise tuples in data.
+  // Reserve extra space for noise tuples in data.
   data.reserve(data.size() +
                total_noise_tuples_count * kBytesPerFlagsCountTuple);
   ASSIGN_OR_RETURN(int frequency_dp_noise_tuples_count,
