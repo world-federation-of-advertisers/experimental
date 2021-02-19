@@ -177,13 +177,7 @@ abstract class InProcessKingdomIntegrationTestBase {
     //
     // These states are exposed in GlobalComputation as CREATED and CONFIRMING.
     logger.info("Awaiting a GlobalComputation in CONFIRMING state")
-    val computation = pollFor {
-      globalComputationsMutex.withLock {
-        globalComputations.findLast {
-          it.state == GlobalComputation.State.CONFIRMING
-        }
-      }
-    }
+    val computation = findLastComputationInState(GlobalComputation.State.CONFIRMING)
 
     logger.info("Confirming Duchy readiness")
     globalComputationsStub.confirmGlobalComputation(
@@ -194,13 +188,7 @@ abstract class InProcessKingdomIntegrationTestBase {
     )
 
     logger.info("Awaiting a GlobalComputation in RUNNING state")
-    val startedComputation = pollFor {
-      globalComputationsMutex.withLock {
-        globalComputations.findLast {
-          it.state == GlobalComputation.State.RUNNING
-        }
-      }
-    }
+    val startedComputation = findLastComputationInState(GlobalComputation.State.RUNNING)
 
     assertThat(startedComputation)
       .isEqualTo(computation.toBuilder().setState(GlobalComputation.State.RUNNING).build())
@@ -232,6 +220,18 @@ abstract class InProcessKingdomIntegrationTestBase {
           }
         }.build()
       )
+  }
+
+  private suspend fun findLastComputationInState(
+    state: GlobalComputation.State
+  ): GlobalComputation {
+    return pollFor {
+      globalComputationsMutex.withLock {
+        globalComputations.findLast {
+          it.state == state
+        }
+      }
+    }
   }
 
   private suspend fun readRequisition(
