@@ -8,12 +8,12 @@ the combiner.
 ## Flag to set
 
 *   curve_id: the Elliptic curve id.
-*   elgamal_y_list: the list of ElGamal Y keys to combine.
+*   element_list: the list of elements to combine.
 
 ### Example
 
 ```
-combine_public_keys  --curve_id=415  --elgamal_y_list=02d1432ca007a6c6d739fce2d21feb56d9a2c35cf968265f9093c4b691e11386b3,039ef370ff4d216225401781d88a03f5a670a5040e6333492cb4e0cd991abbd5a3,02d0f25ab445fc9c29e7e2509adc93308430f432522ffa93c2ae737ceb480b66d7
+combine_public_keys  --curve_id=415  --element_list=02d1432ca007a6c6d739fce2d21feb56d9a2c35cf968265f9093c4b691e11386b3,039ef370ff4d216225401781d88a03f5a670a5040e6333492cb4e0cd991abbd5a3,02d0f25ab445fc9c29e7e2509adc93308430f432522ffa93c2ae737ceb480b66d7
 ```
 
 ## Expected output
