@@ -45,11 +45,11 @@ http_archive(
 )
 
 # Abseil C++ libraries
-git_repository(
+http_archive(
     name = "com_google_absl",
-    commit = "0f3bb466b868b523cf1dc9b2aaaed65c77b28862",
-    remote = "https://github.com/abseil/abseil-cpp.git",
-    shallow_since = "1603283562 -0400",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/20200923.3.tar.gz"],
+    strip_prefix="abseil-cpp-20200923.3",
+    sha256="ebe2ad1480d27383e4bf4211e2ca2ef312d5e6a09eba869fd2e8a5c5d553ded2"
 )
 
 # @com_google_truth_truth
