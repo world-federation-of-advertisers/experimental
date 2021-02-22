@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
 """Build definitions for SWIG Java."""
 
 def _create_src_jar(ctx, java_runtime_info, input_dir, output_jar):
@@ -157,8 +160,7 @@ def java_wrap_cc(
         visibility = ["//visibility:private"],
         **kwargs
     )
-
-    native.cc_library(
+    cc_library(
         name = cc_name,
         srcs = [outfile],
         deps = deps + ["@bazel_tools//tools/jdk:jni"],
@@ -166,16 +168,14 @@ def java_wrap_cc(
         visibility = ["//visibility:private"],
         **kwargs
     )
-
-    native.cc_binary(
+    cc_binary(
         name = so_name,
         deps = [cc_name],
         linkshared = True,
         visibility = visibility,
         **kwargs
     )
-
-    native.java_library(
+    java_library(
         name = name,
         srcs = [srcjar],
         runtime_deps = [so_name],
