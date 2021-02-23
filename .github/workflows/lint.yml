@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Lint subtrees
+    name: Lint changed files
     runs-on: ubuntu-20.04
     defaults:
       run:
@@ -21,13 +21,19 @@ jobs:
         java-package: jdk
         architecture: x64
 
+    - name: Set up linters
+      uses: world-federation-of-advertisers/actions/setup-linters@main
+
+    - name: Install cpplint
+      run: |
+        pip3 install --user cpplint
+        # TODO: Remove once https://github.com/actions/virtual-environments/issues/2455 is deployed
+        ln -s ~/.local/bin/cpplint ~/lint/
+
     - name: Check out revision
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-
-    - name: Set up linters
-      uses: world-federation-of-advertisers/actions/setup-linters@main
 
     - name: Lint any-sketch
       working-directory: any-sketch
