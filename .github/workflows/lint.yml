@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    name: Lint changed files
     runs-on: ubuntu-20.04
     defaults:
       run:
@@ -20,43 +21,8 @@ jobs:
         java-package: jdk
         architecture: x64
 
-    - name: Make linter directory
-      run: mkdir -p ~/lint
-
-    - name: Install buildifier
-      env:
-        BUILDIFIER_VERSION: 4.0.0
-      run: |
-        wget -O ~/lint/buildifier "https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64"
-        chmod u+x ~/lint/buildifier
-
-    - name: Install ktlint
-      env:
-        KTLINT_VERSION: 0.40.0
-      run: |
-        wget -O ~/lint/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
-        chmod u+x ~/lint/ktlint
-
-    - name: Install google-java-format
-      env:
-        GOOGLE_JAVA_FORMAT_VERSION: 1.9
-      run: |
-        wget -O ~/lint/google-java-format.jar "https://github.com/google/google-java-format/releases/download/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}/google-java-format-${GOOGLE_JAVA_FORMAT_VERSION}-all-deps.jar"
-        echo '#!/usr/bin/env bash' > ~/lint/google-java-format
-        echo 'java -jar ~/lint/google-java-format.jar "$@"' >> ~/lint/google-java-format
-        chmod u+x ~/lint/google-java-format
-        
-    - name: Install addlicense
-      env:
-        ADDLICENSE_VERSION: 0.0.0-20200906110928-a0294312aa76
-      run: |
-        mkdir -p /tmp/addlicense
-        cd /tmp/addlicense
-        go mod init temp
-        go get -u -d "github.com/google/addlicense@v${ADDLICENSE_VERSION}"
-        go build -ldflags '-s' github.com/google/addlicense
-        cp addlicense ~/lint/
-        cd -
+    - name: Set up linters
+      uses: world-federation-of-advertisers/actions/setup-linters@main
 
     - name: Install cpplint
       run: |
@@ -64,20 +30,31 @@ jobs:
         # TODO: Remove once https://github.com/actions/virtual-environments/issues/2455 is deployed
         ln -s ~/.local/bin/cpplint ~/lint/
 
-    - name: Add linters to $PATH
-      run: echo "$HOME/lint" >> $GITHUB_PATH
-
     - name: Check out revision
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Lint
-      env:
-        SUBTREES: any-sketch any-sketch-java cross-media-measurement cross-media-measurement-api examples rules-swig
-      run: |
-        for subtree in $SUBTREES; do (
-          cd "${subtree}"
-          echo "Running linters in ${subtree}"
-          ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
-        ); done
+    - name: Lint any-sketch
+      working-directory: any-sketch
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+
+    - name: Lint any-sketch-java
+      working-directory: any-sketch-java
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+
+    - name: Lint cross-media-measurement
+      working-directory: cross-media-measurement
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+
+    - name: Lint cross-media-measurement-api
+      working-directory: cross-media-measurement-api
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+
+    - name: Lint examples
+      working-directory: examples
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
+
+    - name: Lint rules-swig
+      working-directory: rules-swig
+      run: ../.github/scripts/lint.sh ${{ github.event.pull_request.base.sha }} HEAD
