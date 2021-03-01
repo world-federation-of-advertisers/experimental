@@ -44,6 +44,13 @@ container_layer(
     mode = "0o755",
 )
 
+container_layer(
+    name = "cue_binary",
+    directory = "/opt/cue",
+    symlinks = {"/usr/bin/cue": "/opt/cue/cue"},
+    tars = ["@cue//file"],
+)
+
 container_image(
     name = "bazel_image",
     base = BASE_IMAGE,
@@ -51,6 +58,7 @@ container_image(
     layers = [
         ":apt_packages",
         ":bazel_binary",
+        ":cue_binary",
     ],
     stamp = True,
     symlinks = {
