@@ -16,7 +16,7 @@ BASE_IMAGE = "@ubuntu_18_04//image"
 # Bazel requires zip/unzip, a C++ compiler, and a JDK.
 # See https://docs.bazel.build/versions/3.7.0/install-ubuntu.html#step-1-install-required-packages
 BAZEL_DEPS = [
-    "clang-9",
+    "clang-10",
     "openjdk-11-jdk-headless",
     "unzip",
     "zip",
@@ -54,7 +54,7 @@ container_image(
     ],
     stamp = True,
     symlinks = {
-        "/usr/bin/clang": "/usr/bin/clang-9",
+        "/usr/bin/clang": "/usr/bin/clang-10",
     },
 )
 
