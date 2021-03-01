@@ -1,10 +1,7 @@
 # Bazel build environment image.
 
-load("//src/main/docker:constants.bzl", "DEBIAN_JAVA_11")
-load(
-    "//src/main/docker:defs.bzl",
-    "container_commit_install_apt_packages",
-)
+load("//:constants.bzl", "DEBIAN_JAVA_11")
+load("//:defs.bzl", "container_commit_install_apt_packages")
 load(
     "@io_bazel_rules_docker//container:container.bzl",
     "container_image",
@@ -35,7 +32,6 @@ container_commit_install_apt_packages(
         "swig",
         "tzdata",  # For Cloud Spanner Emulator.
     ] + BAZEL_DEPS,
-    tags = ["manual"],
     upgrade = True,
 )
 
@@ -46,7 +42,6 @@ container_layer(
         "@bazel//file",
     ],
     mode = "0o755",
-    tags = ["manual"],
 )
 
 container_image(
@@ -61,7 +56,6 @@ container_image(
     symlinks = {
         "/usr/bin/clang": "/usr/bin/clang-9",
     },
-    tags = ["manual"],
 )
 
 container_push(
@@ -70,8 +64,4 @@ container_push(
     image = ":bazel_image",
     registry = "gcr.io",
     repository = "ads-open-measurement/bazel",
-    tags = [
-        "manual",
-        "requires-network",
-    ],
 )
