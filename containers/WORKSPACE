@@ -1,6 +1,10 @@
 workspace(name = "halo_containers")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_archive",
+    "http_file",
+)
 
 # TODO(@SanjayVas): Switch to an official release once there's one that contains
 # the fixes for https://github.com/bazelbuild/rules_docker/issues/1716.
@@ -51,9 +55,20 @@ container_pull(
     repository = "library/debian",
 )
 
+# Custom Java base image.
+# See //base:push_java_base
 container_pull(
     name = "debian_java_base",
     digest = "sha256:c6746729103a1a306a1ed572012562496512a691b3b23c3abacd64ad503cebc2",
     registry = "index.docker.io",
     repository = "wfameasurement/java-base",
+)
+
+# bazel
+http_file(
+    name = "bazel",
+    downloaded_file_path = "bazel",
+    executable = True,
+    sha256 = "b7583eec83cc38302997098a40b8c870c37e0ab971a83cb3364c754a178b74ec",
+    urls = ["https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel-3.7.0-linux-x86_64"],
 )
