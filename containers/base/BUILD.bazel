@@ -19,21 +19,18 @@ container_layer(
         "/usr/share/man/man1",
         "/usr/share/man/man2",
     ],
-    tags = ["manual"],
 )
 
 container_image(
     name = "man_directories_image",
     base = BASE_IMAGE,
     layers = [":man_directories"],
-    tags = ["manual"],
 )
 
 container_commit_install_apt_packages(
     name = "apt_packages",
     image = ":man_directories_image.tar",
     packages = ["openjdk-11-jre-headless"],
-    tags = ["manual"],
     upgrade = True,
 )
 
@@ -47,7 +44,6 @@ container_image(
     env = JAVA.env,
     layers = [":apt_packages"],
     symlinks = {"/usr/bin/java": JAVA.bin + "/java"},
-    tags = ["manual"],
 )
 
 container_push(
@@ -56,5 +52,4 @@ container_push(
     image = ":java_base",
     registry = "docker.io",
     repository = "wfameasurement/java-base",
-    tags = ["manual"],
 )

@@ -32,7 +32,6 @@ container_commit_install_apt_packages(
         "swig",
         "tzdata",  # For Cloud Spanner Emulator.
     ] + BAZEL_DEPS,
-    tags = ["manual"],
     upgrade = True,
 )
 
@@ -43,7 +42,6 @@ container_layer(
         "@bazel//file",
     ],
     mode = "0o755",
-    tags = ["manual"],
 )
 
 container_image(
@@ -58,7 +56,6 @@ container_image(
     symlinks = {
         "/usr/bin/clang": "/usr/bin/clang-9",
     },
-    tags = ["manual"],
 )
 
 container_push(
@@ -67,8 +64,4 @@ container_push(
     image = ":bazel_image",
     registry = "gcr.io",
     repository = "ads-open-measurement/bazel",
-    tags = [
-        "manual",
-        "requires-network",
-    ],
 )
