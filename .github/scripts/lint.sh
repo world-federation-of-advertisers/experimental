@@ -25,6 +25,23 @@ readonly CPP_OR_PROTO_PATTERN='\.(cc|h|proto)$'
 readonly CPP_PATTERN='\.(cc|h)$'
 readonly JAVA_PATTERN='\.java$'
 
+# Reads exclude pathspecs from the .lintignore file into the specified array.
+read_exclude_pathspecs() {
+  local -n pathspecs="$1"
+
+  if ! [[ -f '.lintignore' ]]; then
+    return
+  fi
+
+  local line
+  while read -r line; do
+    if [[ -z "${line}" ]] || [[ "${line:0:1}" == '#' ]]; then
+      continue
+    fi
+    pathspecs+=( ":!${line}" )
+  done < '.lintignore'
+}
+
 # Outputs the files changed since the specified revision, one per line.
 #
 # Arguments:
@@ -34,13 +51,17 @@ get_changed_files() {
   local -r base_revision="$1"
   local -r revision="${2:-HEAD}"
 
+  local -a exclude_pathspecs=()
+  read_exclude_pathspecs exclude_pathspecs
+
   local files_quoted
   files_quoted="$(
     git -c 'core.quotePath=true' diff \
       --relative \
       --name-only \
       --diff-filter=AMRC \
-      "${base_revision}" "${revision}" --
+      "${base_revision}" "${revision}" -- \
+      "${exclude_pathspecs[@]}"
   )" || return
 
   # Interpret quotes and escape sequences.
