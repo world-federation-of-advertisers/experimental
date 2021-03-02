@@ -16,7 +16,7 @@ BASE_IMAGE = "@ubuntu_18_04//image"
 # Bazel requires zip/unzip, a C++ compiler, and a JDK.
 # See https://docs.bazel.build/versions/3.7.0/install-ubuntu.html#step-1-install-required-packages
 BAZEL_DEPS = [
-    "clang-9",
+    "clang-10",
     "openjdk-11-jdk-headless",
     "unzip",
     "zip",
@@ -44,6 +44,13 @@ container_layer(
     mode = "0o755",
 )
 
+container_layer(
+    name = "cue_binary",
+    directory = "/opt/cue",
+    symlinks = {"/usr/bin/cue": "/opt/cue/cue"},
+    tars = ["@cue//file"],
+)
+
 container_image(
     name = "bazel_image",
     base = BASE_IMAGE,
@@ -51,15 +58,24 @@ container_image(
     layers = [
         ":apt_packages",
         ":bazel_binary",
+        ":cue_binary",
     ],
     stamp = True,
     symlinks = {
-        "/usr/bin/clang": "/usr/bin/clang-9",
+        "/usr/bin/clang": "/usr/bin/clang-10",
     },
 )
 
 container_push(
     name = "push_bazel_image",
+    format = "Docker",
+    image = ":bazel_image",
+    registry = "docker.io",
+    repository = "wfameasurement/bazel",
+)
+
+container_push(
+    name = "push_bazel_image_gcr",
     format = "Docker",
     image = ":bazel_image",
     registry = "gcr.io",
