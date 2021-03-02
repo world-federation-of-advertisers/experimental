@@ -70,6 +70,14 @@ container_push(
     name = "push_bazel_image",
     format = "Docker",
     image = ":bazel_image",
+    registry = "docker.io",
+    repository = "wfameasurement/bazel",
+)
+
+container_push(
+    name = "push_bazel_image_gcr",
+    format = "Docker",
+    image = ":bazel_image",
     registry = "gcr.io",
     repository = "ads-open-measurement/bazel",
 )
