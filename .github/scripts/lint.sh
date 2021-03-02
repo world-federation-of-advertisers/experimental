@@ -42,7 +42,8 @@ read_exclude_pathspecs() {
   done < '.lintignore'
 }
 
-# Outputs the files changed since the specified revision, one per line.
+# Outputs a null-terminated list of files that have changed relative to the
+# specified base revision.
 #
 # Arguments:
 #   Base revision
@@ -54,32 +55,33 @@ get_changed_files() {
   local -a exclude_pathspecs=()
   read_exclude_pathspecs exclude_pathspecs
 
-  local files_quoted
-  files_quoted="$(
-    git -c 'core.quotePath=true' diff \
-      --relative \
-      --name-only \
-      --diff-filter=AMRC \
-      "${base_revision}" "${revision}" -- \
-      "${exclude_pathspecs[@]}"
-  )" || return
-
-  # Interpret quotes and escape sequences.
-  xargs -n 1 <<<"${files_quoted}"
+  git diff \
+    --relative \
+    --name-only \
+    -z \
+    --diff-filter=AMRC \
+    "${base_revision}" "${revision}" -- \
+    "${exclude_pathspecs[@]}"
 }
 
-# Outputs the file paths from stdin whose basename matches the specified regex
-# pattern.
+# Adds the items whose basename matches the specified regex pattern to an array.
+#
+# Arguments:
+#   Array to add filtered items to
+#   pattern
+#   items
 filter() {
-  local -r pattern="$1"
+  local -n filtered="$1"
+  local -r pattern="$2"
+  shift 2
 
   local item
   local base
-  while read -r item; do
+  for item in "$@"; do
     base="$(basename "${item}")"
     # shellcheck disable=SC2053
     if [[ "${base}" =~ $pattern ]]; then
-      echo "${item}"
+      filtered+=( "${item}" )
     fi
   done
 }
@@ -121,12 +123,13 @@ run_linter() {
   local -r command="$1"
   local -r pattern="$2"
 
-  local files
-  files="$(echo "${changed_files}" | filter "${pattern}")"
-  [[ -z "${files}" ]] && return
+  local -a filtered_files=()
+  filter filtered_files "${pattern}" "${changed_files[@]}"
 
-  mapfile -t files <<<"${files}"
-  $command "${files[@]}"
+  if ! (( ${#filtered_files[@]} )); then
+    return
+  fi
+  $command "${filtered_files[@]}"
 }
 
 # Run linters on changed files.
@@ -135,10 +138,12 @@ run_linter() {
 #   Base revision
 #   Revision
 main() {
-  local changed_files
-  changed_files="$(get_changed_files "$@")"
+  local -a changed_files=()
+  readarray -d '' -t changed_files < <(get_changed_files "$@")
+  local -r changed_files_pid="$!"
+  wait "${changed_files_pid}"
 
-  if [[ -z "${changed_files}" ]]; then
+  if ! (( ${#changed_files[@]} )); then
     echo 'No files to lint' >&2
     return
   fi
