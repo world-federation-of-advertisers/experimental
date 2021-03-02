@@ -69,6 +69,14 @@ http_file(
     name = "bazel",
     downloaded_file_path = "bazel",
     executable = True,
-    sha256 = "b7583eec83cc38302997098a40b8c870c37e0ab971a83cb3364c754a178b74ec",
-    urls = ["https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel-3.7.0-linux-x86_64"],
+    sha256 = "7bee349a626281fc8b8d04a7a0b0358492712377400ab12533aeb39c2eb2b901",
+    urls = ["https://github.com/bazelbuild/bazel/releases/download/4.0.0/bazel-4.0.0-linux-x86_64"],
+)
+
+# CUE
+http_file(
+    name = "cue",
+    downloaded_file_path = "cue.tar.gz",
+    sha256 = "810851e0e7d38192a6d0e09a6fa89ab5ff526ce29c9741f697995601edccb134",
+    urls = ["https://github.com/cuelang/cue/releases/download/v0.2.2/cue_0.2.2_Linux_x86_64.tar.gz"],
 )
