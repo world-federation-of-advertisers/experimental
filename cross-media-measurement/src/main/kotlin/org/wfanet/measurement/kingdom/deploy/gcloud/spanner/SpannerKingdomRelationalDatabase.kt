@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.Flow
 import org.wfanet.measurement.common.identity.ExternalId
 import org.wfanet.measurement.common.identity.IdGenerator
 import org.wfanet.measurement.gcloud.spanner.AsyncDatabaseClient
+import org.wfanet.measurement.gcloud.spanner.SpannerQuery
+import org.wfanet.measurement.gcloud.spanner.SpannerWriter
 import org.wfanet.measurement.internal.kingdom.Advertiser
 import org.wfanet.measurement.internal.kingdom.Campaign
 import org.wfanet.measurement.internal.kingdom.DataProvider
@@ -37,7 +39,6 @@ import org.wfanet.measurement.kingdom.db.StreamReportsFilter
 import org.wfanet.measurement.kingdom.db.StreamRequisitionsFilter
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.GetReport
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.ReadRequisitionTemplates
-import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.SpannerQuery
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.StreamReadyReports
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.StreamReadySchedules
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries.StreamReports
@@ -56,7 +57,6 @@ import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.CreateSchedu
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.FinishReport
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.FulfillRequisition
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.RefuseRequisition
-import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.SpannerWriter
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers.UpdateReportState
 
 class SpannerKingdomRelationalDatabase(

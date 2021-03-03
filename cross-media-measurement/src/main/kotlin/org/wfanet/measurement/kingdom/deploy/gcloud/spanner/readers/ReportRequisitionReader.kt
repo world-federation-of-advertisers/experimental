@@ -18,6 +18,7 @@ import com.google.cloud.spanner.Struct
 import kotlinx.coroutines.flow.Flow
 import org.wfanet.measurement.common.identity.InternalId
 import org.wfanet.measurement.gcloud.spanner.AsyncDatabaseClient
+import org.wfanet.measurement.gcloud.spanner.SpannerReader
 import org.wfanet.measurement.gcloud.spanner.appendClause
 import org.wfanet.measurement.internal.kingdom.Report
 

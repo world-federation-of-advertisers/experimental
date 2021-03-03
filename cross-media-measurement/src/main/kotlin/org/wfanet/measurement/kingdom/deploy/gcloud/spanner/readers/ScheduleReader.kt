@@ -15,6 +15,7 @@
 package org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers
 
 import com.google.cloud.spanner.Struct
+import org.wfanet.measurement.gcloud.spanner.SpannerReader
 import org.wfanet.measurement.gcloud.spanner.getProtoMessage
 import org.wfanet.measurement.internal.kingdom.RepetitionSpec
 import org.wfanet.measurement.internal.kingdom.ReportConfigDetails
@@ -58,7 +59,7 @@ class ScheduleReader : SpannerReader<ScheduleReader.Result>() {
       reportConfigId = struct.getLong("ReportConfigId"),
       scheduleId = struct.getLong("ScheduleId"),
       reportConfigDetails =
-        struct.getProtoMessage("ReportConfigDetails", ReportConfigDetails.parser())
+      struct.getProtoMessage("ReportConfigDetails", ReportConfigDetails.parser())
     )
 
   private fun buildSchedule(struct: Struct): ReportConfigSchedule =

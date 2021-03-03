@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import org.wfanet.measurement.common.identity.ExternalId
 import org.wfanet.measurement.common.toJson
+import org.wfanet.measurement.gcloud.spanner.SimpleSpannerWriter
 import org.wfanet.measurement.gcloud.spanner.appendClause
 import org.wfanet.measurement.gcloud.spanner.bufferTo
 import org.wfanet.measurement.gcloud.spanner.toProtoBytes

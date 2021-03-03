@@ -21,12 +21,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import org.wfanet.measurement.common.identity.ExternalId
+import org.wfanet.measurement.gcloud.spanner.BaseSpannerReader
+import org.wfanet.measurement.gcloud.spanner.SpannerQuery
 import org.wfanet.measurement.gcloud.spanner.getProtoMessage
 import org.wfanet.measurement.internal.MetricDefinition
 import org.wfanet.measurement.internal.kingdom.ReportConfigDetails
 import org.wfanet.measurement.internal.kingdom.RequisitionDetails
 import org.wfanet.measurement.internal.kingdom.RequisitionTemplate
-import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.BaseSpannerReader
 
 @OptIn(FlowPreview::class) // For `flatMapConcat`
 class ReadRequisitionTemplates(

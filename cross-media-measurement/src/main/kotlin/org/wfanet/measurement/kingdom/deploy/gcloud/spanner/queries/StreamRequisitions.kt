@@ -16,12 +16,13 @@ package org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.wfanet.measurement.gcloud.spanner.BaseSpannerReader
+import org.wfanet.measurement.gcloud.spanner.SpannerQuery
 import org.wfanet.measurement.gcloud.spanner.appendClause
 import org.wfanet.measurement.internal.kingdom.Requisition
 import org.wfanet.measurement.kingdom.db.StreamRequisitionsFilter
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.common.StreamRequisitionsFilterSqlConverter
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.common.toSql
-import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.BaseSpannerReader
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.RequisitionReader
 
 /**
