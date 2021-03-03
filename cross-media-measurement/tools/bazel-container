@@ -13,7 +13,7 @@ is_podman() {
 
 is_rootless() {
   if is_podman; then
-    [[ "$($DOCKER info --format '{{.Host.Rootless}}')" == 'true' ]]
+    [[ "$($DOCKER info --format '{{.Host.Security.Rootless}}')" == 'true' ]]
   else
     $DOCKER info --format '{{.SecurityOptions}}' | grep --quiet rootless
   fi
