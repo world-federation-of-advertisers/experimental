@@ -15,7 +15,8 @@ is_rootless() {
   if is_podman; then
     [[ "$($DOCKER info --format '{{.Host.Security.Rootless}}')" == 'true' ]]
   else
-    $DOCKER info --format '{{.SecurityOptions}}' | grep --quiet rootless
+    $DOCKER info --format '{{.SecurityOptions}}' | grep --quiet rootless ||
+      [[ "$($DOCKER version --format '{{.Client.Os}}')" == 'darwin' ]]
   fi
 }
 
