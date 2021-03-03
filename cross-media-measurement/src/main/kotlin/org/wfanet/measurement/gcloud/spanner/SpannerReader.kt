@@ -17,8 +17,6 @@ package org.wfanet.measurement.gcloud.spanner
 import com.google.cloud.spanner.Statement
 import kotlinx.coroutines.flow.singleOrNull
 import org.wfanet.measurement.common.identity.ExternalId
-import org.wfanet.measurement.gcloud.spanner.AsyncDatabaseClient
-import org.wfanet.measurement.gcloud.spanner.appendClause
 
 /**
  * Abstraction for reading rows from Spanner and translating into more expressive objects.
