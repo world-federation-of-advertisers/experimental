@@ -78,15 +78,19 @@ class ClusterState(private val clusterName: String = "kind") {
    * @return Outer map contains one entry per NodePort type service keyed on the service name. The
    *     key of the inner map is the port name and the value is the port number.
    */
-  fun getNodePorts(): Map<String, Map<String, Int>> =
-    handleJson("kubectl get services -o json --context kind-$clusterName") { json ->
+  fun getNodePorts(jobNames: List<String>): Map<String, Map<String, Int>> =
+    handleJson(
+      "kubectl get services ${
+        jobNames.joinToString(" ")
+      } -o json --context kind-$clusterName"
+    ) { json ->
       json
         .getAsJsonArray("items")
         .map { it.asJsonObject }
         .filter { el ->
           el.getAsJsonPrimitive("kind").asString == "Service" &&
             el.getAsJsonObject("spec")
-            .getAsJsonPrimitive("type").asString == "NodePort"
+              .getAsJsonPrimitive("type").asString == "NodePort"
         }.associate { el ->
           Pair(
             el.getAsJsonObject("metadata")
@@ -106,7 +110,7 @@ class ClusterState(private val clusterName: String = "kind") {
   fun jobsSucceeded(jobNames: List<String>): Boolean =
     handleJson(
       "kubectl get jobs ${
-      jobNames.joinToString(" ")
+        jobNames.joinToString(" ")
       } -o json --context kind-$clusterName"
     ) { json ->
       json
