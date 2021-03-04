@@ -25,7 +25,25 @@ readonly CPP_OR_PROTO_PATTERN='\.(cc|h|proto)$'
 readonly CPP_PATTERN='\.(cc|h)$'
 readonly JAVA_PATTERN='\.java$'
 
-# Outputs the files changed since the specified revision, one per line.
+# Reads exclude pathspecs from the .lintignore file into the specified array.
+read_exclude_pathspecs() {
+  local -n pathspecs="$1"
+
+  if ! [[ -f '.lintignore' ]]; then
+    return
+  fi
+
+  local line
+  while read -r line; do
+    if [[ -z "${line}" ]] || [[ "${line:0:1}" == '#' ]]; then
+      continue
+    fi
+    pathspecs+=( ":!${line}" )
+  done < '.lintignore'
+}
+
+# Outputs a null-terminated list of files that have changed relative to the
+# specified base revision.
 #
 # Arguments:
 #   Base revision
@@ -34,31 +52,36 @@ get_changed_files() {
   local -r base_revision="$1"
   local -r revision="${2:-HEAD}"
 
-  local files_quoted
-  files_quoted="$(
-    git -c 'core.quotePath=true' diff \
-      --relative \
-      --name-only \
-      --diff-filter=AMRC \
-      "${base_revision}" "${revision}" --
-  )" || return
+  local -a exclude_pathspecs=()
+  read_exclude_pathspecs exclude_pathspecs
 
-  # Interpret quotes and escape sequences.
-  xargs -n 1 <<<"${files_quoted}"
+  git diff \
+    --relative \
+    --name-only \
+    -z \
+    --diff-filter=AMRC \
+    "${base_revision}" "${revision}" -- \
+    "${exclude_pathspecs[@]}"
 }
 
-# Outputs the file paths from stdin whose basename matches the specified regex
-# pattern.
+# Adds the items whose basename matches the specified regex pattern to an array.
+#
+# Arguments:
+#   Array to add filtered items to
+#   pattern
+#   items
 filter() {
-  local -r pattern="$1"
+  local -n filtered="$1"
+  local -r pattern="$2"
+  shift 2
 
   local item
   local base
-  while read -r item; do
+  for item in "$@"; do
     base="$(basename "${item}")"
     # shellcheck disable=SC2053
     if [[ "${base}" =~ $pattern ]]; then
-      echo "${item}"
+      filtered+=( "${item}" )
     fi
   done
 }
@@ -100,12 +123,13 @@ run_linter() {
   local -r command="$1"
   local -r pattern="$2"
 
-  local files
-  files="$(echo "${changed_files}" | filter "${pattern}")"
-  [[ -z "${files}" ]] && return
+  local -a filtered_files=()
+  filter filtered_files "${pattern}" "${changed_files[@]}"
 
-  mapfile -t files <<<"${files}"
-  $command "${files[@]}"
+  if ! (( ${#filtered_files[@]} )); then
+    return
+  fi
+  $command "${filtered_files[@]}"
 }
 
 # Run linters on changed files.
@@ -114,10 +138,12 @@ run_linter() {
 #   Base revision
 #   Revision
 main() {
-  local changed_files
-  changed_files="$(get_changed_files "$@")"
+  local -a changed_files=()
+  readarray -d '' -t changed_files < <(get_changed_files "$@")
+  local -r changed_files_pid="$!"
+  wait "${changed_files_pid}"
 
-  if [[ -z "${changed_files}" ]]; then
+  if ! (( ${#changed_files[@]} )); then
     echo 'No files to lint' >&2
     return
   fi
