@@ -8,16 +8,17 @@ readonly USERNAME="$(id -un)"
 readonly OUTPUT_USER_ROOT="${HOME}/.cache/bazel/_bazel_${USERNAME}"
 
 is_podman() {
-  $DOCKER -v | grep --quiet podman
+  [[ "$($DOCKER -v)" == *podman* ]]
 }
 
 is_rootless() {
   if is_podman; then
     [[ "$($DOCKER info --format '{{.Host.Security.Rootless}}')" == 'true' ]]
-  else
-    $DOCKER info --format '{{.SecurityOptions}}' | grep --quiet rootless ||
-      [[ "$($DOCKER version --format '{{.Client.Os}}')" == 'darwin' ]]
+    return
   fi
+
+  [[ "$($DOCKER info --format '{{.SecurityOptions}}')" == *rootless* ]] ||
+    [[ "$($DOCKER version --format '{{.Client.Os}}')" == 'darwin' ]]
 }
 
 command_exists() {
