@@ -81,6 +81,14 @@ alias(
 )
 
 platform(
+    name = "ubuntu_18_04_rbe",
+    constraint_values = [
+        ":glibc_2_27",
+    ],
+    parents = ["//build/rbe/configs/config:platform"],
+)
+
+platform(
     name = "ubuntu_focal",
     constraint_values = [
         ":glibc_2_31",
