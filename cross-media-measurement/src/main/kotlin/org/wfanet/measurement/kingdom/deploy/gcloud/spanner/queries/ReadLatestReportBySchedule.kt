@@ -17,10 +17,11 @@ package org.wfanet.measurement.kingdom.deploy.gcloud.spanner.queries
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.wfanet.measurement.common.identity.ExternalId
+import org.wfanet.measurement.gcloud.spanner.SpannerQuery
+import org.wfanet.measurement.gcloud.spanner.SpannerReader
 import org.wfanet.measurement.gcloud.spanner.appendClause
 import org.wfanet.measurement.internal.kingdom.Report
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.ReportReader
-import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.SpannerReader
 
 class ReadLatestReportBySchedule(
   externalScheduleId: ExternalId

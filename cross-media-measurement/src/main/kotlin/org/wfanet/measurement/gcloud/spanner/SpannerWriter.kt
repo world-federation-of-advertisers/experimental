@@ -1,4 +1,4 @@
-// Copyright 2020 The Cross-Media Measurement Authors
+// Copyright 2020 The Measurement System Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.wfanet.measurement.kingdom.deploy.gcloud.spanner.writers
+package org.wfanet.measurement.gcloud.spanner
 
 import com.google.cloud.Timestamp
 import com.google.cloud.spanner.TransactionContext
@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import org.wfanet.measurement.common.identity.IdGenerator
 import org.wfanet.measurement.common.identity.RandomIdGenerator
-import org.wfanet.measurement.gcloud.spanner.AsyncDatabaseClient
 
 /**
  * Abstracts a common pattern:

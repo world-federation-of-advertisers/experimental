@@ -19,6 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.wfanet.measurement.common.identity.ExternalId
 import org.wfanet.measurement.common.identity.InternalId
+import org.wfanet.measurement.gcloud.spanner.SpannerWriter
 import org.wfanet.measurement.gcloud.spanner.bufferTo
 import org.wfanet.measurement.internal.kingdom.Campaign
 import org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers.AdvertiserReader

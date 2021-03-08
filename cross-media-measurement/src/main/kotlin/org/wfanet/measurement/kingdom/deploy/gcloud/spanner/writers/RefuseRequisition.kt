@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.collect
 import org.wfanet.measurement.common.identity.ExternalId
 import org.wfanet.measurement.common.identity.InternalId
 import org.wfanet.measurement.common.toJson
+import org.wfanet.measurement.gcloud.spanner.SimpleSpannerWriter
+import org.wfanet.measurement.gcloud.spanner.SpannerWriter
 import org.wfanet.measurement.gcloud.spanner.bufferTo
 import org.wfanet.measurement.gcloud.spanner.toProtoBytes
 import org.wfanet.measurement.gcloud.spanner.toProtoEnum

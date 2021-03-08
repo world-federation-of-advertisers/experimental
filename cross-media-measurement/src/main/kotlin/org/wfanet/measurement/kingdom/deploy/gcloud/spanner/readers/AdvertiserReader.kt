@@ -15,6 +15,7 @@
 package org.wfanet.measurement.kingdom.deploy.gcloud.spanner.readers
 
 import com.google.cloud.spanner.Struct
+import org.wfanet.measurement.gcloud.spanner.SpannerReader
 import org.wfanet.measurement.internal.kingdom.Advertiser
 
 class AdvertiserReader : SpannerReader<AdvertiserReader.Result>() {
