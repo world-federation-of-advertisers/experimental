@@ -22,8 +22,8 @@ on:
 
 jobs:
   cross-media-measurement:
-    name: Build and test cross-media-measurement targets
-    runs-on: ubuntu-20.04
+    name: Build and test Kubernetes-in-Docker targets
+    runs-on: ubuntu-18.04
     steps:
       - name: Check out revision
         uses: actions/checkout@v2
