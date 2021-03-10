@@ -39,4 +39,4 @@ jobs:
         with:
           workspace-path: ${{ github.job }}
           target-patterns: |
-            src/test/kotlin/org/wfanet/measurement/e2e:correctness_test
+            //src/test/kotlin/org/wfanet/measurement/e2e:correctness_test
