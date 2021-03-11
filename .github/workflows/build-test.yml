@@ -28,61 +28,64 @@ env:
 jobs:
   any-sketch:
     name: Build and test any-sketch targets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
 
     - name: Bazel build and test
-      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.1.0-rc2
+      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.2.0
       with:
         workspace-path: ${{ github.job }}
         restore-cache: ${{ env.restore_cache }}
   any-sketch-java:
     name: Build and test any-sketch-java targets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
 
     - name: Bazel build and test
-      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.1.0-rc2
+      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.2.0
       with:
         workspace-path: ${{ github.job }}
         restore-cache: ${{ env.restore_cache }}
   cross-media-measurement:
     name: Build and test cross-media-measurement targets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
 
     - name: Bazel build and test
-      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.1.0-rc2
+      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.2.0
       with:
         workspace-path: ${{ github.job }}
         restore-cache: ${{ env.restore_cache }}
+        cache-version: 1
+        build-options: |
+          --host_platform=//build/platforms:ubuntu_18_04
   cross-media-measurement-api:
     name: Build and test cross-media-measurement-api targets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
 
     - name: Bazel build and test
-      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.1.0-rc2
+      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.2.0
       with:
         restore-cache: ${{ env.restore_cache }}
         workspace-path: ${{ github.job }}
   examples:
     name: Build and test examples targets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out revision
       uses: actions/checkout@v2
 
     - name: Bazel build and test
-      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.1.0-rc2
+      uses: world-federation-of-advertisers/actions/bazel-build-test@v1.2.0
       with:
         restore-cache: ${{ env.restore_cache }}
         workspace-path: ${{ github.job }}
