@@ -22,6 +22,7 @@ kt_jvm_library(
         "//src/main/kotlin/org/wfanet/measurement/common/throttler",
         "//src/main/kotlin/org/wfanet/measurement/kingdom/deploy/gcloud/spanner",
         "//src/main/kotlin/org/wfanet/measurement/storage:client",
+        "//src/main/kotlin/org/wfanet/measurement/tools:run_subprocess",
         "//src/main/proto/wfa/measurement/api/v1alpha:publisher_data_service_kt_jvm_grpc",
         "//src/main/proto/wfa/measurement/api/v1alpha:sketch_java_proto",
         "//src/main/proto/wfa/measurement/internal/loadtest:test_result_java_proto",
