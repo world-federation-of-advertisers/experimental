@@ -20,7 +20,11 @@ kt_jvm_test(
     resources = [
         "//src/main/kotlin/org/wfanet/measurement/loadtest/config",
     ],
-    tags = ["manual", "exclusive", "external"],
+    tags = [
+        "exclusive",
+        "external",
+        "manual",
+    ],
     test_class = "org.wfanet.measurement.e2e.CorrectnessTest",
     deps = [
         ":kind_rule",

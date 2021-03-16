@@ -41,5 +41,6 @@ jobs:
           build-options: |
             --host_platform=//build/platforms:ubuntu_18_04
             --test_output=streamed
+          restore-cache: false
           target-patterns: |
             //src/test/kotlin/org/wfanet/measurement/e2e:correctness_test

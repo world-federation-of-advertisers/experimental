@@ -70,6 +70,7 @@ import org.wfanet.measurement.kingdom.db.streamReportsFilter
 import org.wfanet.measurement.storage.StorageClient
 import org.wfanet.measurement.storage.createBlob
 import org.wfanet.measurement.system.v1alpha.GlobalComputation
+import org.wfanet.measurement.tools.runSubprocess
 
 private const val MAX_COUNTER_VALUE = 10
 private const val DECAY_RATE = 23.0
@@ -245,6 +246,14 @@ class CorrectnessImpl(
     generatedCampaign: GeneratedCampaign,
     testResult: TestResult.Builder
   ) {
+    runSubprocess(
+      "kubectl get pods --context kind-measurement-e2e"
+    )
+
+    runSubprocess(
+      "kubectl logs a-publisher-data-server-pod --context kind-measurement-e2e"
+    )
+
     val dataProviderId = generatedCampaign.dataProviderId.apiId
     val campaignId = generatedCampaign.campaignId.apiId
 
