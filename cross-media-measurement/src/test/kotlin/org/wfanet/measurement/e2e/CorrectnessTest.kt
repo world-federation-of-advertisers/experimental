@@ -22,6 +22,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.logging.Logger
 import kotlin.test.fail
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -39,6 +40,7 @@ import org.wfanet.measurement.loadtest.CorrectnessImpl
 import org.wfanet.measurement.storage.StorageClient
 import org.wfanet.measurement.storage.filesystem.FileSystemStorageClient
 import org.wfanet.measurement.tools.ClusterState
+import org.wfanet.measurement.tools.runSubprocess
 
 /**
  * Runs a correctness test in a Kubernetes-in-Docker (kind) cluster.
@@ -62,6 +64,15 @@ class CorrectnessTest {
   fun testCorrectnessInKind() {
     val clusterState = ClusterState(KindRule.clusterName)
 
+    val nodeIp = clusterState.getNodeIp()
+    val nodePorts = clusterState.getNodePorts(listOf(spannerEmulator, publisherDataServer))
+
+    val publisherDataHost = "$nodeIp:${nodePorts.getValue(publisherDataServer).getValue("port")}"
+    logger.info("Publisher data server: " + publisherDataHost)
+
+    val spannerEmulatorHost = "$nodeIp:${nodePorts.getValue(spannerEmulator).getValue("grpc")}"
+    logger.info("Spanner emulator host: " + spannerEmulatorHost)
+
     // TODO(fashing): Replace with k8s readiness checks or something similar.
     // Poll statuses until cluster is ready
     val maxAttempts = 300
@@ -82,17 +93,17 @@ class CorrectnessTest {
     if (!isReady) {
       fail("Timed out waiting for cluster to be ready")
     }
+
+    runSubprocess(
+      "kubectl logs $publisherDataServer-pod --context kind-${KindRule.clusterName}"
+    )
+
     // Wait for servers to be ready to accept traffic
     Thread.sleep(30000L)
 
-    val nodeIp = clusterState.getNodeIp()
-    val nodePorts = clusterState.getNodePorts(listOf(spannerEmulator, publisherDataServer))
-
-    val spannerEmulatorHost = "$nodeIp:${nodePorts.getValue(spannerEmulator).getValue("grpc")}"
-
     val channel: ManagedChannel =
       ManagedChannelBuilder
-        .forTarget("$nodeIp:${nodePorts.getValue(publisherDataServer).getValue("port")}")
+        .forTarget(publisherDataHost)
         .usePlaintext()
         .build()
     val publisherDataStub = PublisherDataGrpcKt.PublisherDataCoroutineStub(channel)
@@ -151,5 +162,7 @@ class CorrectnessTest {
     private const val configPath =
       "/org/wfanet/measurement/loadtest/config/liquid_legions_sketch_config.textproto"
     private val resource: URL = this::class.java.getResource(configPath)
+
+    private val logger = Logger.getLogger(this::class.java.name)
   }
 }
