@@ -119,20 +119,14 @@ load("@maven//:compat.bzl", "compat_repositories")
 
 compat_repositories()
 
-# Swig rules.
-local_repository(
-    name = "wfa_rules_swig",
-    path = "../rules-swig",
-)
+load("//build/halo:repositories.bzl", "halo_dependencies")
 
-# Measurement APIs.
-local_repository(
-    name = "wfa_measurement_proto",
-    path = "../cross-media-measurement-api",
-)
-
-# Core AnySketch.
-local_repository(
-    name = "any_sketch",
-    path = "../any-sketch",
+halo_dependencies(
+    commit = "687d784769bdd7df8b4b9b725d1f3fc98e8205b9",
+    sha256 = "8048e1073e293e764781865272d1bb6ccda901c16e78e7ccaab1d754ba6c3798",
+    target_map = {
+        "any-sketch": "any_sketch",
+        "cross-media-measurement-api": "wfa_measurement_proto",
+        "rules-swig": "wfa_rules_swig",
+    },
 )
