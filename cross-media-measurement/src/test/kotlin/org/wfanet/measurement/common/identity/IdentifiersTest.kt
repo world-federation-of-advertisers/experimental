@@ -25,7 +25,7 @@ class IdentifiersTest {
 
   @Test
   fun `round trips`() {
-    for (i in listOf<Long>(0, 1, 10, 64, 1 shl 32, Long.MAX_VALUE)) {
+    for (i in listOf(0, 1, 10, 64, 1 shl 32, Long.MAX_VALUE)) {
       val externalId1 = ExternalId(i)
       val apiId1 = externalId1.apiId
       val externalId2 = ApiId(apiId1.value).externalId
