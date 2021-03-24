@@ -33,4 +33,7 @@ message Exchange {
 
   // Must be a complete date (no field can be unset/zero).
   google.type.Date date = 2;
+
+  // SHA256 hash of the audit trail, if uploaded.
+  bytes audit_trail_sha256 = 3;
 }
