@@ -1,6 +1,0 @@
-# Patterns to ignore when running linters.
-#
-# Use the same format as gitignore.
-
-# Third-party code.
-third_party/

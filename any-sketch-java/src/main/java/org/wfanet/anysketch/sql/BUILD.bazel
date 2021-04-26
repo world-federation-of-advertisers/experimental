@@ -1,7 +1,0 @@
-filegroup(
-    name = "sql",
-    srcs = glob(["*.sql"]),
-    visibility = [
-        "//src/main/java/org/wfanet/anysketch:__pkg__",
-    ],
-)

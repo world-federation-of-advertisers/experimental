@@ -1,8 +1,0 @@
-package(default_visibility = [
-    "//src/main/cc/any_sketch:__subpackages__",
-])
-
-cc_library(
-    name = "macros",
-    hdrs = ["macros.h"],
-)
