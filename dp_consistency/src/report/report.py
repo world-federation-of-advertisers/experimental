@@ -27,6 +27,20 @@ class MetricReport:
             total_campaign_reach_time_series)
         self.__reach_time_series_by_edp = reach_time_series_by_edp
 
+    def sample_with_noise(self):
+        """
+        :return: a new MetricReport where measurements have been resampled
+        according to their mean and variance.
+        """
+        return MetricReport(
+            total_campaign_reach_time_series=list(
+                MetricReport.__sample_with_noise(measurement) for measurement in
+                self.__total_campaign_reach_time_series),
+            reach_time_series_by_edp=list(
+                list(MetricReport.__sample_with_noise(measurement)
+                     for measurement in series)
+                for series in self.__reach_time_series_by_edp))
+
     def get_edp_measurement(self, edp: int, period: int):
         return self.__reach_time_series_by_edp[edp][period]
 
@@ -39,20 +53,6 @@ class MetricReport:
     def get_number_of_periods(self):
         return len(self.__total_campaign_reach_time_series)
 
-    def sample_with_noise(self):
-        """
-        :return: a new MetricReport where measurements have been resampled
-        according to their mean and variance.
-        """
-        return MetricReport(
-            total_campaign_reach_time_series=list(
-                MetricReport.__sample_with_noise(metric) for metric in
-                self.__total_campaign_reach_time_series),
-            reach_time_series_by_edp=list(
-                list(MetricReport.__sample_with_noise(metric) for metric in i)
-                for i in
-                self.__reach_time_series_by_edp))
-
     @staticmethod
     def __sample_with_noise(measurement: Measurement):
         return Measurement(
@@ -63,7 +63,7 @@ class MetricReport:
 class Report:
     """
     Represents a full report, consisting of multiple MetricReports,
-    each of which is a subset of the previous one.
+    which may have set relationships between each other.
     """
     __metric_reports: dict[str, MetricReport]
     __metric_subsets_by_parent: dict[str, list[str]]
