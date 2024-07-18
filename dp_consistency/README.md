@@ -21,15 +21,15 @@ $\|{ \dfrac{Y_i - \mu_{M_j}}{\sigma_{M_j}} }\|_2$
 
 where:
 
-* Y_i: Adjusted estimates for each set
-* M_i: Original (noisy) measurements
-* sigma_i: Standard deviations of the measurements
+* $Y_i$: Adjusted estimates for each set
+* $M_j$: Original (noisy) measurements, note each set could have been measured more than once.
+* $\sigma_{M_j}$: Standard deviations of the measurements
 
 ### Constraints
 
 The optimization is subject to several constraints:
 
-1. **Subset Constraints:** The sum of measurements for subsets within a set must be less than or equal to the
+1. **Subset Constraints:** The measurements for subsets within a set must be less than or equal to the
    measurement of the parent set.
 2. **Cover Constraints:** The sum of measurements for sets forming a cover must be greater than or equal to the
    measurement of the parent set they cover.
@@ -86,7 +86,7 @@ measurements, facilitating the automatic generation of constraints for the optim
 ## Experimental Results
 
 Simulation results demonstrate a reduction in variance across all variables in the report, indicating improved
-consistency after applying this method.
+consistency after applying this method. More details will be added soon.
 
 ## Key Advantages
 
