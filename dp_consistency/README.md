@@ -35,7 +35,7 @@ This project implements a quadratic programming (QP) approach for noise removal 
 
 
 
-## Prepare the environment and install dependencies 
+## Prepare the environment, install dependencies and run correction on an Origin Report
 
 ```
 git clone https://github.com/world-federation-of-advertisers/experimental.git
@@ -43,8 +43,10 @@ cd experimental
 python3 -m venv ../noisecorrectionenv
 source ../noisecorrectionenv/bin/activate
 cd dp_consistency
-pip3 install -r requirements.txt 
+pip3 install -r requirements.txt
+python3 -m src.correctoriginreport --path_to_report=Origin_Report.xlsx 
 ```
+This will correct the report and create a corrected a file called `Origin_Report_corrected.xlsx` in this folder. 
 
 ## Usage Example
 
