@@ -44,13 +44,6 @@ FILTER_COL_NAME = "Impression Filter"
 ami = "ami"
 mrc = "mrc"
 
-# Add unnoised flag      (DONE)
-# Check if the unnoised is one of the EDPs (DONE)
-# Add 0 std to for the unnoised (DONE)
-# Use the total tabs as the last element of the series and write them back to file correctly (DONE)
-# Change the package (DONE)
-# write unit test
-
 
 def createMeasurements(rows, reach_col_name, sigma):
     # These rows are already sorted by timestamp.
@@ -75,7 +68,9 @@ def readExcel(excel_file_path, unnoised_edps):
         measurements = {}
         dfs = pd.read_excel(excel_file_path, sheet_name=None)
         for edp in EDP_MAP:
-            sigma = 0 if edp in unnoised_edps else SIGMA
+            # TODO(uakyol) : uncomment this line when the optimizer issue is resolved.
+            # sigma = 0 if edp in unnoised_edps else SIGMA
+            sigma = SIGMA
 
             cumilative_sheet_name = EDP_MAP[edp]["sheet"]
             (cumilative_ami_measurements, cumilative_mrc_measurements) = (
@@ -207,6 +202,7 @@ def correctExcelFile(path_to_report, unnoised_edps):
     (measurements, excel) = readExcel(path_to_report, unnoised_edps)
     correctedReport = getCorrectedReport(measurements)
     return buildCorrectedExcel(correctedReport, excel)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Read an Excel file.")
