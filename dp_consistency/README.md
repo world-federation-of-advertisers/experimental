@@ -36,7 +36,7 @@ The optimization is subject to several constraints:
 3. **Non-negativity:** All adjusted estimates (Y_i) must be greater than or equal to zero.
 4. **Population Bound:** All adjusted estimates (Y_i) must be less than or equal to the total population (P).
 5. **Zero-Variance Equality:** Measurements with zero variance are considered exact and are enforced as equality
-   constraints (Y_i = M_j).
+   constraints (Y_i = M_j). Note: This is useful if one of the data sources does not have noise added.
 
 ## Interpretation
 
@@ -56,6 +56,8 @@ Each measurement is also associated to a time period, and a metric (e.g. mrc, am
 To compute unique reach for each EDP (when the number of EDPs are larger than 2), we must also compute the union of all
 EDPs but one, for each EDP, for each measurement period and metric.
 
+For TV measurements we always set the variance to 0, to indicate that TV measurements do not have DP noise.
+
 ### Cover Relationships ###
 
 For each metric and period, it identifies the set representing the union of all entities/dimensions (EDPs) and the
@@ -74,13 +76,17 @@ and the union set for that metric and period, for all unions that include that E
 If there's a predefined hierarchy among metrics (where some metrics are inherently greater than or equal to others), it
 enforces this relationship for each period and EDP, including the measured unions.
 
-It assumes measurements in one period are less than or equal to those in the subsequent period. It adds
-subset relationships to reflect this for each metric and EDP, including the union set.
+It asserts the cumulative reach measurements in one period are less than or equal to those in the
+subsequent period. It adds subset relationships to reflect this for each metric and EDP, including the union set.
 
 ## Implementation
 
-The methodology is implemented using Python and the `qpsolvers` library to solve the QP problem.
-The `SetMeasurementsSpec` class is used to efficiently store and manage the relationships between sets and their
+The methodology is implemented using Python and the [qpsolvers](https://github.com/qpsolvers/qpsolvers)
+ library to solve the QP problem. QP solvers offers a common interface over many QP implementations which
+can make it easy to adjust underlying the solver engine over time.
+
+The `SetMeasurementsSpec` class in the [noised_measurements](src/noiseninja/noised_measurements.py) package is used to
+efficiently store and manage the relationships between sets and their
 measurements, facilitating the automatic generation of constraints for the optimization.
 
 ## Experimental Results
