@@ -61,9 +61,8 @@ For TV measurements we always set the variance to 0, to indicate that TV measure
 ### Cover Relationships ###
 
 For each metric and period, it identifies the set representing the union of all entities/dimensions (EDPs) and the
-individual
-_sets for each EDP and add a "cover" relationship to the spec, indicating that the union set's measurement should be_
-greater than or equal to the sum of the measurements of its constituent EDP sets.
+individual sets for each EDP and add a "cover" relationship to the spec, indicating that the union set's measurement 
+should be greater than or equal to the sum of the measurements of its constituent EDP sets.
 
 We do the same for the unions computed for unique reach purposes. Also including the relationship that the
 of all-but-edp-x set and the set x are a cover of the union of all EDPs.
@@ -74,7 +73,7 @@ For each metric, period, and EDP, it establishes a subset relationship between t
 and the union set for that metric and period, for all unions that include that EDP for tha metric and period.
 
 If there's a predefined hierarchy among metrics (where some metrics are inherently greater than or equal to others), it
-enforces this relationship for each period and EDP, including the measured unions.
+enforces this relationship for each period and EDP, including the measured unions. For example: $MRC \lte AMI$.
 
 It asserts the cumulative reach measurements in one period are less than or equal to those in the
 subsequent period. It adds subset relationships to reflect this for each metric and EDP, including the union set.
