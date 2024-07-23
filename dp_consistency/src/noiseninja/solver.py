@@ -6,7 +6,7 @@ from qpsolvers import solve_problem, Problem
 
 from src.noiseninja.noised_measurements import SetMeasurementsSpec
 
-SOLVER = "highs"
+SOLVER = "clarabel"
 
 SEMAPHORE = Semaphore()
 

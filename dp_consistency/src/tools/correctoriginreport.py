@@ -10,10 +10,9 @@ import math
 #   1. There are 2 EDPs one with Name Google, the other Linear TV.
 #   2. CUSTOM filters are not yet supported in this tool.
 #   3. AMI is a parent of MRC and there are no other relationships between metrics.
-#   4. The variance is assumed to be 1??
+#   4. The standard deviation for all Measurements are assumed to be 1
 #   5. Frequency results are not corrected.
 #   6. Impression results are not corrected.
-#   7. The issue with the Linear TV shouldn't be corrected can be addressed by setting the variance of its measurements to 0.
 
 
 SIGMA = 1
