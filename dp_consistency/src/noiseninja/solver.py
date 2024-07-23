@@ -6,10 +6,12 @@ from qpsolvers import solve_problem, Problem
 
 from src.noiseninja.noised_measurements import SetMeasurementsSpec
 
-SOLVER = "clarabel"
+SOLVER = "highs"
 
 SEMAPHORE = Semaphore()
 
+
+BIG_M = 100_000_000
 
 class Solver:
 

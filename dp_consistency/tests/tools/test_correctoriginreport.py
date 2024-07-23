@@ -18,7 +18,9 @@ class TestReport(TestCase):
         )
         (google_ami_rows, google_mrc_rows) = self.get_edp_rows(correctedExcel, "Google")
         (tv_ami_rows, tv_mrc_rows) = self.get_edp_rows(correctedExcel, "Linear TV")
-        (total_ami_rows, total_mrc_rows) = self.get_edp_rows(correctedExcel, "Total Campaign")
+        (total_ami_rows, total_mrc_rows) = self.get_edp_rows(
+            correctedExcel, "Total Campaign"
+        )
 
         # Ensure that subset relations are correct by checking larger time periods have more reach than smaller ones.
         self.__assert_is_monotonically_increasing(google_ami_rows)
@@ -38,7 +40,7 @@ class TestReport(TestCase):
         self.__assert_pairwise_greater(google_ami_rows, google_mrc_rows)
         self.__assert_pairwise_greater(tv_ami_rows, tv_mrc_rows)
         self.__assert_pairwise_greater(total_ami_rows, total_mrc_rows)
-    
+
     def get_edp_rows(self, df, edp):
         tot_sheet = df[edp]
         cum_sheet = df[f"Cuml. Reach ({edp})"]
@@ -59,11 +61,11 @@ class TestReport(TestCase):
             ].tolist()
         )
         return (ami_rows, mrc_rows)
-    
+
     def __assert_is_monotonically_increasing(self, lst):
         """Checks if a list is monotonically increasing."""
-        self.assertTrue(all(lst[i] <= lst[i+1] for i in range(len(lst)-1)))
-    
+        self.assertTrue(all(lst[i] <= lst[i + 1] for i in range(len(lst) - 1)))
+
     def __assert_pairwise_sum_greater(self, list1, list2, list3):
         """Checks if the pairwise sum of the first two lists is pairwise greater than the third list."""
         if len(list1) != len(list2) or len(list1) != len(list3):

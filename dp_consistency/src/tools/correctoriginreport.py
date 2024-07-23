@@ -4,6 +4,7 @@ import sys
 import argparse
 import pandas as pd
 from functools import partial
+import math
 
 # This is a demo script that has the following assumptions :
 #   1. There are 2 EDPs one with Name Google, the other Linear TV.
@@ -15,8 +16,7 @@ from functools import partial
 #   7. The issue with the Linear TV shouldn't be corrected can be addressed by setting the variance of its measurements to 0.
 
 
-# Important Note: If sigma is set to a low number like 1, the corrected report returns numbers very close to 0.
-SIGMA = 100
+SIGMA = 1
 
 AMI_FILTER = "AMI"
 MRC_FILTER = "MRC"
@@ -64,35 +64,27 @@ def getMeasurements(df, reach_col_name, sigma):
 
 
 def readExcel(excel_file_path, unnoised_edps):
-    try:
-        measurements = {}
-        dfs = pd.read_excel(excel_file_path, sheet_name=None)
-        for edp in EDP_MAP:
-            # TODO(uakyol) : uncomment this line when the optimizer issue is resolved.
-            # sigma = 0 if edp in unnoised_edps else SIGMA
-            sigma = SIGMA
+    measurements = {}
+    dfs = pd.read_excel(excel_file_path, sheet_name=None)
+    for edp in EDP_MAP:
+        sigma = 0 if edp in unnoised_edps else SIGMA
 
-            cumilative_sheet_name = EDP_MAP[edp]["sheet"]
-            (cumilative_ami_measurements, cumilative_mrc_measurements) = (
-                getMeasurements(dfs[cumilative_sheet_name], CUML_REACH_COL_NAME, sigma)
-            )
+        cumilative_sheet_name = EDP_MAP[edp]["sheet"]
+        (cumilative_ami_measurements, cumilative_mrc_measurements) = getMeasurements(
+            dfs[cumilative_sheet_name], CUML_REACH_COL_NAME, sigma
+        )
 
-            (total_ami_measurements, total_mrc_measurements) = getMeasurements(
-                dfs[edp], TOTAL_REACH_COL_NAME, sigma
-            )
+        (total_ami_measurements, total_mrc_measurements) = getMeasurements(
+            dfs[edp], TOTAL_REACH_COL_NAME, sigma
+        )
 
-            # There has to be 1 row for AMI and MRC metrics in the total reach sheet.
-            assert len(total_mrc_measurements) == 1 and len(total_ami_measurements) == 1
+        # There has to be 1 row for AMI and MRC metrics in the total reach sheet.
+        assert len(total_mrc_measurements) == 1 and len(total_ami_measurements) == 1
 
-            measurements[edp] = {
-                AMI_FILTER: cumilative_ami_measurements + total_ami_measurements,
-                MRC_FILTER: cumilative_mrc_measurements + total_mrc_measurements,
-            }
-
-    except FileNotFoundError:
-        print(f"Error: File not found at {excel_file_path}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        measurements[edp] = {
+            AMI_FILTER: cumilative_ami_measurements + total_ami_measurements,
+            MRC_FILTER: cumilative_mrc_measurements + total_mrc_measurements,
+        }
 
     return (measurements, dfs)
 
@@ -127,7 +119,7 @@ def getCorrectedReport(measurements):
 
 def correctSheetMetric(df, rows, func):
     for period, (index, row) in enumerate(rows.iterrows()):
-        df.at[index, CUML_REACH_COL_NAME] = int(func(period).value)
+        df.at[index, CUML_REACH_COL_NAME] = math.ceil(func(period).value)
 
 
 def correctCumSheet(df, ami_func, mrc_func):
@@ -144,8 +136,8 @@ def correctTotSheet(df, ami_val, mrc_val):
 
     # There has to be 1 row for AMI and MRC metrics in the total reach sheet.
     assert ami_rows.shape[0] == 1 and mrc_rows.shape[0] == 1
-    df.at[ami_rows.index[0], TOTAL_REACH_COL_NAME] = int(ami_val)
-    df.at[mrc_rows.index[0], TOTAL_REACH_COL_NAME] = int(mrc_val)
+    df.at[ami_rows.index[0], TOTAL_REACH_COL_NAME] = math.ceil(ami_val)
+    df.at[mrc_rows.index[0], TOTAL_REACH_COL_NAME] = math.ceil(mrc_val)
     return df
 
 
@@ -198,7 +190,6 @@ def writeCorrectedExcel(path, corrected_excel):
 
 
 def correctExcelFile(path_to_report, unnoised_edps):
-    print(path_to_report, unnoised_edps)
     (measurements, excel) = readExcel(path_to_report, unnoised_edps)
     correctedReport = getCorrectedReport(measurements)
     return buildCorrectedExcel(correctedReport, excel)
