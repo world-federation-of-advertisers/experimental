@@ -1,0 +1,251 @@
+# See event_groups.txt for context
+display_name: "my report"
+
+report_time {
+  start_time: "2024-01-01"  # a Monday
+  end_time: "2024-01-26"  # a Friday
+}
+
+reporting_set_entries {
+  name: "Y Display"
+  reporting_set_name: "random string"
+}
+reporting_set_entries {
+  name: "Y Video"
+  reporting_set_name: "random string"
+}
+reporting_set_entries {
+  name: "T Video"
+  reporting_set_name: "random string"
+}
+
+qualification_filters {
+  media_type: "video"
+  filter_names: "mrc"
+  filter_names: "ami"
+  custom {
+    viewability {
+      quantile: ONE_HUNDRED
+    }
+    completion {
+      quantile: ONE_HUNDRED
+    }
+  }
+  # ami: true -- measurement policy would force this to true regardless
+}
+qualification_filters {
+  media_type: "display"
+  filter_names: "ami"
+}
+
+page_definitions {
+  name: "Total Campaign"
+  frequency: TOTAL
+  cumulative: true  # for total this value should be ignored
+  grouping {
+    dimension_name: "SEX"
+  }
+  filters {
+    terms {
+      dimension_name: "AGE_BUCKET"
+      value: "18_34"
+    }
+  }
+  population_size: true
+
+  metric_spec {
+    reporting_set_entry_names: "Y Video"
+    reporting_set_entry_names: "T Video"
+
+    metric_type {
+      impressions: true
+      grps: true
+      percent_k_plus_reach: true
+      k_plus_reach: 5
+      average_frequency: true
+    }
+  }
+}
+
+pages {
+  name: "Total Campaign"
+  results {
+    metadata {
+      interval {
+        start_time: "2024-01-01"
+        end_time: "2024-01-26"
+      }
+      reporting_set_entry_names: "T Video"
+      reporting_set_entry_names: "Y Video"
+      media_type: "video"
+      qualification_filter_name: "mrc"
+      grouping {
+        dimension_name: "SEX"
+        value: "M"
+      }
+      filters {
+        terms {
+          dimension_name: "AGE_BUCKET"
+          value: "18_34"
+        }
+      }
+    }
+    value {
+      population_size: 10000000
+      metric_result {
+        impressions: 123
+        grps: 1.23
+        percent_k_plus_reach: 90
+        percent_k_plus_reach: 80
+        percent_k_plus_reach: 70
+        percent_k_plus_reach: 60
+        percent_k_plus_reach: 50
+        k_plus_reach: 900
+        k_plus_reach: 800
+        k_plus_reach: 700
+        k_plus_reach: 600
+        k_plus_reach: 500
+        average_frequency: 5.6
+      }
+    }
+  }
+
+  results {
+    metadata {
+      interval {
+        start_time: "2024-01-01"
+        end_time: "2024-01-26"
+      }
+      reporting_set_entry_names: "T Video"
+      reporting_set_entry_names: "Y Video"
+      media_type: "video"
+      qualification_filter_name: "mrc"
+      grouping {
+        dimension_name: "SEX"
+        value: "F"  # changed from above
+      }
+    }
+    value {}  # omitting result values for brevity
+  }
+
+  # Four more results should exist for
+  # the combinations of filter_names {ami, custom}
+  # and {M, F}
+}
+
+# A similar page definition and page would be created for
+# display, and cross-media. It would differ on what
+# reporting sets would be included
+
+page_definitions {
+  name: "Total Campaign Cumulative"
+  frequency: WEEKLY
+  cumulative: true
+  # omit grouping and filters
+  # a sufficent example exist above
+  metric_spec {
+    reporting_set_entry_names: "Y Video"
+    reporting_set_entry_names: "T Video"
+
+    metric_type {
+      reach: true
+    }
+  }
+}
+
+pages {
+  name: "Total Campaign Cumulative"
+  results {
+    metadata {
+      interval {
+        start_time: "2024-01-01"
+        end_time: "2024-01-08"
+      }
+      reporting_set_entry_names: "T Video"
+      reporting_set_entry_names: "Y Video"
+      media_type: "video"
+      qualification_filter_name: "ami"
+    }
+    value {
+      metric_result {
+        reach: 111
+      }
+    }
+
+  }
+
+  results {
+    metadata {
+      interval {
+        start_time: "2024-01-08"
+        end_time: "2024-01-15"
+      }
+      reporting_set_entry_names: "T"
+      reporting_set_entry_names: "Y"
+      media_type: "video"
+      qualification_filter_name: "ami"
+    }
+    value {
+      metric_result {
+        reach: 222
+      }
+    }
+  }
+  # and so on for each date and then for each filter type
+}
+
+page_definitions {
+  name: "Y"
+  frequency: TOTAL
+  metric_spec {
+    reporting_set_entry_names: "Y Video"
+
+    metric_type {
+      unique_reach: true
+      impressions: true
+      grps: true
+      percent_k_plus_reach: true
+      k_plus_reach: 5
+      average_frequency: true
+    }
+  }
+}
+
+pages {
+  name: "Y"
+  results {
+    metadata {
+      interval {
+        start_time: "2024-01-01"
+        end_time: "2024-01-26"
+      }
+      reporting_set_entry_names: "Y Video"
+      media_type: "video"
+      qualification_filter_name: "mrc"
+    }
+    value {
+      metric_result {
+        unique_reach: 42
+        impressions: 123
+        grps: 1.23
+        percent_k_plus_reach: 90
+        percent_k_plus_reach: 80
+        percent_k_plus_reach: 70
+        percent_k_plus_reach: 60
+        percent_k_plus_reach: 50
+        k_plus_reach: 900
+        k_plus_reach: 800
+        k_plus_reach: 700
+        k_plus_reach: 600
+        k_plus_reach: 500
+        average_frequency: 5.6
+      }
+    }
+  }
+  # and so on for each media type
+}
+
+# Single pub cumulative reach is almost identical to the multi-pub
+# version and is left as an exercise. :)
+
+# Similarly anchored reach is left as an exercise.

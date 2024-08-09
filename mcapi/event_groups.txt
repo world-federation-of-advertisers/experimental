@@ -1,0 +1,10 @@
+Assume three EDPs: Y, T, M
+
+We have the following Event Groups:
+
+Y.Video (with ETs=video)
+Y.Display (with ETs=display)
+
+T.Video (with ETs=video)
+
+M.Other (with ETs=video)
