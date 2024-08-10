@@ -1,26 +1,13 @@
 # See event_groups.txt for context
-display_name: "my report"
+title: "my report"
 
 report_time {
   start_time: "2024-01-01"  # a Monday
   end_time: "2024-01-26"  # a Friday
 }
 
-reporting_set_entries {
-  name: "Y Display"
-  reporting_set_name: "random string"
-}
-reporting_set_entries {
-  name: "Y Video"
-  reporting_set_name: "random string"
-}
-reporting_set_entries {
-  name: "T Video"
-  reporting_set_name: "random string"
-}
-
 qualification_filters {
-  media_type: "video"
+  media_type: 2  # VIDEO
   filter_names: "mrc"
   filter_names: "ami"
   custom {
@@ -31,31 +18,46 @@ qualification_filters {
       quantile: ONE_HUNDRED
     }
   }
-  # ami: true -- measurement policy would force this to true regardless
 }
 qualification_filters {
-  media_type: "display"
+  media_type: 3  # "DISPLAY"
   filter_names: "ami"
 }
 
-page_definitions {
-  name: "Total Campaign"
-  frequency: TOTAL
-  cumulative: true  # for total this value should be ignored
-  grouping {
-    dimension_name: "SEX"
-  }
-  filters {
-    terms {
-      dimension_name: "AGE_BUCKET"
-      value: "18_34"
+calculation_spec_map {
+  key: "total"
+  value {
+    frequency: TOTAL
+    cumulative: true  # for total this value should be ignored
+    grouping {
+      dimension_name: "SEX"
+    }
+    filters {
+      term {
+        dimension_name: "AGE_BUCKET"
+        value: "18_34"
+      }
     }
   }
+}
+calculation_spec_map {
+  key: "weekly"
+  value {
+    frequency: WEEKLY
+    cumulative: true
+    # omit grouping and filters
+    # as a sufficent example exist above
+  }
+}
+
+page_definitions {
+  title: "Total Campaign"
+  calculation_spec_key: "total"
   population_size: true
 
   metric_spec {
-    reporting_set_entry_names: "Y Video"
-    reporting_set_entry_names: "T Video"
+    reporting_sets: "Y Video"
+    reporting_sets: "T Video"
 
     metric_type {
       impressions: true
@@ -68,23 +70,25 @@ page_definitions {
 }
 
 pages {
-  name: "Total Campaign"
+  title: "Total Campaign"
   results {
     metadata {
       interval {
         start_time: "2024-01-01"
         end_time: "2024-01-26"
       }
-      reporting_set_entry_names: "T Video"
-      reporting_set_entry_names: "Y Video"
-      media_type: "video"
+      reporting_sets: "T Video"
+      reporting_sets: "Y Video"
+      reporting_set_display_names: "T Video"
+      reporting_set_display_names: "Y Video"
+      media_type: 2  # "VIDEO"
       qualification_filter_name: "mrc"
       grouping {
         dimension_name: "SEX"
         value: "M"
       }
       filters {
-        terms {
+        term {
           dimension_name: "AGE_BUCKET"
           value: "18_34"
         }
@@ -116,9 +120,11 @@ pages {
         start_time: "2024-01-01"
         end_time: "2024-01-26"
       }
-      reporting_set_entry_names: "T Video"
-      reporting_set_entry_names: "Y Video"
-      media_type: "video"
+      reporting_sets: "T Video"
+      reporting_sets: "Y Video"
+      reporting_set_display_names: "T Video"
+      reporting_set_display_names: "Y Video"
+      media_type: 2  # "VIDEO"
       qualification_filter_name: "mrc"
       grouping {
         dimension_name: "SEX"
@@ -138,14 +144,11 @@ pages {
 # reporting sets would be included
 
 page_definitions {
-  name: "Total Campaign Cumulative"
-  frequency: WEEKLY
-  cumulative: true
-  # omit grouping and filters
-  # a sufficent example exist above
+  title: "Total Campaign Cumulative"
+  calculation_spec_key: "total"
   metric_spec {
-    reporting_set_entry_names: "Y Video"
-    reporting_set_entry_names: "T Video"
+    reporting_sets: "Y Video"
+    reporting_sets: "T Video"
 
     metric_type {
       reach: true
@@ -154,16 +157,19 @@ page_definitions {
 }
 
 pages {
-  name: "Total Campaign Cumulative"
+  title: "Total Campaign Cumulative"
   results {
     metadata {
       interval {
         start_time: "2024-01-01"
         end_time: "2024-01-08"
       }
-      reporting_set_entry_names: "T Video"
-      reporting_set_entry_names: "Y Video"
-      media_type: "video"
+      reporting_sets: "T Video"
+      reporting_sets: "Y Video"
+      reporting_set_display_names: "Y Video"
+      reporting_set_display_names: "T Video"
+
+      media_type: 2  #"VIDEO"
       qualification_filter_name: "ami"
     }
     value {
@@ -180,9 +186,11 @@ pages {
         start_time: "2024-01-08"
         end_time: "2024-01-15"
       }
-      reporting_set_entry_names: "T"
-      reporting_set_entry_names: "Y"
-      media_type: "video"
+      reporting_sets: "T Video"
+      reporting_sets: "Y Video"
+      reporting_set_display_names: "Y Video"
+      reporting_set_display_names: "T Video"
+      media_type: 2  #"VIDEO"
       qualification_filter_name: "ami"
     }
     value {
@@ -195,10 +203,10 @@ pages {
 }
 
 page_definitions {
-  name: "Y"
-  frequency: TOTAL
+  title: "Y"
+  calculation_spec_key: "total"
   metric_spec {
-    reporting_set_entry_names: "Y Video"
+    reporting_sets: "T Video"
 
     metric_type {
       unique_reach: true
@@ -212,15 +220,17 @@ page_definitions {
 }
 
 pages {
-  name: "Y"
+  title: "Y"
   results {
     metadata {
       interval {
         start_time: "2024-01-01"
         end_time: "2024-01-26"
       }
-      reporting_set_entry_names: "Y Video"
-      media_type: "video"
+      reporting_sets: "Y Video"
+      reporting_set_display_names: "Y Video"
+
+      media_type: 2  #"VIDEO"
       qualification_filter_name: "mrc"
     }
     value {

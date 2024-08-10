@@ -2,9 +2,11 @@ Assume three EDPs: Y, T, M
 
 We have the following Event Groups:
 
-Y.Video (with ETs=video)
-Y.Display (with ETs=display)
+Y.Video (with media type = VIDEO)
+Y.Display (with media type = DISPLAY)
 
-T.Video (with ETs=video)
+T.Video (with media type = VIDEO)
 
-M.Other (with ETs=video)
+M.Other (with media type = OTHER)
+
+We assume the names and display names are the same.
