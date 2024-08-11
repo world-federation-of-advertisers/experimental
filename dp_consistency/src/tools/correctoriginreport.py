@@ -145,17 +145,19 @@ def correctTotSheet(df, ami_val, mrc_val):
 def buildCorrectedExcel(correctedReport, excel):
     ami_metric_report = correctedReport.get_metric_report(ami)
     mrc_metric_report = correctedReport.get_metric_report(mrc)
+
+    
     for edp in EDP_MAP:
         edp_index = EDP_MAP[edp]["ind"]
         amiFunc = (
-            ami_metric_report.get_total_reach_measurement
+            partial(ami_metric_report.get_edp_comb_measurement, frozenset({EDP_ONE, EDP_TWO}))
             if (edp == TOTAL_CAMPAIGN)
-            else partial(ami_metric_report.get_edp_measurement, edp_index)
+            else partial(ami_metric_report.get_edp_comb_measurement, frozenset({edp}))
         )
         mrcFunc = (
-            mrc_metric_report.get_total_reach_measurement
+            partial(mrc_metric_report.get_edp_comb_measurement, frozenset({EDP_ONE, EDP_TWO}))
             if (edp == TOTAL_CAMPAIGN)
-            else partial(mrc_metric_report.get_edp_measurement, edp_index)
+            else partial(mrc_metric_report.get_edp_comb_measurement, frozenset({edp}))
         )
 
         cumilative_sheet_name = EDP_MAP[edp]["sheet"]
@@ -163,16 +165,17 @@ def buildCorrectedExcel(correctedReport, excel):
             excel[cumilative_sheet_name], amiFunc, mrcFunc
         )
 
+
         # The last value of the corrected measurement series is the total reach.
         totAmiVal = (
-            ami_metric_report.get_total_reach_measurement(-1).value
+            ami_metric_report.get_edp_comb_measurement(frozenset({EDP_ONE, EDP_TWO}), -1).value
             if (edp == TOTAL_CAMPAIGN)
-            else ami_metric_report.get_edp_measurement(edp_index, -1).value
+            else ami_metric_report.get_edp_comb_measurement(frozenset({edp}), -1).value
         )
         totMrcVal = (
-            mrc_metric_report.get_total_reach_measurement(-1).value
+            mrc_metric_report.get_edp_comb_measurement(frozenset({EDP_ONE, EDP_TWO}), -1).value
             if (edp == TOTAL_CAMPAIGN)
-            else mrc_metric_report.get_edp_measurement(edp_index, -1).value
+            else mrc_metric_report.get_edp_comb_measurement(frozenset({edp}), -1).value
         )
         total_sheet_name = edp
         excel[total_sheet_name] = correctTotSheet(
