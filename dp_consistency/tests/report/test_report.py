@@ -95,6 +95,55 @@ class TestReport(TestCase):
 
         self.__assertReportsAlmostEqual(expected, corrected, corrected.to_array())
 
+
+    def test_allows_incorrect_time_series(self):
+        ami = "ami"
+        report = Report(
+            metric_reports={
+                ami: MetricReport(
+                    reach_time_series_by_edp_combination={
+                        frozenset({EDP_TWO}): [
+                            Measurement(0.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(4.00, 1),
+                        ],
+                        frozenset({EDP_ONE}): [
+                            Measurement(0.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(1.00, 1),
+                        ],
+                    }
+                )
+            },
+            metric_subsets_by_parent={},
+            cumulative_inconsistency_allowed_edp_combs=set(frozenset({EDP_ONE})),
+        )
+
+        corrected = report.get_corrected_report()
+
+        expected = Report(
+            metric_reports={
+                ami: MetricReport(
+                    reach_time_series_by_edp_combination={
+                        frozenset({EDP_TWO}): [
+                            Measurement(0.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(4.00, 1),
+                        ],
+                        frozenset({EDP_ONE}): [
+                            Measurement(0.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(1.00, 1),
+                        ],
+                    }
+                )
+            },
+            metric_subsets_by_parent={},
+            cumulative_inconsistency_allowed_edp_combs=set(frozenset({EDP_ONE})),
+        )
+
+        self.__assertReportsAlmostEqual(expected, corrected, corrected.to_array())
+
     def test_can_correct_related_metrics(self):
         ami = "ami"
         mrc = "mrc"

@@ -284,7 +284,7 @@ class Report:
 
             # period1 <= period2
             for edp_comb in self.__edp_comb_index:
-                if edp_comb in self.__cumulative_inconsistency_allowed_edp_combs:
+                if len(edp_comb) == 1 and next(iter(edp_comb)) in self.__cumulative_inconsistency_allowed_edp_combs:
                     continue
                 if period >= self.__num_periods - 1:
                     continue
