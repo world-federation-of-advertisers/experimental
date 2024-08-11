@@ -63,7 +63,8 @@ class MetricReport:
         return len(next(iter(self.__reach_time_series_by_edp_combination.values())))
 
     def get_subset_relationships(self):
-        """Returns a list of tuples where first elem in the tuple is the parent and second elem is the subset"""
+        """Returns a list of tuples where first element in the tuple is the parent
+        and second element is the subset."""
         subset_relationships = []
         edp_combinations = list(self.__reach_time_series_by_edp_combination)
 
