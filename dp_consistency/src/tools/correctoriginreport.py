@@ -92,27 +92,29 @@ def getCorrectedReport(measurements):
     report = Report(
         {
             ami: MetricReport(
-                total_campaign_reach_time_series=measurements[TOTAL_CAMPAIGN][
-                    AMI_FILTER
-                ],
-                reach_time_series_by_edp=[
-                    measurements[EDP_ONE][AMI_FILTER],
-                    measurements[EDP_TWO][AMI_FILTER],
-                ],
+                reach_time_series_by_edp_combination={
+                    frozenset({EDP_ONE, EDP_TWO}): measurements[TOTAL_CAMPAIGN][
+                        AMI_FILTER
+                    ],
+                    frozenset({EDP_ONE}): measurements[EDP_ONE][AMI_FILTER],
+                    frozenset({EDP_TWO}): measurements[EDP_TWO][AMI_FILTER],
+                }
             ),
             mrc: MetricReport(
-                total_campaign_reach_time_series=measurements[TOTAL_CAMPAIGN][
-                    MRC_FILTER
-                ],
-                reach_time_series_by_edp=[
-                    measurements[EDP_ONE][MRC_FILTER],
-                    measurements[EDP_TWO][MRC_FILTER],
-                ],
+                reach_time_series_by_edp_combination={
+                    frozenset({EDP_ONE, EDP_TWO}): measurements[TOTAL_CAMPAIGN][
+                        MRC_FILTER
+                    ],
+                    frozenset({EDP_ONE}): measurements[EDP_ONE][MRC_FILTER],
+                    frozenset({EDP_TWO}): measurements[EDP_TWO][MRC_FILTER],
+                }
             ),
         },
         # AMI is a parent of MRC
         metric_subsets_by_parent={ami: [mrc]},
+        cumulative_inconsistency_allowed_edp_combs={},
     )
+
     return report.get_corrected_report()
 
 
