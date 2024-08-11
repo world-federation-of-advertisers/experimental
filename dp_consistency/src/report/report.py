@@ -62,8 +62,8 @@ class MetricReport:
     def get_number_of_periods(self):
         return len(next(iter(self.__reach_time_series_by_edp_combination.values())))
 
-    # Returns a list of tuples where first elem in the tuple is the parent and second elem is the subset
     def get_subset_relationships(self):
+        """Returns a list of tuples where first elem in the tuple is the parent and second elem is the subset"""
         subset_relationships = []
         edp_combinations = list(self.__reach_time_series_by_edp_combination)
 
@@ -74,12 +74,14 @@ class MetricReport:
                 subset_relationships.append((comb1, comb2))
         return subset_relationships
 
-    # Get covers as defined here: # https://en.wikipedia.org/wiki/Cover_(topology)
-    # For each set (s_i) in the list, enumerate combinations of all sets excluding this one.
-    # For each of these considered combinations, take their uinon and check if it is equal to
-    # s_i. If so, this combination is a cover of s_i.
     def get_cover_relationships(self):
-        def generate_length_combinations(data):
+        """Returns covers as defined here: # https://en.wikipedia.org/wiki/Cover_(topology).
+        For each set (s_i) in the list, enumerate combinations of all sets excluding this one.
+        For each of these considered combinations, take their uinon and check if it is equal to
+        s_i. If so, this combination is a cover of s_i.
+        """
+
+        def generate_all_length_combinations(data):
             return [
                 comb for r in range(1, len(data) + 1) for comb in combinations(data, r)
             ]
@@ -88,7 +90,7 @@ class MetricReport:
         edp_combinations = list(self.__reach_time_series_by_edp_combination)
         for i in range(len(edp_combinations)):
             possible_covered = edp_combinations[i]
-            for possible_cover in generate_length_combinations(
+            for possible_cover in generate_all_length_combinations(
                 edp_combinations[:i] + edp_combinations[i + 1 :]
             ):
                 union_of_possible_cover = reduce(
@@ -136,7 +138,7 @@ class Report:
             cumulative_inconsistency_allowed_edp_combs
         )
 
-        # all metrics in the set relationships must have a corresponding report.
+        # All metrics in the set relationships must have a corresponding report.
         for parent in metric_subsets_by_parent.keys():
             if not (parent in metric_reports):
                 raise ValueError(
@@ -158,11 +160,9 @@ class Report:
         ):
             self.__edp_comb_index[edp_comb] = index
 
-        # self.__num_edps = next(iter(metric_reports.values())).get_num_edps()
         self.__num_edp_combs = len(self.__edp_comb_index.keys())
         self.__num_periods = next(iter(metric_reports.values())).get_number_of_periods()
 
-        # num_vars_per_period = (self.__num_edps + 1) * len(metric_reports.keys())
         num_vars_per_period = (self.__num_edp_combs + 1) * len(metric_reports.keys())
         self.__num_vars = self.__num_periods * num_vars_per_period
 
