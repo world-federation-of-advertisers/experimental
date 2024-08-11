@@ -95,6 +95,109 @@ class TestReport(TestCase):
 
         self.__assertReportsAlmostEqual(expected, corrected, corrected.to_array())
 
+    def test_can_correct_time_series_for_three_edps(self):
+        ami = "ami"
+        report = Report(
+            metric_reports={
+                ami: MetricReport(
+                    reach_time_series_by_edp_combination={
+                        # 1 way comb
+                        frozenset({EDP_ONE}): [
+                            Measurement(0.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(4.00, 1),
+                        ],
+                        frozenset({EDP_TWO}): [
+                            Measurement(0.00, 1),
+                            Measurement(2.30, 1),
+                            Measurement(3.00, 1),
+                        ],
+                        frozenset({EDP_THREE}): [
+                            Measurement(1.00, 1),
+                            Measurement(3.30, 1),
+                            Measurement(5.00, 1),
+                        ],
+                        # 2 way combs
+                        frozenset({EDP_ONE, EDP_TWO}): [
+                            Measurement(0.00, 1),
+                            Measurement(5.30, 1),
+                            Measurement(6.90, 1),
+                        ],
+                        frozenset({EDP_TWO, EDP_THREE}): [
+                            Measurement(0.70, 1),
+                            Measurement(6.30, 1),
+                            Measurement(9.00, 1),
+                        ],
+                        frozenset({EDP_ONE, EDP_THREE}): [
+                            Measurement(1.20, 1),
+                            Measurement(7.00, 1),
+                            Measurement(8.90, 1),
+                        ],
+                        # 3 way comb
+                        frozenset({EDP_ONE, EDP_TWO, EDP_THREE}): [
+                            Measurement(1.10, 1),
+                            Measurement(8.0, 1),
+                            Measurement(11.90, 1),
+                        ],
+                    }
+                )
+            },
+            metric_subsets_by_parent={},
+            cumulative_inconsistency_allowed_edp_combs={},
+        )
+
+        corrected = report.get_corrected_report()
+
+        expected = Report(
+            metric_reports={
+                ami: MetricReport(
+                    reach_time_series_by_edp_combination={
+                        # 1 way comb
+                        frozenset({EDP_ONE}): [
+                            Measurement(0.10, 1.00),
+                            Measurement(3.362, 1.00),
+                            Measurement(4.00, 1.00),
+                        ],
+                        frozenset({EDP_TWO}): [
+                            Measurement(0.00, 1.00),
+                            Measurement(2.512, 1.00),
+                            Measurement(3.3333, 1.00),
+                        ],
+                        frozenset({EDP_THREE}): [
+                            Measurement(0.95, 1.00),
+                            Measurement(3.5749, 1.00),
+                            Measurement(5.3333, 1.00),
+                        ],
+                        # 2 way combs
+                        frozenset({EDP_ONE, EDP_TWO}): [
+                            Measurement(0.10, 1.00),
+                            Measurement(5.30, 1.00),
+                            Measurement(6.90, 1.00),
+                        ],
+                        frozenset({EDP_TWO, EDP_THREE}): [
+                            Measurement(0.95, 1.00),
+                            Measurement(6.087, 1.00),
+                            Measurement(8.66666, 1.00),
+                        ],
+                        frozenset({EDP_ONE, EDP_THREE}): [
+                            Measurement(1.05, 1.00),
+                            Measurement(6.937, 1.00),
+                            Measurement(8.90, 1.00),
+                        ],
+                        # 3 way comb
+                        frozenset({EDP_ONE, EDP_TWO, EDP_THREE}): [
+                            Measurement(1.05, 1.00),
+                            Measurement(8.00, 1.00),
+                            Measurement(11.90, 1.00),
+                        ],
+                    }
+                )
+            },
+            metric_subsets_by_parent={},
+            cumulative_inconsistency_allowed_edp_combs={},
+        )
+
+        self.__assertReportsAlmostEqual(expected, corrected, corrected.to_array())
 
     def test_allows_incorrect_time_series(self):
         ami = "ami"
@@ -168,7 +271,6 @@ class TestReport(TestCase):
         )
 
         corrected = report.get_corrected_report()
-
 
         expected = Report(
             metric_reports={
