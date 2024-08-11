@@ -29,7 +29,6 @@ class MetricReport:
                     )
                 )
 
-
         self.__reach_time_series_by_edp_combination = (
             reach_time_series_by_edp_combination
         )
@@ -39,14 +38,16 @@ class MetricReport:
         :return: a new MetricReport where measurements have been resampled
         according to their mean and variance.
         """
-        sampled_reach_time_series_by_edp_combination = {}
-        for edp_comb in self.__reach_time_series_by_edp_combination.keys():
-            sampled_reach_time_series_by_edp_combination[edp_comb] = [
-                MetricReport.__sample_with_noise(measurement)
-                for measurement in self.__reach_time_series_by_edp_combination[edp_comb]
-            ]
         return MetricReport(
-            reach_time_series_by_edp_combination=sampled_reach_time_series_by_edp_combination
+            reach_time_series_by_edp_combination={
+                edp_comb: [
+                    MetricReport.__sample_with_noise(measurement)
+                    for measurement in self.__reach_time_series_by_edp_combination[
+                        edp_comb
+                    ]
+                ]
+                for edp_comb in self.__reach_time_series_by_edp_combination.keys()
+            }
         )
 
     def get_edp_comb_measurement(self, edp_comb: str, period: int):
@@ -73,16 +74,15 @@ class MetricReport:
                 subset_relationships.append((comb1, comb2))
         return subset_relationships
 
+    # Get covers as defined here: # https://en.wikipedia.org/wiki/Cover_(topology)
+    # For each set (s_i) in the list, enumerate combinations of all sets excluding this one.
+    # For each of these considered combinations, take their uinon and check if it is equal to
+    # s_i. If so, this combination is a cover of s_i.
     def get_cover_relationships(self):
         def generate_length_combinations(data):
-            all_combinations = []
-            for r in range(1, len(data) + 1):
-                all_combinations.extend(combinations(data, r))
-            return all_combinations
-
-        def generate_sublists_removing_one(data):
-            for i in range(len(data)):
-                yield data[:i] + data[i + 1 :]
+            return [
+                comb for r in range(1, len(data) + 1) for comb in combinations(data, r)
+            ]
 
         cover_relationships = []
         edp_combinations = list(self.__reach_time_series_by_edp_combination)
@@ -95,9 +95,7 @@ class MetricReport:
                     lambda x, y: x.union(y), possible_cover
                 )
                 if union_of_possible_cover == possible_covered:
-                    cover_relationships.append(
-                        (possible_covered, possible_cover)
-                    )
+                    cover_relationships.append((possible_covered, possible_cover))
         return cover_relationships
 
     @staticmethod
@@ -189,7 +187,7 @@ class Report:
                 for metric in self.__metric_reports
             },
             metric_subsets_by_parent=self.__metric_subsets_by_parent,
-            cumulative_inconsistency_allowed_edp_combs=self.__cumulative_inconsistency_allowed_edp_combs
+            cumulative_inconsistency_allowed_edp_combs=self.__cumulative_inconsistency_allowed_edp_combs,
         )
 
     def sample_with_noise(self) -> "Report":
@@ -202,7 +200,7 @@ class Report:
                 for i in self.__metric_reports
             },
             metric_subsets_by_parent=self.__metric_subsets_by_parent,
-            cumulative_inconsistency_allowed_edp_combs=self.__cumulative_inconsistency_allowed_edp_combs
+            cumulative_inconsistency_allowed_edp_combs=self.__cumulative_inconsistency_allowed_edp_combs,
         )
 
     def to_array(self) -> np.array:
@@ -236,7 +234,9 @@ class Report:
             # sum of subsets >= union for each period
             for metric in self.__metric_reports:
                 metric_ind = self.__metric_index[metric]
-                for cover_relationship in self.__metric_reports[metric].get_cover_relationships():
+                for cover_relationship in self.__metric_reports[
+                    metric
+                ].get_cover_relationships():
                     covered_parent = cover_relationship[0]
                     covering_children = cover_relationship[1]
                     spec.add_cover(
@@ -256,7 +256,9 @@ class Report:
             # subset <= union
             for metric in self.__metric_reports:
                 metric_ind = self.__metric_index[metric]
-                for subset_relationship in self.__metric_reports[metric].get_subset_relationships():
+                for subset_relationship in self.__metric_reports[
+                    metric
+                ].get_subset_relationships():
                     parent_edp_comb = subset_relationship[0]
                     child_edp_comb = subset_relationship[1]
                     spec.add_subset_relation(
@@ -284,7 +286,11 @@ class Report:
 
             # period1 <= period2
             for edp_comb in self.__edp_comb_index:
-                if len(edp_comb) == 1 and next(iter(edp_comb)) in self.__cumulative_inconsistency_allowed_edp_combs:
+                if (
+                    len(edp_comb) == 1
+                    and next(iter(edp_comb))
+                    in self.__cumulative_inconsistency_allowed_edp_combs
+                ):
                     continue
                 if period >= self.__num_periods - 1:
                     continue
