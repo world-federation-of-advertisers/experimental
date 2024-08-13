@@ -78,7 +78,7 @@ class MetricReport:
     def get_cover_relationships(self):
         """Returns covers as defined here: # https://en.wikipedia.org/wiki/Cover_(topology).
         For each set (s_i) in the list, enumerate combinations of all sets excluding this one.
-        For each of these considered combinations, take their uinon and check if it is equal to
+        For each of these considered combinations, take their union and check if it is equal to
         s_i. If so, this combination is a cover of s_i.
         """
 
@@ -91,13 +91,16 @@ class MetricReport:
         edp_combinations = list(self.__reach_time_series_by_edp_combination)
         for i in range(len(edp_combinations)):
             possible_covered = edp_combinations[i]
-            for possible_cover in generate_all_length_combinations(
-                edp_combinations[:i] + edp_combinations[i + 1 :]
-            ):
+            other_sets = edp_combinations[:i] + edp_combinations[i + 1 :]
+            all_subsets_of_possible_covered = [other_set for other_set in other_sets if other_set.issubset(possible_covered)]
+            possible_covers = generate_all_length_combinations(all_subsets_of_possible_covered)
+            for possible_cover in possible_covers:
                 union_of_possible_cover = reduce(
                     lambda x, y: x.union(y), possible_cover
                 )
                 if union_of_possible_cover == possible_covered:
+                    # print("possible_coveredpossible_coveredpossible_coveredpossible_covered")
+                    # print(possible_covered)
                     cover_relationships.append((possible_covered, possible_cover))
         return cover_relationships
 
