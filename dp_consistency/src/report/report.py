@@ -99,8 +99,6 @@ class MetricReport:
                     lambda x, y: x.union(y), possible_cover
                 )
                 if union_of_possible_cover == possible_covered:
-                    # print("possible_coveredpossible_coveredpossible_coveredpossible_covered")
-                    # print(possible_covered)
                     cover_relationships.append((possible_covered, possible_cover))
         return cover_relationships
 
