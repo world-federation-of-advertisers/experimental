@@ -42,3 +42,73 @@ class VsockServer():
             decryption.force_cleanup()
             del decryption
             gc.collect()
+
+
+    def _receive_data_store_part_in_chunk(self, from_client, vsock_enclave_request):
+        """ Receive data from the enclave in chunks and upload them to S3 using `s3_uploader` """
+        try:
+            buffer = b""
+            while True:
+                chunk_size = 20 * 1024 * 1024
+                chunk = from_client.recv(chunk_size)
+                if not chunk:
+                    if buffer:
+                        # Empty the buffer and send the last part.
+                        self.even_bus.publish(
+                            DataStorePartAvailableEvent(
+                                VsockData(
+                                    metadata=VsockMetadata(
+                                        data_content=DataContent.DATA_STORE_PART,
+                                        data_store=DataStore(
+                                            data_store_id=vsock_enclave_request.data_stores[0].data_store_id,
+                                            data_store_remote_file_key=vsock_enclave_request.data_stores[0].remote_file_keys[0]
+                                        ),
+                                        internal_request_id=vsock_enclave_request.internal_request_id,
+                                    ),
+                                    data=buffer
+                                )
+                            )
+                        )
+                        # Send an empty part to indicate the end of the file.
+                        self.even_bus.publish(
+                            DataStorePartAvailableEvent(
+                                VsockData(
+                                    metadata=VsockMetadata(
+                                        data_content=DataContent.DATA_STORE_PART,
+                                        data_store=DataStore(
+                                            data_store_id=vsock_enclave_request.data_stores[0].data_store_id,
+                                            data_store_remote_file_key=vsock_enclave_request.data_stores[0].remote_file_keys[0]
+                                        ),
+                                        internal_request_id=vsock_enclave_request.internal_request_id,
+                                    ),
+                                    data=b""
+                                )
+                            )
+                        )
+                    break
+                buffer += chunk
+
+                if len(buffer) >= chunk_size:
+                    # Send a new chunk of data
+                    self.even_bus.publish(
+                        DataStorePartAvailableEvent(
+                            VsockData(
+                                metadata=VsockMetadata(
+                                    data_content=DataContent.DATA_STORE_PART,
+                                    data_store=DataStore(
+                                        data_store_id=vsock_enclave_request.data_stores[0].data_store_id,
+                                        data_store_remote_file_key=vsock_enclave_request.data_stores[0].remote_file_keys[0],
+                                    ),
+                                    internal_request_id=vsock_enclave_request.internal_request_id
+                                ),
+                                data=buffer
+                            )
+                        )
+                    )
+                    buffer = b""
+
+        except Exception as e:
+            Logger.log(
+                f"Exception while receiving file: {e}",
+                LoggingType.EXCEPTION,
+            )
