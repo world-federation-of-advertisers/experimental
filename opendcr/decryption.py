@@ -131,3 +131,32 @@ class Decryption:
 
         gc.collect()
         self.is_subprocess_ready = False
+
+    def decrypt_dek(self, aws_region, aws_credentials, dek):
+        gc.collect()
+        proc = subprocess.Popen(
+            [
+                "/app/enclave/kmstool_enclave_cli",
+                "decrypt",
+                "--region",
+                aws_region,
+                "--proxy-port",
+                "8000",
+                "--aws-access-key-id",
+                aws_credentials["accessKey"],
+                "--aws-secret-access-key",
+                aws_credentials["secretKey"],
+                "--aws-session-token",
+                aws_credentials["sessionKey"],
+                "--ciphertext",
+                dek,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = proc.communicate()
+        stdout_decoded = stdout.decode()
+        stderr_decoded = stderr.decode()
+        
+        clear_dek = stdout_decoded.split(": ")[1]
+        return clear_dek
